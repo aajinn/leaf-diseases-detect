@@ -1,0 +1,28 @@
+flowchart LR
+  subgraph Frontend
+    UI[Streamlit UI<br/>(`main.py`)]
+  end
+
+  subgraph Backend
+    API[FastAPI Endpoint<br/>(POST /disease-detection-file)]
+    UTIL[convert_image_to_base64_and_test<br/>(`utils.py`)]
+    TEST[test_with_base64_data<br/>(`utils.py`)]
+    DET[LeafDiseaseDetector<br/>(`Leaf Disease/main.py`)]
+    PARSE[_parse_response()]
+    PROMPT[create_analysis_prompt()]
+    GROQ[Groq API (external)]
+  end
+
+  UI -->|file bytes| API
+  API -->|await file.read()| API
+  API -->|call| UTIL
+  UTIL -->|base64 string| TEST
+  TEST -->|instantiate| DET
+  DET -->|create prompt| PROMPT
+  DET -->|POST prompt + data| GROQ
+  GROQ -->|raw message content| DET
+  DET -->|clean & parse| PARSE
+  PARSE -->|DiseaseAnalysisResult dict| TEST
+  TEST -->|return dict| API
+  API -->|JSONResponse| UI
+  DET -->|load env| Env[`.env (GROQ_API_KEY)`]

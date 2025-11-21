@@ -1,0 +1,18 @@
+flowchart LR
+  User[User<br/>(Uploads image, views results)]
+  UI[Streamlit UI<br/>(`main.py`)]
+  API[FastAPI Server<br/>(`app.py`)]
+  Utils[Utils<br/>(`utils.py`)]
+  Detector[LeafDiseaseDetector<br/>(`Leaf Disease/main.py`)]
+  Groq[Groq Model API<br/>(external)]
+  
+  User -->|Upload image (jpg/png)| UI
+  UI -->|POST file (multipart/form-data)| API
+  API -->|image bytes| Utils
+  Utils -->|base64 image| Detector
+  Detector -->|model request (prompt + image)| Groq
+  Groq -->|JSON analysis| Detector
+  Detector -->|parsed JSON result| API
+  API -->|JSON response| UI
+  UI -->|display analysis| User
+  Detector -.->|reads| Env[`.env (GROQ_API_KEY)`]
