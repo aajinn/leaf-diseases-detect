@@ -13,7 +13,23 @@ uvicorn>=0.21.1
 # Testing dependencies
 requests>=2.31.0
 
+# Perplexity AI
+perplexityai>=0.1.0
+
+# HTTP client for API calls
 python-multipart
 
 # Frontend dependencies
 streamlit
+
+# Authentication dependencies
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.0.0
+python-multipart>=0.0.6
+
+# Database dependencies
+motor>=3.3.0
+pymongo>=4.6.0
+
+# Email validation
+email-validator>=2.1.0
