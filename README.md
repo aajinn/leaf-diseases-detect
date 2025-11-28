@@ -35,23 +35,66 @@ An enterprise-grade AI-powered leaf disease detection system featuring a dual-in
 
 ### Directory Structure
 
-**Main Application Components:**
-- **🚀 main.py** - Streamlit Web Application with interactive UI components, real-time image preview, results visualization, and modern CSS styling
-- **🔧 app.py** - FastAPI Backend Service with RESTful API endpoints, file upload handling, error management, and JSON response formatting
-- **🧠 Leaf Disease/main.py** - Core AI Detection Engine containing the LeafDiseaseDetector class, DiseaseAnalysisResult dataclass, Groq API integration, base64 image processing, response parsing and comprehensive error handling
+```
+leaf-disease-detection/
+├── src/                    # Source code
+│   ├── app.py             # FastAPI backend
+│   ├── main.py            # Streamlit frontend
+│   ├── auth/              # Authentication
+│   ├── database/          # MongoDB models
+│   ├── routes/            # API endpoints
+│   ├── services/          # External APIs
+│   ├── storage/           # File storage
+│   └── core/              # AI engine
+├── frontend/              # Web interface
+├── tests/                 # Test suite
+├── docs/                  # Documentation
+├── scripts/               # Utility scripts
+├── config/                # Configuration
+└── assets/                # Static assets
+```
 
-**Supporting Files:**
-- **🛠️ utils.py** - Image processing utilities and helper functions
-- **🧪 test_api.py** - Comprehensive API testing suite
-- **📋 requirements.txt** - Python dependencies and package versions
-- **⚙️ vercel.json** - Deployment configuration for cloud platforms
-- **📁 Media/** - Sample test images for development and testing
+**📖 Full Structure**: See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for complete details.
 
-### Core Module: Leaf Disease/main.py
+### Core Components
 
-The heart of the system, featuring the **LeafDiseaseDetector Class** which provides advanced AI-powered leaf disease detection using Groq's Llama Vision models. This class supports multi-format image input (JPEG, PNG, WebP, BMP, TIFF), automatic base64 encoding, structured JSON output with comprehensive disease information, robust error handling and response validation, plus configurable AI model parameters.
+**🚀 FastAPI Backend** (`src/app.py`)
+- RESTful API endpoints
+- User authentication & authorization
+- File upload handling
+- Database integration
+- YouTube video recommendations
 
-The **DiseaseAnalysisResult DataClass** serves as a structured container for disease analysis results, including boolean detection status, specific disease identification, category classification, severity assessment levels, AI confidence scores (0-100%), observable symptom lists, environmental and biological factors, evidence-based treatment recommendations, and ISO 8601 timestamps.
+**🎨 Streamlit Frontend** (`src/main.py`)
+- Interactive web interface
+- Real-time image preview
+- Results visualization
+- Modern CSS styling
+
+**🧠 AI Detection Engine** (`src/core/disease_detector.py`)
+- LeafDiseaseDetector class
+- Groq Llama Vision integration
+- Multi-format image support
+- Structured JSON output
+- Confidence scoring
+
+**🔐 Authentication** (`src/auth/`)
+- JWT token management
+- Password hashing (bcrypt)
+- Role-based access control
+- User registration & login
+
+**💾 Database** (`src/database/`)
+- MongoDB integration
+- Pydantic models
+- Analysis records
+- User management
+
+**📺 YouTube Integration** (`src/services/`)
+- Perplexity API integration
+- Automatic video recommendations
+- Treatment tutorials
+- Embedded playback
 
 ## 🚀 Quick Start Guide
 
