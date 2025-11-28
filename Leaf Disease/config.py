@@ -48,7 +48,7 @@ class AppConfig:
         >>> 
         >>> # Create config with custom values
         >>> config = AppConfig(
-        ...     groq_api_key="your-api-key",
+        ...     groq_api_key="your-api-key-here",
         ...     model_temperature=0.5,
         ...     log_level="DEBUG"
         ... )
