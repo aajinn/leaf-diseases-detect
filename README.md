@@ -25,11 +25,21 @@ An enterprise-grade AI-powered leaf disease detection system featuring a dual-in
 - **⚡ Real-time Processing**: Optimized inference pipeline with sub-5-second response times
 
 ### 🏗️ Architecture Components
-- **FastAPI Backend (app.py)**: RESTful API service with automatic OpenAPI documentation
-- **Streamlit Frontend (main.py)**: Interactive web interface with modern UI/UX design
+- **FastAPI Backend (src/app.py)**: RESTful API service with automatic OpenAPI documentation
+- **Web Frontend (frontend/)**: Modern responsive UI with Tailwind CSS
+- **Admin Panel (frontend/admin.html)**: Comprehensive system management dashboard
 - **Core AI Engine (Leaf Disease/main.py)**: Advanced disease detection engine powered by Meta Llama Vision
-- **Utility Layer (utils.py)**: Image processing and data transformation utilities
+- **Authentication System**: JWT-based secure authentication with session management
+- **API Integration**: Groq AI for disease detection, Perplexity AI for YouTube recommendations
 - **Cloud Deployment**: Production-ready with Vercel integration and scalable architecture
+
+### 🎛️ Admin Panel Features
+- **📊 System Dashboard**: Real-time statistics and usage trends
+- **👥 User Management**: View, activate/deactivate users, track per-user costs
+- **📈 API Usage Tracking**: Monitor Groq and Perplexity API consumption
+- **💰 Cost Monitoring**: Track API costs with detailed breakdowns
+- **🔧 API Configuration**: Update API keys and manage settings
+- **📉 Usage Charts**: 30-day trends for API calls, analyses, and costs
 
 ## 🏗️ Project Architecture
 
@@ -516,6 +526,39 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 - **Efficient Resource Usage**: Minimal memory footprint
 - **Load Balancing**: Multi-instance deployment ready
 - **Caching**: Response caching for improved performance
+
+---
+
+## 🔐 Admin Panel Setup
+
+### Quick Admin Creation (2 Minutes)
+
+```cmd
+# Create default admin user
+python scripts/create_quick_admin.py
+
+# Default credentials:
+# Username: admin
+# Password: Admin@123
+# Email: admin@leafdisease.com
+```
+
+### Access Admin Panel
+
+1. Start server: `uvicorn src.app:app --reload --host 0.0.0.0 --port 8000`
+2. Login at: `http://localhost:8000/login`
+3. Access admin panel: `http://localhost:8000/admin`
+
+### Admin Features
+
+- **System Dashboard**: Real-time stats and 30-day usage trends
+- **User Management**: View all users, activate/deactivate accounts
+- **API Usage Tracking**: Monitor Groq and Perplexity API consumption
+- **Cost Monitoring**: Track API costs per user and overall
+- **API Configuration**: Update Groq and Perplexity API keys
+- **Usage Charts**: Visual analytics with Chart.js
+
+📚 **Full Documentation**: See `docs/features/ADMIN_PANEL.md` and `docs/setup/ADMIN_SETUP.md`
 
 ---
 

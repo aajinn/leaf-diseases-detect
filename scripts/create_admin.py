@@ -12,9 +12,9 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from database.connection import MongoDB, USERS_COLLECTION
-from database.models import UserInDB
-from auth.security import get_password_hash
+from src.database.connection import MongoDB, USERS_COLLECTION
+from src.database.models import UserInDB
+from src.auth.security import get_password_hash
 from datetime import datetime
 
 

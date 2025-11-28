@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Leaf Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-leaf text-primary text-3xl mr-3"></i>
+                    <span class="text-2xl font-bold text-gray-800">Admin Panel</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="userInfo" class="text-gray-600"></span>
+                    <a href="/dashboard" class="text-gray-600 hover:text-primary">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </a>
+                    <button onclick="logout()" class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Overview Stats -->
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Total Users</p>
+                        <p id="totalUsers" class="text-3xl font-bold text-primary">0</p>
+                    </div>
+                    <i class="fas fa-users text-primary text-4xl opacity-20"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Total Analyses</p>
+                        <p id="totalAnalyses" class="text-3xl font-bold text-blue-600">0</p>
+                    </div>
+                    <i class="fas fa-microscope text-blue-600 text-4xl opacity-20"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">API Calls</p>
+                        <p id="totalAPICalls" class="text-3xl font-bold text-purple-600">0</p>
+                    </div>
+                    <i class="fas fa-server text-purple-600 text-4xl opacity-20"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Total Cost</p>
+                        <p id="totalCost" class="text-3xl font-bold text-orange-600">$0.00</p>
+                    </div>
+                    <i class="fas fa-dollar-sign text-orange-600 text-4xl opacity-20"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-xl shadow-lg mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                    <button onclick="switchTab('overview')" id="tab-overview" class="tab-button active py-4 px-1 border-b-2 border-primary font-medium text-sm">
+                        <i class="fas fa-chart-line mr-2"></i>Overview
+                    </button>
+                    <button onclick="switchTab('users')" id="tab-users" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-users mr-2"></i>Users
+                    </button>
+                    <button onclick="switchTab('api-usage')" id="tab-api-usage" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-server mr-2"></i>API Usage
+                    </button>
+                    <button onclick="switchTab('api-config')" id="tab-api-config" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-cog mr-2"></i>API Config
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Overview Tab -->
+                <div id="content-overview" class="tab-content">
+                    <h3 class="text-xl font-bold mb-4">Usage Overview (Last 30 Days)</h3>
+                    <canvas id="usageChart" class="w-full" height="100"></canvas>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mt-8">
+                        <div>
+                            <h4 class="font-bold mb-3">API Cost Breakdown</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span class="text-gray-700">Groq API</span>
+                                    <span id="groqCost" class="font-bold text-green-600">$0.00</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span class="text-gray-700">Perplexity API</span>
+                                    <span id="perplexityCost" class="font-bold text-blue-600">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-bold mb-3">Analysis Statistics</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span class="text-gray-700">Diseases Detected</span>
+                                    <span id="diseasesDetected" class="font-bold text-red-600">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span class="text-gray-700">Healthy Plants</span>
+                                    <span id="healthyPlants" class="font-bold text-green-600">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Tab -->
+                <div id="content-users" class="tab-content hidden">
+                    <h3 class="text-xl font-bold mb-4">User Management</h3>
+                    <div id="usersTable" class="overflow-x-auto">
+                        <p class="text-gray-500">Loading users...</p>
+                    </div>
+                </div>
+
+                <!-- API Usage Tab -->
+                <div id="content-api-usage" class="tab-content hidden">
+                    <h3 class="text-xl font-bold mb-4">API Usage Records</h3>
+                    <div class="mb-4 flex space-x-4">
+                        <select id="apiTypeFilter" onchange="loadAPIUsage()" class="px-4 py-2 border rounded-lg">
+                            <option value="">All APIs</option>
+                            <option value="groq">Groq</option>
+                            <option value="perplexity">Perplexity</option>
+                        </select>
+                        <select id="daysFilter" onchange="loadAPIUsage()" class="px-4 py-2 border rounded-lg">
+                            <option value="7">Last 7 days</option>
+                            <option value="30">Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="0">All time</option>
+                        </select>
+                    </div>
+                    <div id="apiUsageTable" class="overflow-x-auto">
+                        <p class="text-gray-500">Loading API usage...</p>
+                    </div>
+                </div>
+
+                <!-- API Config Tab -->
+                <div id="content-api-config" class="tab-content hidden">
+                    <h3 class="text-xl font-bold mb-4">API Configuration</h3>
+                    
+                    <div class="space-y-6">
+                        <!-- Groq Config -->
+                        <div class="border border-gray-200 rounded-lg p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-lg font-bold">Groq API</h4>
+                                <span id="groqStatus" class="px-3 py-1 rounded-full text-sm font-semibold bg-gray-200 text-gray-700">Unknown</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                                    <input type="password" id="groqApiKey" class="w-full px-4 py-2 border rounded-lg" placeholder="Enter Groq API key">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                                    <input type="text" id="groqModel" class="w-full px-4 py-2 border rounded-lg bg-gray-50" readonly>
+                                </div>
+                                <button onclick="updateAPIKey('groq')" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary">
+                                    Update Groq API Key
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Perplexity Config -->
+                        <div class="border border-gray-200 rounded-lg p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-lg font-bold">Perplexity API</h4>
+                                <span id="perplexityStatus" class="px-3 py-1 rounded-full text-sm font-semibold bg-gray-200 text-gray-700">Unknown</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                                    <input type="password" id="perplexityApiKey" class="w-full px-4 py-2 border rounded-lg" placeholder="Enter Perplexity API key">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                                    <input type="text" id="perplexityModel" class="w-full px-4 py-2 border rounded-lg bg-gray-50" value="sonar" readonly>
+                                </div>
+                                <button onclick="updateAPIKey('perplexity')" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary">
+                                    Update Perplexity API Key
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

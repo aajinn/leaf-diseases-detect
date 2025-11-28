@@ -4,10 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from contextlib import asynccontextmanager
 
-from src.utils import convert_image_to_base64_and_test
+from src.image_utils import convert_image_to_base64_and_test
 from src.database.connection import MongoDB
 from src.auth.routes import router as auth_router
 from src.routes.disease_detection import router as detection_router
+from src.routes.admin import router as admin_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -77,10 +78,16 @@ if os.path.exists("frontend"):
     async def serve_history():
         """Serve the history page"""
         return FileResponse("frontend/history.html")
+    
+    @app.get("/admin", response_class=FileResponse)
+    async def serve_admin():
+        """Serve the admin panel page"""
+        return FileResponse("frontend/admin.html")
 
 # Include routers
 app.include_router(auth_router)
 app.include_router(detection_router)
+app.include_router(admin_router)
 
 
 @app.post('/disease-detection-file')

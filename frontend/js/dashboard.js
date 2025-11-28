@@ -12,6 +12,11 @@ async function loadUserInfo() {
     const profile = await getUserProfile();
     if (profile) {
         document.getElementById('userInfo').textContent = `Hello, ${profile.full_name || profile.username}!`;
+        
+        // Show admin link if user is admin
+        if (profile.is_admin) {
+            document.getElementById('adminLink').classList.remove('hidden');
+        }
     } else {
         // Session invalid, redirect to login
         window.location.href = '/login?redirect=/dashboard';

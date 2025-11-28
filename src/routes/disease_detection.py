@@ -14,8 +14,9 @@ from src.database.models import UserInDB, AnalysisRecord, AnalysisResponse, YouT
 from src.database.connection import MongoDB, ANALYSIS_COLLECTION
 from src.auth.security import get_current_active_user
 from src.storage.image_storage import save_image
-from src.utils import test_with_base64_data
+from src.image_utils import test_with_base64_data
 from src.services.perplexity_service import get_perplexity_service
+from src.utils.usage_tracker import track_groq_usage, track_perplexity_usage
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,16 @@ async def detect_disease(
         base64_string = base64.b64encode(contents).decode('utf-8')
         result = test_with_base64_data(base64_string)
         
+        # Track Groq API usage (estimate tokens)
+        estimated_tokens = len(base64_string) // 4 + 500  # Rough estimate
+        await track_groq_usage(
+            user_id=str(current_user.id),
+            username=current_user.username,
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            tokens_used=estimated_tokens,
+            success=result is not None and not result.get("error")
+        )
+        
         if result is None or (isinstance(result, dict) and result.get("error")):
             error_detail = result.get("error", "Failed to process image") if isinstance(result, dict) else "Failed to process image"
             logger.error(f"Disease detection failed: {error_detail}")
@@ -102,11 +113,29 @@ async def detect_disease(
                 logger.info(f"Fetched {len(youtube_videos)} treatment videos")
                 if youtube_videos:
                     logger.info(f"First video: {youtube_videos[0]}")
+                
+                # Track Perplexity usage
+                await track_perplexity_usage(
+                    user_id=str(current_user.id),
+                    username=current_user.username,
+                    model="sonar",
+                    tokens_used=1000,  # Estimate
+                    success=len(youtube_videos) > 0
+                )
             elif not result.get("disease_detected") and result.get("disease_type") != "invalid_image":
                 # Get general plant care videos for healthy leaves
                 logger.info("Plant is healthy - fetching plant care videos")
                 youtube_videos = perplexity.get_general_plant_care_videos(max_videos=3)
                 logger.info(f"Fetched {len(youtube_videos)} plant care videos")
+                
+                # Track Perplexity usage
+                await track_perplexity_usage(
+                    user_id=str(current_user.id),
+                    username=current_user.username,
+                    model="sonar",
+                    tokens_used=800,  # Estimate
+                    success=len(youtube_videos) > 0
+                )
             else:
                 logger.info(f"No videos fetched. Disease detected: {result.get('disease_detected')}, Type: {result.get('disease_type')}")
         except Exception as e:
