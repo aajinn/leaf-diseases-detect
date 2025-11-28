@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Leaf Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-leaf text-primary text-3xl mr-3"></i>
+                    <span class="text-2xl font-bold text-gray-800">Leaf Disease Detection</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="userInfo" class="text-gray-600"></span>
+                    <button onclick="logout()" class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Welcome Section -->
+        <div class="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-8 mb-8 shadow-lg">
+            <h1 class="text-3xl font-bold mb-2">Welcome to Your Dashboard</h1>
+            <p class="text-green-100">Upload a leaf image to detect diseases and get treatment recommendations</p>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Upload Section -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <i class="fas fa-upload text-primary mr-3"></i>
+                        Upload Leaf Image
+                    </h2>
+
+                    <div id="dropZone" class="border-4 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-primary transition cursor-pointer">
+                        <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-xl text-gray-600 mb-2">Drag & drop your image here</p>
+                        <p class="text-gray-500 mb-4">or</p>
+                        <label class="bg-primary text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-secondary transition inline-block">
+                            <i class="fas fa-folder-open mr-2"></i>Browse Files
+                            <input type="file" id="fileInput" accept="image/*" class="hidden">
+                        </label>
+                        <p class="text-sm text-gray-500 mt-4">Supported: JPG, PNG, WebP (Max 10MB)</p>
+                    </div>
+
+                    <!-- Image Preview -->
+                    <div id="imagePreview" class="mt-6 hidden">
+                        <h3 class="font-bold mb-3">Image Preview:</h3>
+                        <img id="previewImg" class="max-w-full h-64 object-contain mx-auto rounded-lg shadow-md">
+                        <button id="analyzeBtn" class="w-full mt-4 bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition">
+                            <i class="fas fa-microscope mr-2"></i>Analyze Image
+                        </button>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="results" class="mt-8 hidden">
+                        <h3 class="text-2xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-clipboard-check text-primary mr-3"></i>
+                            Analysis Results
+                        </h3>
+                        <div id="resultsContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Quick Stats -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="font-bold text-lg mb-4">Quick Stats</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Total Analyses</span>
+                            <span id="totalAnalyses" class="font-bold text-primary text-xl">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Diseases Found</span>
+                            <span id="diseasesFound" class="font-bold text-red-600 text-xl">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Healthy Plants</span>
+                            <span id="healthyPlants" class="font-bold text-green-600 text-xl">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="font-bold text-lg mb-4">Recent Activity</h3>
+                    <div id="recentActivity" class="space-y-3">
+                        <p class="text-gray-500 text-sm">No recent activity</p>
+                    </div>
+                    <button onclick="window.location.href='/history'" class="w-full mt-4 text-primary hover:text-secondary font-semibold">
+                        View All History <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/validation.js"></script>
+    <script src="js/session-indicator.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
