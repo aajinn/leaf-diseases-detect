@@ -1,5 +1,12 @@
 // History page functionality
 
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
     await loadHistory();
@@ -105,6 +112,10 @@ function displayHistory(records) {
                             class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition">
                             <i class="fas fa-eye mr-2"></i>View
                         </button>
+                        <button onclick="exportHistoryRecord('${record.id}')" 
+                            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
                         <button onclick="deleteRecord('${record.id}')" 
                             class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
                             <i class="fas fa-trash"></i>
@@ -124,12 +135,12 @@ async function viewDetails(recordId) {
             const record = await response.json();
             showDetailModal(record);
         } else {
-            alert('Failed to load details');
+            showNotification('Failed to load details', 'error');
         }
     } catch (error) {
         console.error('Error loading details:', error);
         if (error.message !== 'Session expired') {
-            alert('Failed to load details');
+            showNotification('Failed to load details', 'error');
         }
     }
 }
@@ -186,6 +197,15 @@ function showDetailModal(record) {
             <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg">
                 <h4 class="font-bold text-xl mb-2 text-red-800">${record.disease_name}</h4>
                 <p class="text-red-600">Type: ${record.disease_type} | Severity: ${record.severity}</p>
+                ${record.description && record.description.trim() ? `
+                <div class="mt-4 p-4 bg-white rounded-lg">
+                    <h5 class="font-bold text-sm text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        About This Disease
+                    </h5>
+                    <p class="text-gray-700 text-sm leading-relaxed">${escapeHtml(record.description)}</p>
+                </div>
+                ` : ''}
             </div>
 
             <div>
@@ -226,6 +246,15 @@ function showDetailModal(record) {
                 <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
                 <h4 class="font-bold text-2xl text-green-800 mb-2">Healthy Plant!</h4>
                 <p class="text-green-600">No disease was detected in this analysis</p>
+                ${record.description && record.description.trim() ? `
+                <div class="mt-4 p-4 bg-white rounded-lg text-left">
+                    <h5 class="font-bold text-sm text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-leaf text-green-500 mr-2"></i>
+                        Plant Health Information
+                    </h5>
+                    <p class="text-gray-700 text-sm leading-relaxed">${escapeHtml(record.description)}</p>
+                </div>
+                ` : ''}
             </div>
 
             ${displayYouTubeVideosInModal(record.youtube_videos, true)}
@@ -288,7 +317,12 @@ function closeModal() {
 }
 
 async function deleteRecord(recordId) {
-    if (!confirm('Are you sure you want to delete this analysis record?')) {
+    const confirmed = await showConfirm(
+        'Are you sure you want to delete this analysis record? This action cannot be undone.',
+        'Delete Analysis'
+    );
+    
+    if (!confirmed) {
         return;
     }
 
@@ -298,16 +332,38 @@ async function deleteRecord(recordId) {
         });
 
         if (response.ok) {
-            alert('Record deleted successfully');
+            showNotification('Record deleted successfully', 'success');
             await loadHistory();
         } else {
-            alert('Failed to delete record');
+            showNotification('Failed to delete record', 'error');
         }
     } catch (error) {
         console.error('Error deleting record:', error);
         if (error.message !== 'Session expired') {
-            alert('Failed to delete record');
+            showNotification('Failed to delete record', 'error');
         }
+    }
+}
+
+// Export history record to PDF
+async function exportHistoryRecord(recordId) {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/api/analyses/${recordId}`);
+        
+        if (response.ok) {
+            const record = await response.json();
+            
+            if (typeof exportAnalysisToPDF !== 'undefined') {
+                await exportAnalysisToPDF(record, null);
+            } else {
+                showNotification('PDF export feature not available', 'warning');
+            }
+        } else {
+            showNotification('Failed to load analysis record', 'error');
+        }
+    } catch (error) {
+        console.error('Error exporting record:', error);
+        showNotification('Failed to export PDF', 'error');
     }
 }
 

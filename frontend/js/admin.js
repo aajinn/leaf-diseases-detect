@@ -13,8 +13,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function checkAdminAccess() {
     const profile = await getUserProfile();
     if (!profile || !profile.is_admin) {
-        alert('Access denied. Admin privileges required.');
-        window.location.href = '/dashboard';
+        showNotification('Access denied. Admin privileges required.', 'error');
+        setTimeout(() => {
+            window.location.href = '/dashboard';
+        }, 2000);
     }
 }
 
@@ -183,7 +185,12 @@ function displayUsers(users) {
 }
 
 async function toggleUserStatus(username) {
-    if (!confirm(`Are you sure you want to toggle status for ${username}?`)) {
+    const confirmed = await showConfirm(
+        `Are you sure you want to toggle status for ${username}?`,
+        'Toggle User Status'
+    );
+    
+    if (!confirmed) {
         return;
     }
     
@@ -193,14 +200,14 @@ async function toggleUserStatus(username) {
         });
         
         if (response.ok) {
-            alert('User status updated successfully');
+            showNotification('User status updated successfully', 'success');
             await loadUsers();
         } else {
-            alert('Failed to update user status');
+            showNotification('Failed to update user status', 'error');
         }
     } catch (error) {
         console.error('Error toggling user status:', error);
-        alert('Error updating user status');
+        showNotification('Error updating user status', 'error');
     }
 }
 
@@ -310,11 +317,16 @@ async function updateAPIKey(apiType) {
     const apiKey = document.getElementById(`${apiType}ApiKey`).value;
     
     if (!apiKey) {
-        alert('Please enter an API key');
+        showNotification('Please enter an API key', 'warning');
         return;
     }
     
-    if (!confirm(`Are you sure you want to update the ${apiType} API key?`)) {
+    const confirmed = await showConfirm(
+        `Are you sure you want to update the ${apiType} API key?`,
+        'Update API Key'
+    );
+    
+    if (!confirmed) {
         return;
     }
     
@@ -324,16 +336,16 @@ async function updateAPIKey(apiType) {
         });
         
         if (response.ok) {
-            alert(`${apiType.charAt(0).toUpperCase() + apiType.slice(1)} API key updated successfully`);
+            showNotification(`${apiType.charAt(0).toUpperCase() + apiType.slice(1)} API key updated successfully`, 'success');
             document.getElementById(`${apiType}ApiKey`).value = '';
             await loadAPIConfig();
         } else {
             const error = await response.json();
-            alert(`Failed to update API key: ${error.detail}`);
+            showNotification(`Failed to update API key: ${error.detail}`, 'error');
         }
     } catch (error) {
         console.error('Error updating API key:', error);
-        alert('Error updating API key');
+        showNotification('Error updating API key', 'error');
     }
 }
 
