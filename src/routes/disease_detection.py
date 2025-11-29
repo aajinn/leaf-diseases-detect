@@ -78,6 +78,9 @@ async def detect_disease(
         base64_string = base64.b64encode(contents).decode('utf-8')
         result = test_with_base64_data(base64_string)
         
+        logger.info(f"Analysis result keys: {result.keys() if result else 'None'}")
+        logger.info(f"Description in result: {result.get('description', 'NOT FOUND') if result else 'None'}")
+        
         # Track Groq API usage (estimate tokens)
         estimated_tokens = len(base64_string) // 4 + 500  # Rough estimate
         await track_groq_usage(
@@ -156,6 +159,7 @@ async def detect_disease(
             symptoms=result.get("symptoms", []),
             possible_causes=result.get("possible_causes", []),
             treatment=result.get("treatment", []),
+            description=result.get("description", ""),
             youtube_videos=youtube_videos
         )
         
@@ -177,6 +181,7 @@ async def detect_disease(
             symptoms=analysis_record.symptoms,
             possible_causes=analysis_record.possible_causes,
             treatment=analysis_record.treatment,
+            description=analysis_record.description,
             youtube_videos=analysis_record.youtube_videos,
             analysis_timestamp=analysis_record.analysis_timestamp
         )

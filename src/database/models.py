@@ -121,6 +121,7 @@ class AnalysisRecord(BaseModel):
     symptoms: List[str] = []
     possible_causes: List[str] = []
     treatment: List[str] = []
+    description: str = ""
     youtube_videos: List[YouTubeVideo] = []
     analysis_timestamp: datetime = Field(default_factory=datetime.utcnow)
     
@@ -154,5 +155,6 @@ class AnalysisResponse(BaseModel):
     symptoms: List[str]
     possible_causes: List[str]
     treatment: List[str]
+    description: str = ""
     youtube_videos: List[YouTubeVideo] = []
     analysis_timestamp: datetime

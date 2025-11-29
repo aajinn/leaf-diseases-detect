@@ -38,6 +38,7 @@ class DiseaseAnalysisResult:
     symptoms: List[str]
     possible_causes: List[str]
     treatment: List[str]
+    description: str = ""
     analysis_timestamp: str = datetime.now().astimezone().isoformat()
 
 
@@ -141,6 +142,7 @@ class LeafDiseaseDetector:
         6. Symptoms observed
         7. Possible causes
         8. Treatment recommendations
+        9. Detailed description (2-3 sentences explaining the disease, its impact, and importance)
 
         For NON-LEAF images (humans, animals, objects, or not detected as leaves, etc.), return this format:
         {
@@ -151,7 +153,8 @@ class LeafDiseaseDetector:
             "confidence": 95,
             "symptoms": ["This image does not contain a plant leaf"],
             "possible_causes": ["Invalid image type uploaded"],
-            "treatment": ["Please upload an image of a plant leaf for disease analysis"]
+            "treatment": ["Please upload an image of a plant leaf for disease analysis"],
+            "description": "The uploaded image does not appear to be a plant leaf. Please upload a clear image of a plant leaf for accurate disease detection."
         }
         
         For VALID LEAF images, return this format:
@@ -163,7 +166,8 @@ class LeafDiseaseDetector:
             "confidence": 85,
             "symptoms": ["list", "of", "symptoms"],
             "possible_causes": ["list", "of", "causes"],
-            "treatment": ["list", "of", "treatments"]
+            "treatment": ["list", "of", "treatments"],
+            "description": "A detailed 2-3 sentence description explaining what this disease is, how it affects the plant, and why it's important to address it. For healthy plants, explain the plant's condition and general care tips."
         }"""
 
     def analyze_leaf_image_base64(self, base64_image: str,
@@ -278,7 +282,8 @@ class LeafDiseaseDetector:
                 confidence=float(disease_data.get('confidence', 0)),
                 symptoms=disease_data.get('symptoms', []),
                 possible_causes=disease_data.get('possible_causes', []),
-                treatment=disease_data.get('treatment', [])
+                treatment=disease_data.get('treatment', []),
+                description=disease_data.get('description', '')
             )
 
         except json.JSONDecodeError:
@@ -304,7 +309,8 @@ class LeafDiseaseDetector:
                         symptoms=disease_data.get('symptoms', []),
                         possible_causes=disease_data.get(
                             'possible_causes', []),
-                        treatment=disease_data.get('treatment', [])
+                        treatment=disease_data.get('treatment', []),
+                        description=disease_data.get('description', '')
                     )
                 except json.JSONDecodeError:
                     pass
