@@ -10,6 +10,11 @@ Modern, responsive web interface built with HTML, Tailwind CSS, and vanilla Java
 - **User Authentication** - Register and login pages
 - **Dashboard** - Upload images and analyze diseases
 - **History** - View all past analyses with detailed results
+- **Animated Background** - Dynamic leaf and bacteria particles with collision effects
+- **Theme System** - Color themes that change based on page state
+- **Text-to-Speech** - Voice announcements for analysis results
+- **PDF Export** - Download analysis reports as PDF
+- **Custom Notifications** - Toast and modal notifications
 - **Responsive Design** - Works on desktop, tablet, and mobile
 
 ## Pages
@@ -43,6 +48,14 @@ Modern, responsive web interface built with HTML, Tailwind CSS, and vanilla Java
 - Delete records
 - Filter and search (coming soon)
 
+### 6. live-detection.html - Live Camera Detection
+- Real-time camera feed
+- Multiple detection modes (manual, auto, real-time)
+- Continuous monitoring
+- Detection history
+- Session statistics
+- Visual feedback
+
 ## JavaScript Modules
 
 ### js/auth.js
@@ -63,6 +76,65 @@ Modern, responsive web interface built with HTML, Tailwind CSS, and vanilla Java
 - Display records
 - View details modal
 - Delete functionality
+
+### js/animated-background.js
+- Canvas-based particle animation
+- Leaf and bacteria particles
+- Collision detection and physics
+- Dynamic theme system
+- Performance optimization
+
+### js/text-to-speech.js
+- Web Speech API integration
+- Analysis result announcements
+- Toggle and replay controls
+- LocalStorage persistence
+
+### js/pdf-export.js
+- Client-side PDF generation
+- Professional report formatting
+- Image embedding
+- Single-page layout
+
+### js/notifications.js
+- Toast notifications
+- Modal dialogs
+- Custom styling
+- Animation effects
+
+### js/validation.js
+- Form field validation
+- Real-time feedback
+- Password strength meter
+- Email/username validation
+
+### js/session-indicator.js
+- Session timeout tracking
+- Activity monitoring
+- Expiration warnings
+- Auto-logout
+
+### js/camera-capture.js
+- Camera access and control
+- Image capture from video stream
+- Front/back camera switching
+- Auto-capture mode
+- Multi-camera support
+
+### js/live-detection.js
+- Continuous disease monitoring
+- Multiple detection modes
+- Real-time analysis
+- Detection history tracking
+- Session statistics
+
+### js/leaf-detection.js
+- Automatic leaf detection
+- Color-based segmentation
+- Morphological image processing
+- Smart cropping algorithm
+- Background removal
+- Quality validation
 
 ## Setup
 
@@ -243,18 +315,90 @@ const API_URL = 'https://your-api-url.com';
 - Verify file type (images only)
 - Check network tab for errors
 
+## Camera Capture & Live Detection
+
+### Camera Capture (Dashboard)
+Capture leaf images directly from your device camera:
+- **Webcam Support**: Use desktop/laptop camera
+- **Mobile Camera**: Front and back camera on phones
+- **Camera Switching**: Toggle between cameras
+- **Auto-Capture**: Automatic capture every 3 seconds
+- **Frame Guide**: Visual guide for optimal positioning
+
+### Live Detection Page
+Dedicated page for continuous disease monitoring:
+- **Manual Mode**: Capture on demand
+- **Auto Mode**: Automatic capture every 3 seconds
+- **Real-time Mode**: Analyze every frame (experimental)
+- **Detection History**: View last 10 detections
+- **Session Statistics**: Track scans and results
+- **Visual Feedback**: Frame color changes based on detection
+
+See [CAMERA_CAPTURE.md](../docs/features/CAMERA_CAPTURE.md) for detailed documentation.
+
+## Auto-Crop Leaf Detection
+
+Automatically detects and crops leaf regions from images:
+- **Color Detection**: Identifies green, yellow, and brown leaves
+- **Background Removal**: Removes unnecessary background
+- **Smart Cropping**: Focuses on leaf with padding
+- **Quality Validation**: Falls back to original if needed
+- **Toggle Control**: Enable/disable in settings
+- **Client-Side**: No server processing required
+
+### How It Works
+1. Analyzes image colors to find leaf regions
+2. Uses morphological operations to clean mask
+3. Finds largest contiguous leaf region
+4. Crops with padding around detected area
+5. Validates crop quality before using
+
+### Benefits
+- Better detection accuracy
+- Faster processing (smaller images)
+- Reduced bandwidth usage
+- Automatic operation
+- No manual cropping needed
+
+See [AUTO_CROP.md](../docs/features/AUTO_CROP.md) for detailed documentation.
+
+## Animated Background System
+
+The application features an immersive animated background with floating leaves and bacteria particles:
+
+### Features
+- **Particle Physics**: Realistic collision detection and bouncing
+- **Dynamic Themes**: Background color changes based on page state
+- **Visual Feedback**: Particles glow when colliding
+- **Performance**: Optimized for 60 FPS with minimal CPU usage
+
+### Themes
+- **Guest** (Light Blue): Before login pages
+- **User** (Light Green): Logged in user pages
+- **Admin** (Blue): Admin panel
+- **Analyzing** (Yellow/Orange): During image analysis
+- **Healthy** (Vibrant Green): No disease detected
+
+### Testing
+- `test-animation.html` - Visual test of all themes and animations
+- `debug-theme.html` - Debug console with state controls and logging
+
+See [ANIMATED_BACKGROUND.md](../docs/features/ANIMATED_BACKGROUND.md) for detailed documentation.
+
 ## Future Enhancements
 
 - [ ] Dark mode toggle
 - [ ] Multi-language support
 - [ ] Advanced search/filter in history
 - [ ] Batch upload
-- [ ] Export results as PDF
+- [x] Export results as PDF ✅
 - [ ] Image comparison
 - [ ] Mobile app (PWA)
-- [ ] Real-time notifications
+- [x] Real-time notifications ✅
 - [ ] User settings page
-- [ ] Admin dashboard
+- [x] Admin dashboard ✅
+- [x] Animated background ✅
+- [x] Text-to-speech ✅
 
 ## Contributing
 

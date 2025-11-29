@@ -1,0 +1,47 @@
+/* Animated Background Styles */
+
+body {
+    position: relative;
+    transition: background-color 0.5s ease;
+}
+
+#animated-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Ensure content is above the background */
+nav,
+.max-w-7xl,
+.bg-white,
+.bg-gradient-to-r,
+.bg-gradient-to-br {
+    position: relative;
+    z-index: 1;
+}
+
+/* Smooth transitions for theme changes */
+body.theme-guest {
+    background-color: rgba(240, 248, 255, 0.3) !important;
+}
+
+body.theme-user {
+    background-color: rgba(232, 245, 233, 0.3) !important;
+}
+
+body.theme-admin {
+    background-color: rgba(227, 242, 253, 0.3) !important;
+}
+
+body.theme-analyzing {
+    background-color: rgba(255, 243, 224, 0.3) !important;
+}
+
+body.theme-healthy {
+    background-color: rgba(232, 245, 233, 0.3) !important;
+}

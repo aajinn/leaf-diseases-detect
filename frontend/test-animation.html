@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Test - Leaf Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/animated-background.css">
+    <script src="js/animated-background.js"></script>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 py-16">
+        <div class="bg-white rounded-xl shadow-2xl p-8">
+            <h1 class="text-4xl font-bold mb-8 text-center">
+                <i class="fas fa-leaf text-green-600 mr-3"></i>
+                Animated Background Test
+            </h1>
+
+            <div class="space-y-6">
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <h2 class="text-2xl font-bold mb-4">Theme Controls</h2>
+                    <p class="text-gray-600 mb-4">Click buttons to test different background themes:</p>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <button onclick="window.updateBackgroundTheme('guest')" 
+                            class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition">
+                            <i class="fas fa-user mr-2"></i>Guest
+                        </button>
+                        
+                        <button onclick="window.updateBackgroundTheme('user')" 
+                            class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition">
+                            <i class="fas fa-user-check mr-2"></i>User
+                        </button>
+                        
+                        <button onclick="window.updateBackgroundTheme('admin')" 
+                            class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+                            <i class="fas fa-user-shield mr-2"></i>Admin
+                        </button>
+                        
+                        <button onclick="window.updateBackgroundTheme('analyzing')" 
+                            class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition">
+                            <i class="fas fa-spinner mr-2"></i>Analyzing
+                        </button>
+                        
+                        <button onclick="window.updateBackgroundTheme('healthy')" 
+                            class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
+                            <i class="fas fa-check-circle mr-2"></i>Healthy
+                        </button>
+                        
+                        <button onclick="testAnalysisFlow()" 
+                            class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
+                            <i class="fas fa-play mr-2"></i>Test Flow
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <h2 class="text-2xl font-bold mb-4">Animation Info</h2>
+                    <div class="space-y-2 text-gray-700">
+                        <p><strong>Leaves:</strong> Green particles representing healthy plants</p>
+                        <p><strong>Bacteria:</strong> Red particles representing diseases</p>
+                        <p><strong>Collision:</strong> Particles bounce and glow when they collide</p>
+                        <p><strong>Themes:</strong> Background color changes based on page state</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <h2 class="text-2xl font-bold mb-4">Theme Descriptions</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <div class="w-4 h-4 bg-blue-200 rounded mr-3 mt-1"></div>
+                            <div>
+                                <strong>Guest:</strong> Light blue - Before login pages
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-4 h-4 bg-green-200 rounded mr-3 mt-1"></div>
+                            <div>
+                                <strong>User:</strong> Light green - Logged in user pages
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-4 h-4 bg-blue-300 rounded mr-3 mt-1"></div>
+                            <div>
+                                <strong>Admin:</strong> Blue tint - Admin panel
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-4 h-4 bg-yellow-200 rounded mr-3 mt-1"></div>
+                            <div>
+                                <strong>Analyzing:</strong> Yellow/orange - During image analysis
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="w-4 h-4 bg-green-300 rounded mr-3 mt-1"></div>
+                            <div>
+                                <strong>Healthy:</strong> Vibrant green - No disease detected
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg">
+                    <h3 class="font-bold text-lg mb-2">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        How to Use
+                    </h3>
+                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                        <li>Watch the leaves and bacteria float across the screen</li>
+                        <li>Click theme buttons to see color changes</li>
+                        <li>Click "Test Flow" to simulate an analysis sequence</li>
+                        <li>Notice how particles collide and bounce off each other</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test the full analysis flow
+        async function testAnalysisFlow() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Running...';
+            
+            // Start with user theme
+            window.updateBackgroundTheme('user');
+            await sleep(2000);
+            
+            // Switch to analyzing
+            window.setAnalyzingState(true);
+            await sleep(3000);
+            
+            // Random result
+            const isHealthy = Math.random() > 0.5;
+            window.setAnalyzingState(false);
+            window.setDiseaseStatus(isHealthy ? 'healthy' : 'diseased');
+            await sleep(3000);
+            
+            // Back to user
+            window.updateBackgroundTheme('user');
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play mr-2"></i>Test Flow';
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>

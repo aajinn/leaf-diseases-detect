@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Crop Test - Leaf Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-xl shadow-2xl p-8">
+            <h1 class="text-4xl font-bold mb-8 text-center">
+                <i class="fas fa-crop-alt text-green-600 mr-3"></i>
+                Auto-Crop Leaf Detection Test
+            </h1>
+
+            <!-- Upload Section -->
+            <div class="mb-8">
+                <label class="block text-lg font-bold mb-4">Upload Test Image</label>
+                <div class="flex items-center space-x-4">
+                    <label class="bg-primary text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-secondary transition">
+                        <i class="fas fa-upload mr-2"></i>Choose Image
+                        <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                    </label>
+                    <button onclick="processImage()" id="processBtn" disabled
+                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400">
+                        <i class="fas fa-magic mr-2"></i>Detect & Crop
+                    </button>
+                    <button onclick="clearImages()" 
+                        class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-times mr-2"></i>Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Grid -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Original Image -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-image text-blue-600 mr-2"></i>
+                        Original Image
+                    </h3>
+                    <div id="originalContainer" class="border-4 border-gray-300 rounded-lg p-4 min-h-96 flex items-center justify-center bg-gray-50">
+                        <p class="text-gray-500">No image uploaded</p>
+                    </div>
+                    <div id="originalInfo" class="mt-4 text-sm text-gray-600 hidden"></div>
+                </div>
+
+                <!-- Cropped Image -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-crop-alt text-green-600 mr-2"></i>
+                        Auto-Cropped Result
+                    </h3>
+                    <div id="croppedContainer" class="border-4 border-green-500 rounded-lg p-4 min-h-96 flex items-center justify-center bg-gray-50">
+                        <p class="text-gray-500">Process image to see result</p>
+                    </div>
+                    <div id="croppedInfo" class="mt-4 text-sm text-gray-600 hidden"></div>
+                </div>
+            </div>
+
+            <!-- Detection Info -->
+            <div id="detectionInfo" class="mt-8 hidden">
+                <h3 class="text-xl font-bold mb-4">Detection Details</h3>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="font-semibold">Detected Region:</p>
+                            <p id="regionInfo" class="text-gray-700"></p>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Processing Time:</p>
+                            <p id="timeInfo" class="text-gray-700"></p>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Size Reduction:</p>
+                            <p id="sizeInfo" class="text-gray-700"></p>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Status:</p>
+                            <p id="statusInfo" class="text-gray-700"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="mt-8 bg-green-50 border-l-4 border-green-500 p-6 rounded">
+                <h4 class="font-bold text-lg mb-3">
+                    <i class="fas fa-info-circle text-green-600 mr-2"></i>
+                    How to Test
+                </h4>
+                <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                    <li>Upload an image containing a leaf</li>
+                    <li>Click "Detect & Crop" to process</li>
+                    <li>Compare original and cropped images</li>
+                    <li>Check detection details below</li>
+                    <li>Try different images to test accuracy</li>
+                </ol>
+            </div>
+
+            <!-- Test Cases -->
+            <div class="mt-8">
+                <h4 class="font-bold text-lg mb-3">Recommended Test Cases</h4>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-gray-50 p-4 rounded">
+                        <p class="font-semibold mb-2">✅ Good Cases</p>
+                        <ul class="text-sm space-y-1 text-gray-700">
+                            <li>• Single green leaf</li>
+                            <li>• Plain background</li>
+                            <li>• Good lighting</li>
+                            <li>• Centered leaf</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <p class="font-semibold mb-2">⚠️ Challenging Cases</p>
+                        <ul class="text-sm space-y-1 text-gray-700">
+                            <li>• Multiple leaves</li>
+                            <li>• Green background</li>
+                            <li>• Poor lighting</li>
+                            <li>• Diseased leaves</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <p class="font-semibold mb-2">❌ Edge Cases</p>
+                        <ul class="text-sm space-y-1 text-gray-700">
+                            <li>• No leaf present</li>
+                            <li>• Very dark images</li>
+                            <li>• Extreme close-ups</li>
+                            <li>• Non-plant objects</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/leaf-detection.js"></script>
+    <script>
+        let currentFile = null;
+        let detector = null;
+
+        // Initialize detector
+        detector = new LeafDetector();
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            currentFile = file;
+            
+            // Display original image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'max-w-full h-auto rounded';
+                
+                const container = document.getElementById('originalContainer');
+                container.innerHTML = '';
+                container.appendChild(img);
+                
+                // Show info
+                const info = document.getElementById('originalInfo');
+                info.classList.remove('hidden');
+                info.innerHTML = `
+                    <strong>File:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB<br>
+                    <strong>Type:</strong> ${file.type}
+                `;
+                
+                // Enable process button
+                document.getElementById('processBtn').disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function processImage() {
+            if (!currentFile) return;
+
+            const btn = document.getElementById('processBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+            const startTime = performance.now();
+
+            try {
+                // Process image
+                const croppedFile = await detector.detectAndCrop(currentFile);
+                
+                const endTime = performance.now();
+                const processingTime = (endTime - startTime).toFixed(0);
+
+                // Display cropped image
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'max-w-full h-auto rounded';
+                    
+                    const container = document.getElementById('croppedContainer');
+                    container.innerHTML = '';
+                    container.appendChild(img);
+                    
+                    // Show info
+                    const info = document.getElementById('croppedInfo');
+                    info.classList.remove('hidden');
+                    info.innerHTML = `
+                        <strong>Size:</strong> ${(croppedFile.size / 1024).toFixed(2)} KB<br>
+                        <strong>Reduction:</strong> ${((1 - croppedFile.size / currentFile.size) * 100).toFixed(1)}%
+                    `;
+                    
+                    // Show detection info
+                    const detectionInfo = document.getElementById('detectionInfo');
+                    detectionInfo.classList.remove('hidden');
+                    
+                    document.getElementById('timeInfo').textContent = `${processingTime} ms`;
+                    document.getElementById('sizeInfo').textContent = 
+                        `${(currentFile.size / 1024).toFixed(2)} KB → ${(croppedFile.size / 1024).toFixed(2)} KB`;
+                    
+                    const wasCropped = croppedFile.size < currentFile.size * 0.95;
+                    document.getElementById('statusInfo').innerHTML = wasCropped
+                        ? '<span class="text-green-600 font-semibold">✓ Leaf detected and cropped</span>'
+                        : '<span class="text-yellow-600 font-semibold">⚠ Using original (no crop applied)</span>';
+                };
+                reader.readAsDataURL(croppedFile);
+
+            } catch (error) {
+                console.error('Processing error:', error);
+                alert('Error processing image: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Detect & Crop';
+            }
+        }
+
+        function clearImages() {
+            currentFile = null;
+            document.getElementById('originalContainer').innerHTML = '<p class="text-gray-500">No image uploaded</p>';
+            document.getElementById('croppedContainer').innerHTML = '<p class="text-gray-500">Process image to see result</p>';
+            document.getElementById('originalInfo').classList.add('hidden');
+            document.getElementById('croppedInfo').classList.add('hidden');
+            document.getElementById('detectionInfo').classList.add('hidden');
+            document.getElementById('processBtn').disabled = true;
+            document.getElementById('fileInput').value = '';
+        }
+    </script>
+</body>
+</html>

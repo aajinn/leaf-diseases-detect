@@ -52,6 +52,7 @@ import os
 if os.path.exists("frontend"):
     # Serve static assets (js, css, images)
     app.mount("/js", StaticFiles(directory="frontend/js"), name="js")
+    app.mount("/css", StaticFiles(directory="frontend/css"), name="css")
     
     # Serve HTML pages at root
     @app.get("/", response_class=FileResponse)
@@ -83,6 +84,11 @@ if os.path.exists("frontend"):
     async def serve_admin():
         """Serve the admin panel page"""
         return FileResponse("frontend/admin.html")
+    
+    @app.get("/live-detection", response_class=FileResponse)
+    async def serve_live_detection():
+        """Serve the live detection page"""
+        return FileResponse("frontend/live-detection.html")
 
 # Include routers
 app.include_router(auth_router)

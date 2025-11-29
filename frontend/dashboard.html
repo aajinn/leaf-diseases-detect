@@ -6,6 +6,7 @@
     <title>Dashboard - Leaf Disease Detection</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/animated-background.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         tailwind.config = {
@@ -19,6 +20,7 @@
             }
         }
     </script>
+    <script src="js/animated-background.js"></script>
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
@@ -52,8 +54,15 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Welcome Section -->
         <div class="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-8 mb-8 shadow-lg">
-            <h1 class="text-3xl font-bold mb-2">Welcome to Your Dashboard</h1>
-            <p class="text-green-100">Upload a leaf image to detect diseases and get treatment recommendations</p>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2">Welcome to Your Dashboard</h1>
+                    <p class="text-green-100">Upload a leaf image to detect diseases and get treatment recommendations</p>
+                </div>
+                <a href="/live-detection" class="bg-white text-primary px-6 py-3 rounded-lg hover:bg-green-50 transition font-semibold">
+                    <i class="fas fa-video mr-2"></i>Live Detection
+                </a>
+            </div>
         </div>
 
         <div class="grid lg:grid-cols-3 gap-8">
@@ -69,10 +78,15 @@
                         <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
                         <p class="text-xl text-gray-600 mb-2">Drag & drop your image here</p>
                         <p class="text-gray-500 mb-4">or</p>
-                        <label class="bg-primary text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-secondary transition inline-block">
-                            <i class="fas fa-folder-open mr-2"></i>Browse Files
-                            <input type="file" id="fileInput" accept="image/*" class="hidden">
-                        </label>
+                        <div class="flex justify-center space-x-4">
+                            <label class="bg-primary text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-secondary transition inline-block">
+                                <i class="fas fa-folder-open mr-2"></i>Browse Files
+                                <input type="file" id="fileInput" accept="image/*" class="hidden">
+                            </label>
+                            <button onclick="showCameraModal()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+                                <i class="fas fa-camera mr-2"></i>Use Camera
+                            </button>
+                        </div>
                         <p class="text-sm text-gray-500 mt-4">Supported: JPG, PNG, WebP (Max 10MB)</p>
                     </div>
 
@@ -143,12 +157,115 @@
         </div>
     </div>
 
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        <i class="fas fa-camera text-blue-600 mr-3"></i>
+                        Camera Capture
+                    </h2>
+                    <button onclick="hideCameraModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- Camera Error -->
+                <div id="cameraError" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
+                        <p class="text-red-700">Camera access denied or not available</p>
+                    </div>
+                </div>
+
+                <!-- Camera Preview -->
+                <div class="relative bg-black rounded-lg overflow-hidden mb-4">
+                    <video id="cameraVideo" autoplay playsinline class="w-full h-auto"></video>
+                    <canvas id="cameraCanvas" class="hidden"></canvas>
+                    
+                    <!-- Auto-capture preview overlay -->
+                    <img id="autoCapturePreview" class="hidden absolute top-4 right-4 w-32 h-32 object-cover border-4 border-green-500 rounded-lg shadow-lg">
+                    
+                    <!-- Camera overlay guide -->
+                    <div class="absolute inset-0 pointer-events-none">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="border-4 border-green-500 border-dashed rounded-lg w-3/4 h-3/4 opacity-50"></div>
+                        </div>
+                        <div class="absolute bottom-4 left-0 right-0 text-center">
+                            <p class="text-white text-sm bg-black bg-opacity-50 inline-block px-4 py-2 rounded">
+                                <i class="fas fa-leaf mr-2"></i>Position leaf within the frame
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Controls -->
+                <div id="cameraControls" class="space-y-4">
+                    <!-- Main Controls -->
+                    <div class="flex justify-center space-x-4">
+                        <button id="captureBtn" onclick="captureFromCamera()" 
+                            class="bg-primary text-white px-8 py-3 rounded-lg hover:bg-secondary transition font-semibold">
+                            <i class="fas fa-camera mr-2"></i>Capture Photo
+                        </button>
+                        
+                        <button id="switchCameraBtn" onclick="switchCamera()" 
+                            class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
+                            <i class="fas fa-camera-rotate"></i>
+                        </button>
+                    </div>
+
+                    <!-- Advanced Controls -->
+                    <div class="flex justify-center space-x-4">
+                        <button id="autoCaptureBtn" onclick="toggleAutoCapture()" 
+                            class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition text-sm">
+                            <i class="fas fa-play mr-2"></i>Start Auto-Capture
+                        </button>
+                    </div>
+
+                    <!-- Auto-Crop Toggle -->
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                        <label class="flex items-center justify-between cursor-pointer">
+                            <div class="flex items-center">
+                                <i class="fas fa-crop-alt text-green-600 mr-3"></i>
+                                <div>
+                                    <span class="font-bold text-sm text-green-800">Auto-Crop Leaf</span>
+                                    <p class="text-xs text-green-700">Automatically detect and crop leaf region</p>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="autoCropToggle" checked 
+                                onchange="toggleAutoCrop(this.checked)"
+                                class="w-6 h-6 text-green-600 rounded focus:ring-green-500">
+                        </label>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                        <h4 class="font-bold text-sm text-blue-800 mb-2">
+                            <i class="fas fa-info-circle mr-2"></i>Tips for Best Results
+                        </h4>
+                        <ul class="text-sm text-blue-700 space-y-1">
+                            <li><i class="fas fa-check mr-2"></i>Ensure good lighting</li>
+                            <li><i class="fas fa-check mr-2"></i>Hold camera steady</li>
+                            <li><i class="fas fa-check mr-2"></i>Fill frame with leaf</li>
+                            <li><i class="fas fa-check mr-2"></i>Focus on affected areas</li>
+                            <li><i class="fas fa-check mr-2"></i>Auto-crop removes background automatically</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/notifications.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/validation.js"></script>
     <script src="js/session-indicator.js"></script>
     <script src="js/text-to-speech.js"></script>
     <script src="js/pdf-export.js"></script>
+    <script src="js/leaf-detection.js"></script>
+    <script src="js/camera-capture.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 </html>

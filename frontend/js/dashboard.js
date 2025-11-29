@@ -2,6 +2,47 @@
 let selectedFile = null;
 let lastAnalysisResult = null;
 
+// Toggle auto-crop feature
+function toggleAutoCrop(enabled) {
+    localStorage.setItem('autoCropEnabled', enabled ? 'true' : 'false');
+    if (enabled) {
+        showNotification('Auto-crop enabled - Leaf will be detected automatically', 'success');
+    } else {
+        showNotification('Auto-crop disabled - Full image will be used', 'info');
+    }
+}
+
+// Initialize auto-crop toggle
+function initializeAutoCropToggle() {
+    const toggle = document.getElementById('autoCropToggle');
+    if (toggle) {
+        const enabled = localStorage.getItem('autoCropEnabled') !== 'false';
+        toggle.checked = enabled;
+    }
+}
+
+// Analyze image file (used by both file upload and camera capture)
+async function analyzeImageFile(file) {
+    // Auto-crop if enabled
+    const autoCropEnabled = localStorage.getItem('autoCropEnabled') !== 'false';
+    if (autoCropEnabled && typeof processImageWithAutoCrop === 'function') {
+        file = await processImageWithAutoCrop(file);
+    }
+    
+    selectedFile = file;
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('previewImg').src = e.target.result;
+        document.getElementById('imagePreview').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+    
+    // Auto-analyze
+    await analyzeImage();
+}
+
 // Helper function to escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -30,7 +71,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadStats();
     setupFileUpload();
     initializeTTS();
+    initializeAutoCropToggle();
+    checkPendingAnalysis();
 });
+
+// Check for pending analysis from live detection
+function checkPendingAnalysis() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('showResult') === 'true') {
+        const pendingAnalysis = sessionStorage.getItem('pendingAnalysis');
+        if (pendingAnalysis) {
+            try {
+                const result = JSON.parse(pendingAnalysis);
+                sessionStorage.removeItem('pendingAnalysis');
+                
+                // Display full results
+                displayResults(result);
+                lastAnalysisResult = result;
+                
+                // Show action buttons
+                const replayBtn = document.getElementById('replayTTS');
+                const exportBtn = document.getElementById('exportPDF');
+                if (replayBtn) replayBtn.classList.remove('hidden');
+                if (exportBtn) exportBtn.classList.remove('hidden');
+                
+                // Scroll to results
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+                
+                showNotification('Full analysis loaded from live detection', 'success');
+            } catch (error) {
+                console.error('Error loading pending analysis:', error);
+            }
+        }
+    }
+}
 
 function initializeTTS() {
     if (typeof tts !== 'undefined') {
@@ -143,7 +217,7 @@ function setupFileUpload() {
     analyzeBtn.addEventListener('click', analyzeImage);
 }
 
-function handleFile(file) {
+async function handleFile(file) {
     const validation = validateImageFile(file);
     
     if (!validation.valid) {
@@ -151,7 +225,23 @@ function handleFile(file) {
         return;
     }
 
+    // Auto-crop leaf if enabled
+    const autoCropEnabled = localStorage.getItem('autoCropEnabled') !== 'false';
+    if (autoCropEnabled && typeof processImageWithAutoCrop === 'function') {
+        file = await processImageWithAutoCrop(file);
+    }
+
     selectedFile = file;
+    
+    // Reset disease status when new image is selected
+    if (typeof window.setDiseaseStatus === 'function') {
+        window.diseaseStatus = null;
+        // Return to normal user/guest theme
+        if (typeof window.updateBackgroundTheme === 'function') {
+            const isLoggedIn = !!localStorage.getItem('token');
+            window.updateBackgroundTheme(isLoggedIn ? 'user' : 'guest');
+        }
+    }
     
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -169,8 +259,15 @@ async function analyzeImage() {
     analyzeBtn.disabled = true;
     analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
 
+    // Set analyzing state for background animation
+    if (typeof window.setAnalyzingState === 'function') {
+        window.setAnalyzingState(true);
+    }
+
     const formData = new FormData();
     formData.append('file', selectedFile);
+    
+    let analysisSuccessful = false;
 
     try {
         const token = sessionManager.getToken();
@@ -207,8 +304,23 @@ async function analyzeImage() {
             
             // Store result for replay
             lastAnalysisResult = result;
+            analysisSuccessful = true;
             
             displayResults(result);
+            
+            // Reset analyzing state first, then set disease status after a brief delay
+            if (typeof window.setAnalyzingState === 'function') {
+                window.setAnalyzingState(false);
+            }
+            
+            // Set disease status for background animation after a brief delay
+            setTimeout(() => {
+                if (typeof window.setDiseaseStatus === 'function') {
+                    const status = result.disease_detected ? 'diseased' : 'healthy';
+                    console.log('Setting disease status to:', status);
+                    window.setDiseaseStatus(status);
+                }
+            }, 300);
             
             // Show action buttons
             const replayBtn = document.getElementById('replayTTS');
@@ -271,6 +383,13 @@ async function analyzeImage() {
             showErrorMessage(errorMsg);
         }
     } finally {
+        // Only reset analyzing state if analysis failed
+        if (!analysisSuccessful && typeof window.setAnalyzingState === 'function') {
+            window.setAnalyzingState(false);
+            // Also clear any previous disease status
+            window.diseaseStatus = null;
+        }
+        
         analyzeBtn.disabled = false;
         analyzeBtn.innerHTML = '<i class="fas fa-microscope mr-2"></i>Analyze Image';
     }

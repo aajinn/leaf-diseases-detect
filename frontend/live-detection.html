@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Detection - Leaf Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/animated-background.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="js/animated-background.js"></script>
+    <style>
+        body {
+            overflow: hidden;
+        }
+        .fullscreen-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .camera-feed {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+        #cameraVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .overlay-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+        }
+        .top-bar {
+            top: 20px;
+            left: 20px;
+            right: 20px;
+        }
+        .result-panel {
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
+            animation: scan 2s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        .pulse-ring {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="fullscreen-container">
+        <!-- Camera Feed -->
+        <div class="camera-feed">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <canvas id="cameraCanvas" class="hidden"></canvas>
+            
+            <!-- Scanning Animation -->
+            <div id="scanAnimation" class="hidden">
+                <div class="scan-line"></div>
+            </div>
+            
+            <!-- Top Bar -->
+            <div class="overlay-panel top-bar">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <div id="statusDot" class="w-3 h-3 bg-gray-500 rounded-full"></div>
+                            <span id="statusText" class="text-sm font-semibold">Camera Inactive</span>
+                        </div>
+                        <div class="text-sm text-gray-300">
+                            <i class="fas fa-chart-line mr-1"></i>
+                            <span id="scanCount">0</span> scans
+                        </div>
+                        <div class="text-xs text-gray-400 bg-gray-800 px-3 py-1 rounded-full">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Tip: Use longer intervals to reduce API costs
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <!-- Interval display -->
+                        <button id="intervalBtn" onclick="toggleIntervalControl()" 
+                            class="hidden bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">
+                            <i class="fas fa-clock mr-2"></i><span id="intervalDisplay">5s</span>
+                        </button>
+                        
+                        <!-- Auto-crop toggle -->
+                        <button id="autoCropBtn" onclick="toggleAutoCrop()" 
+                            class="bg-green-600 px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm">
+                            <i class="fas fa-crop-alt mr-2"></i>Auto-Crop: ON
+                        </button>
+                        
+                        <!-- Switch camera -->
+                        <button id="switchCameraBtn" onclick="switchCamera()" 
+                            class="hidden bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                            <i class="fas fa-camera-rotate"></i>
+                        </button>
+                        
+                        <!-- Exit -->
+                        <a href="/dashboard" 
+                            class="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm">
+                            <i class="fas fa-times mr-2"></i>Exit
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center Frame Guide -->
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div id="frameGuide" class="border-4 border-green-500 border-dashed rounded-lg w-3/4 h-3/4 opacity-50 transition-all"></div>
+            </div>
+            
+            <!-- Center Instructions (when no result) -->
+            <div id="centerInstructions" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="text-center text-white bg-black bg-opacity-50 px-8 py-6 rounded-xl">
+                    <i class="fas fa-leaf text-6xl mb-4 text-green-500"></i>
+                    <h2 class="text-2xl font-bold mb-2">Position Leaf in Frame</h2>
+                    <p class="text-gray-300">Click "Start Scanning" to begin detection</p>
+                </div>
+            </div>
+            
+            <!-- Interval Control (Top Right) -->
+            <div id="intervalControl" class="hidden absolute top-24 right-5 bg-black bg-opacity-85 backdrop-filter backdrop-blur-lg rounded-lg p-4 text-white">
+                <h4 class="font-bold text-sm mb-3 flex items-center">
+                    <i class="fas fa-clock mr-2 text-blue-400"></i>Scan Interval
+                </h4>
+                <div class="space-y-2">
+                    <button onclick="setScanInterval(3000)" class="w-full text-left px-3 py-2 rounded hover:bg-gray-700 transition text-sm">
+                        <i class="fas fa-bolt mr-2 text-yellow-400"></i>Fast (3s)
+                    </button>
+                    <button onclick="setScanInterval(5000)" class="w-full text-left px-3 py-2 rounded hover:bg-gray-700 transition text-sm bg-gray-700">
+                        <i class="fas fa-check mr-2 text-green-400"></i>Normal (5s)
+                    </button>
+                    <button onclick="setScanInterval(10000)" class="w-full text-left px-3 py-2 rounded hover:bg-gray-700 transition text-sm">
+                        <i class="fas fa-turtle mr-2 text-blue-400"></i>Slow (10s)
+                    </button>
+                    <button onclick="setScanInterval(15000)" class="w-full text-left px-3 py-2 rounded hover:bg-gray-700 transition text-sm">
+                        <i class="fas fa-pause mr-2 text-gray-400"></i>Very Slow (15s)
+                    </button>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-400">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Longer intervals reduce API usage
+                </div>
+            </div>
+            
+            <!-- Result Panel -->
+            <div id="resultPanel" class="overlay-panel result-panel hidden">
+                <div id="resultContent"></div>
+            </div>
+            
+            <!-- Control Bar (Bottom Center) -->
+            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center space-x-4">
+                <button id="startBtn" onclick="startScanning()" 
+                    class="bg-primary text-white px-8 py-4 rounded-full hover:bg-secondary transition font-bold text-lg shadow-2xl">
+                    <i class="fas fa-play mr-2"></i>Start Scanning
+                </button>
+                
+                <button id="stopBtn" onclick="stopScanning()" 
+                    class="hidden bg-red-600 text-white px-8 py-4 rounded-full hover:bg-red-700 transition font-bold text-lg shadow-2xl">
+                    <i class="fas fa-stop mr-2"></i>Stop Scanning
+                </button>
+                
+                <button id="captureBtn" onclick="captureNow()" 
+                    class="hidden bg-blue-600 text-white px-6 py-4 rounded-full hover:bg-blue-700 transition shadow-2xl">
+                    <i class="fas fa-camera text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/notifications.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/session-indicator.js"></script>
+    <script src="js/leaf-detection.js"></script>
+    <script src="js/camera-capture.js"></script>
+    <script src="js/live-detection-quick.js"></script>
+</body>
+</html>
