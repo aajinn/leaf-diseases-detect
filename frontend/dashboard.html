@@ -6,6 +6,7 @@
     <title>Dashboard - Leaf Disease Detection</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -30,6 +31,11 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <span id="userInfo" class="text-gray-600"></span>
+                    <button id="ttsButton" onclick="toggleTTS()" 
+                        class="bg-primary text-white px-3 py-2 rounded-lg hover:bg-secondary transition"
+                        title="Toggle voice announcements">
+                        <i id="ttsIcon" class="fas fa-volume-up"></i>
+                    </button>
                     <span id="adminLink" class="hidden">
                         <a href="/admin" class="text-primary hover:text-secondary font-semibold">
                             <i class="fas fa-cog mr-2"></i>Admin Panel
@@ -81,10 +87,22 @@
 
                     <!-- Results -->
                     <div id="results" class="mt-8 hidden">
-                        <h3 class="text-2xl font-bold mb-4 flex items-center">
-                            <i class="fas fa-clipboard-check text-primary mr-3"></i>
-                            Analysis Results
-                        </h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-2xl font-bold flex items-center">
+                                <i class="fas fa-clipboard-check text-primary mr-3"></i>
+                                Analysis Results
+                            </h3>
+                            <div class="flex space-x-2">
+                                <button id="exportPDF" onclick="exportCurrentAnalysis()" 
+                                    class="hidden bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm">
+                                    <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                                </button>
+                                <button id="replayTTS" onclick="replayAnalysis()" 
+                                    class="hidden bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm">
+                                    <i class="fas fa-volume-up mr-2"></i>Replay Audio
+                                </button>
+                            </div>
+                        </div>
                         <div id="resultsContent"></div>
                     </div>
                 </div>
@@ -125,9 +143,12 @@
         </div>
     </div>
 
+    <script src="js/notifications.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/validation.js"></script>
     <script src="js/session-indicator.js"></script>
+    <script src="js/text-to-speech.js"></script>
+    <script src="js/pdf-export.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 </html>

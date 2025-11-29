@@ -1,12 +1,52 @@
 // Dashboard functionality
 let selectedFile = null;
+let lastAnalysisResult = null;
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Replay last analysis audio
+function replayAnalysis() {
+    if (lastAnalysisResult && typeof tts !== 'undefined') {
+        tts.speakAnalysisResult(lastAnalysisResult);
+    }
+}
+
+// Export current analysis to PDF
+function exportCurrentAnalysis() {
+    if (lastAnalysisResult && typeof exportAnalysisToPDF !== 'undefined') {
+        const imageElement = document.getElementById('previewImg');
+        exportAnalysisToPDF(lastAnalysisResult, imageElement);
+    }
+}
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
     await loadStats();
     setupFileUpload();
+    initializeTTS();
 });
+
+function initializeTTS() {
+    if (typeof tts !== 'undefined') {
+        const icon = document.getElementById('ttsIcon');
+        const button = document.getElementById('ttsButton');
+        
+        if (icon && button) {
+            const enabled = tts.isEnabled();
+            icon.classList.remove('fa-volume-up', 'fa-volume-mute');
+            icon.classList.add(enabled ? 'fa-volume-up' : 'fa-volume-mute');
+            button.classList.remove('bg-primary', 'bg-gray-400');
+            button.classList.add(enabled ? 'bg-primary' : 'bg-gray-400');
+            button.title = enabled ? 'Disable voice announcements' : 'Enable voice announcements';
+        }
+    }
+}
 
 async function loadUserInfo() {
     const profile = await getUserProfile();
@@ -107,7 +147,7 @@ function handleFile(file) {
     const validation = validateImageFile(file);
     
     if (!validation.valid) {
-        alert(validation.message);
+        showNotification(validation.message, 'error');
         return;
     }
 
@@ -136,8 +176,10 @@ async function analyzeImage() {
         const token = sessionManager.getToken();
         
         if (!token) {
-            alert('Please login to analyze images');
-            window.location.href = '/login?redirect=/dashboard';
+            showNotification('Please login to analyze images', 'warning');
+            setTimeout(() => {
+                window.location.href = '/login?redirect=/dashboard';
+            }, 1500);
             return;
         }
 
@@ -157,9 +199,32 @@ async function analyzeImage() {
         if (response.ok) {
             const result = await response.json();
             console.log('Analysis result:', result);
+            console.log('Description:', result.description);
+            console.log('Description exists:', !!result.description);
+            console.log('Description length:', result.description ? result.description.length : 0);
             console.log('YouTube videos in response:', result.youtube_videos);
             console.log('Number of videos:', result.youtube_videos ? result.youtube_videos.length : 0);
+            
+            // Store result for replay
+            lastAnalysisResult = result;
+            
             displayResults(result);
+            
+            // Show action buttons
+            const replayBtn = document.getElementById('replayTTS');
+            const exportBtn = document.getElementById('exportPDF');
+            if (replayBtn) {
+                replayBtn.classList.remove('hidden');
+            }
+            if (exportBtn) {
+                exportBtn.classList.remove('hidden');
+            }
+            
+            // Speak the results
+            if (typeof tts !== 'undefined') {
+                tts.speakAnalysisResult(result);
+            }
+            
             await loadStats(); // Refresh stats
         } else if (response.status === 401) {
             handleSessionExpired();
@@ -291,6 +356,15 @@ function displayResults(result) {
                         <div class="text-sm text-red-500">Confidence</div>
                     </div>
                 </div>
+                ${result.description && result.description.trim() ? `
+                <div class="mt-4 p-4 bg-white rounded-lg border-l-4 border-blue-500">
+                    <h5 class="font-bold text-sm text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        About This Disease
+                    </h5>
+                    <p class="text-gray-700 text-sm leading-relaxed">${escapeHtml(result.description)}</p>
+                </div>
+                ` : ''}
             </div>
 
             <div class="grid md:grid-cols-3 gap-6">
@@ -330,7 +404,7 @@ function displayResults(result) {
     } else {
         html = `
             <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center">
                         <i class="fas fa-check-circle text-green-500 text-4xl mr-4"></i>
                         <div>
@@ -343,6 +417,15 @@ function displayResults(result) {
                         <div class="text-sm text-green-500">Confidence</div>
                     </div>
                 </div>
+                ${result.description && result.description.trim() ? `
+                <div class="mt-4 p-4 bg-white rounded-lg border-l-4 border-green-500">
+                    <h5 class="font-bold text-sm text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-leaf text-green-500 mr-2"></i>
+                        Plant Health Information
+                    </h5>
+                    <p class="text-gray-700 text-sm leading-relaxed">${escapeHtml(result.description)}</p>
+                </div>
+                ` : ''}
             </div>
 
             ${displayYouTubeVideos(result.youtube_videos, true)}
