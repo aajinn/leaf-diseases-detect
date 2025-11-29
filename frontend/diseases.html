@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Diseases Database - Leaf Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/animated-background.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="js/animated-background.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-leaf text-primary text-3xl mr-3"></i>
+                    <span class="text-2xl font-bold text-gray-800">Plant Diseases Database</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-primary">Home</a>
+                    <a href="/diseases" class="text-primary font-semibold">Diseases</a>
+                    <span id="authLinks"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-8 mb-8 shadow-lg">
+            <h1 class="text-4xl font-bold mb-2">Plant Diseases Encyclopedia</h1>
+            <p class="text-green-100">Comprehensive database of common plant diseases with symptoms and treatments</p>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Search Diseases</label>
+                    <input type="text" id="searchInput" placeholder="Search by name, plant, or symptoms..." 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                        onkeyup="filterDiseases()">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Filter by Type</label>
+                    <select id="typeFilter" onchange="filterDiseases()" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                        <option value="">All Types</option>
+                        <option value="Fungal">Fungal</option>
+                        <option value="Bacterial">Bacterial</option>
+                        <option value="Viral">Viral</option>
+                        <option value="Pest">Pest</option>
+                        <option value="Nutrient">Nutrient Deficiency</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center justify-between">
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Showing <span id="resultCount" class="font-bold text-primary">0</span> diseases
+                </p>
+                <button onclick="resetFilters()" class="text-sm text-primary hover:text-secondary font-semibold">
+                    <i class="fas fa-redo mr-2"></i>Reset Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Diseases Grid -->
+        <div id="diseasesGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards will be inserted here by JavaScript -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin text-4xl text-primary mb-4"></i>
+            <p class="text-gray-600">Loading diseases database...</p>
+        </div>
+
+        <!-- No Results -->
+        <div id="noResults" class="hidden text-center py-12">
+            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+            <p class="text-xl text-gray-600 mb-2">No diseases found</p>
+            <p class="text-gray-500">Try adjusting your search or filters</p>
+        </div>
+    </div>
+
+    <!-- Disease Detail Modal -->
+    <div id="diseaseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-screen overflow-y-auto">
+            <div class="p-8">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 id="modalTitle" class="text-3xl font-bold text-gray-800 mb-2"></h2>
+                        <div id="modalMeta" class="flex items-center space-x-4 text-sm"></div>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <div id="modalContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/diseases.js"></script>
+</body>
+</html>

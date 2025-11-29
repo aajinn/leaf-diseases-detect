@@ -89,6 +89,11 @@ if os.path.exists("frontend"):
     async def serve_live_detection():
         """Serve the live detection page"""
         return FileResponse("frontend/live-detection.html")
+    
+    @app.get("/diseases", response_class=FileResponse)
+    async def serve_diseases():
+        """Serve the diseases database page"""
+        return FileResponse("frontend/diseases.html")
 
 # Include routers
 app.include_router(auth_router)

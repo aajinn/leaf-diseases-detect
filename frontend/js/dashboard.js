@@ -65,6 +65,148 @@ function exportCurrentAnalysis() {
     }
 }
 
+// Show cache information
+function showCacheInfo() {
+    if (typeof duplicateDetector === 'undefined') {
+        showNotification('Cache system not available', 'error');
+        return;
+    }
+    
+    const stats = duplicateDetector.getCacheStats();
+    const cacheSize = (stats.cacheSize / 1024).toFixed(2);
+    
+    let oldestDate = 'N/A';
+    let newestDate = 'N/A';
+    
+    if (stats.oldestEntry) {
+        oldestDate = new Date(stats.oldestEntry).toLocaleDateString();
+    }
+    if (stats.newestEntry) {
+        newestDate = new Date(stats.newestEntry).toLocaleDateString();
+    }
+    
+    showModal(
+        'Cache Information',
+        `
+        <div class="space-y-4">
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <h4 class="font-bold text-blue-800 mb-2">
+                    <i class="fas fa-info-circle mr-2"></i>About Duplicate Detection
+                </h4>
+                <p class="text-sm text-blue-700">
+                    The system automatically detects duplicate images and reuses previous analysis results. 
+                    This saves API calls and provides instant results!
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-50 p-4 rounded">
+                    <p class="text-sm text-gray-600 mb-1">Cached Results</p>
+                    <p class="text-2xl font-bold text-primary">${stats.totalEntries}</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded">
+                    <p class="text-sm text-gray-600 mb-1">Cache Size</p>
+                    <p class="text-2xl font-bold text-primary">${cacheSize} KB</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded">
+                    <p class="text-sm text-gray-600 mb-1">Oldest Entry</p>
+                    <p class="text-sm font-semibold text-gray-800">${oldestDate}</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded">
+                    <p class="text-sm text-gray-600 mb-1">Newest Entry</p>
+                    <p class="text-sm font-semibold text-gray-800">${newestDate}</p>
+                </div>
+            </div>
+            
+            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                <h4 class="font-bold text-green-800 mb-2">
+                    <i class="fas fa-check-circle mr-2"></i>Benefits
+                </h4>
+                <ul class="text-sm text-green-700 space-y-1">
+                    <li><i class="fas fa-bolt mr-2"></i>Instant results for duplicate images</li>
+                    <li><i class="fas fa-dollar-sign mr-2"></i>Saves API costs</li>
+                    <li><i class="fas fa-leaf mr-2"></i>Reduces server load</li>
+                    <li><i class="fas fa-clock mr-2"></i>Results cached for 7 days</li>
+                </ul>
+            </div>
+            
+            <button onclick="clearCacheConfirm()" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">
+                <i class="fas fa-trash mr-2"></i>Clear Cache
+            </button>
+        </div>
+        `
+    );
+}
+
+// Clear cache with confirmation
+function clearCacheConfirm() {
+    if (confirm('Are you sure you want to clear the cache? This will remove all saved analysis results.')) {
+        if (typeof duplicateDetector !== 'undefined') {
+            duplicateDetector.clearCache();
+            updateCacheCount();
+            showNotification('Cache cleared successfully', 'success');
+            // Close modal if open
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
+        }
+    }
+}
+
+// Update cache count display
+function updateCacheCount() {
+    try {
+        if (typeof duplicateDetector !== 'undefined' && duplicateDetector) {
+            const stats = duplicateDetector.getCacheStats();
+            const countEl = document.getElementById('cachedCount');
+            if (countEl) {
+                countEl.textContent = stats.totalEntries;
+            }
+        }
+    } catch (error) {
+        console.error('Error updating cache count:', error);
+    }
+}
+
+// Simple modal function
+function showModal(title, content) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold">${title}</h3>
+                    <button onclick="this.closest('.modal').remove()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                ${content}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// Test duplicate detector
+function testDuplicateDetector() {
+    console.log('=== Duplicate Detector Test ===');
+    console.log('duplicateDetector exists:', typeof duplicateDetector !== 'undefined');
+    if (typeof duplicateDetector !== 'undefined' && duplicateDetector) {
+        console.log('duplicateDetector object:', duplicateDetector);
+        console.log('Cache stats:', duplicateDetector.getCacheStats());
+    } else {
+        console.error('duplicateDetector is not available!');
+    }
+    console.log('=== End Test ===');
+}
+
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
@@ -73,6 +215,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeTTS();
     initializeAutoCropToggle();
     checkPendingAnalysis();
+    updateCacheCount();
+    
+    // Test duplicate detector after a short delay
+    setTimeout(() => {
+        testDuplicateDetector();
+    }, 1000);
 });
 
 // Check for pending analysis from live detection
@@ -257,6 +405,64 @@ async function analyzeImage() {
 
     const analyzeBtn = document.getElementById('analyzeBtn');
     analyzeBtn.disabled = true;
+    analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking for duplicates...';
+
+    // Check for duplicate image
+    if (typeof duplicateDetector !== 'undefined') {
+        try {
+            console.log('Checking for duplicate image...');
+            const duplicateCheck = await duplicateDetector.checkDuplicate(selectedFile);
+            console.log('Duplicate check result:', duplicateCheck);
+            
+            if (duplicateCheck.isDuplicate) {
+            // Use cached result
+            console.log('Duplicate image detected, using cached result');
+            
+            analyzeBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Using cached result...';
+            
+            // Show notification with cache info
+            showNotification('✨ Duplicate image detected! Using previous analysis (instant result, no API call)', 'success');
+            
+            // Display cached result
+            const result = duplicateCheck.result;
+            lastAnalysisResult = result;
+            
+            // Set disease status
+            if (typeof window.setDiseaseStatus === 'function') {
+                const status = result.disease_detected ? 'diseased' : 'healthy';
+                window.setDiseaseStatus(status);
+            }
+            
+            displayResults(result);
+            
+            // Show action buttons
+            const replayBtn = document.getElementById('replayTTS');
+            const exportBtn = document.getElementById('exportPDF');
+            if (replayBtn) replayBtn.classList.remove('hidden');
+            if (exportBtn) exportBtn.classList.remove('hidden');
+            
+            // Speak results if TTS enabled
+            if (typeof tts !== 'undefined') {
+                tts.speakAnalysisResult(result);
+            }
+            
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<i class="fas fa-microscope mr-2"></i>Analyze Image';
+            
+            await loadStats(); // Refresh stats
+            
+            return;
+        } else {
+            console.log('No duplicate found, proceeding with analysis');
+        }
+        } catch (error) {
+            console.error('Error checking for duplicates:', error);
+            // Continue with normal analysis if duplicate check fails
+        }
+    } else {
+        console.warn('duplicateDetector not available');
+    }
+
     analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
 
     // Set analyzing state for background animation
@@ -268,6 +474,12 @@ async function analyzeImage() {
     formData.append('file', selectedFile);
     
     let analysisSuccessful = false;
+    let imageHash = null;
+
+    // Generate hash for caching
+    if (typeof duplicateDetector !== 'undefined') {
+        imageHash = await duplicateDetector.generateImageHash(selectedFile);
+    }
 
     try {
         const token = sessionManager.getToken();
@@ -305,6 +517,17 @@ async function analyzeImage() {
             // Store result for replay
             lastAnalysisResult = result;
             analysisSuccessful = true;
+            
+            // Cache the result for future duplicate detection (only valid images)
+            if (typeof duplicateDetector !== 'undefined' && imageHash) {
+                // Only cache if it's a valid plant image (not invalid_image type)
+                if (result.disease_type !== 'invalid_image') {
+                    duplicateDetector.saveCachedResult(imageHash, result);
+                    console.log('Valid analysis result cached for duplicate detection');
+                } else {
+                    console.log('Invalid image - not caching result');
+                }
+            }
             
             displayResults(result);
             

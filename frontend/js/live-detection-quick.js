@@ -163,8 +163,34 @@ async function captureAndAnalyze() {
             file = await processImageWithAutoCrop(file);
         }
         
-        // Quick analysis (no description, no videos)
-        const result = await quickAnalyze(file);
+        // Check for duplicate image
+        let imageHash = null;
+        let result = null;
+        
+        if (typeof duplicateDetector !== 'undefined') {
+            try {
+                const duplicateCheck = await duplicateDetector.checkDuplicate(file);
+                imageHash = duplicateCheck.hash;
+                
+                if (duplicateCheck.isDuplicate) {
+                    console.log('Duplicate detected in live scan, using cached result');
+                    result = duplicateCheck.result;
+                }
+            } catch (error) {
+                console.error('Error checking duplicate:', error);
+            }
+        }
+        
+        // Quick analysis if not duplicate (no description, no videos)
+        if (!result) {
+            result = await quickAnalyze(file);
+            
+            // Cache valid results only (not invalid_image)
+            if (typeof duplicateDetector !== 'undefined' && imageHash && result.disease_type !== 'invalid_image') {
+                duplicateDetector.saveCachedResult(imageHash, result);
+                console.log('Valid live scan result cached');
+            }
+        }
         
         // Update UI
         scanCount++;
