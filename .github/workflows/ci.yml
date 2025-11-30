@@ -27,11 +27,13 @@ jobs:
           pip install black isort flake8
       
       - name: Check code formatting with Black
-        run: black --check --diff .
+        run: |
+          black --check --diff . --exclude '/(\.git|\.venv|venv|__pycache__|node_modules|build|dist|Leaf Disease)/'
         continue-on-error: false
       
       - name: Check import sorting with isort
-        run: isort --check-only --diff .
+        run: |
+          isort --check-only --diff . --skip-gitignore
         continue-on-error: false
       
       - name: Lint with flake8 (Critical Errors)
