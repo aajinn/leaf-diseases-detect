@@ -28,16 +28,19 @@ jobs:
       
       - name: Check code formatting with Black
         run: black --check --diff .
-        continue-on-error: true
+        continue-on-error: false
       
       - name: Check import sorting with isort
         run: isort --check-only --diff .
-        continue-on-error: true
+        continue-on-error: false
       
-      - name: Lint with flake8
+      - name: Lint with flake8 (Critical Errors)
         run: |
           # Stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      
+      - name: Lint with flake8 (Style Warnings)
+        run: |
           # Exit-zero treats all errors as warnings
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         continue-on-error: true
@@ -94,8 +97,8 @@ jobs:
             pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
           else
             echo "No test files found, skipping tests"
+            exit 0
           fi
-        continue-on-error: true
       
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
@@ -127,13 +130,13 @@ jobs:
       - name: Check for known security vulnerabilities
         run: |
           pip install -r requirements.txt
-          safety check --json || true
+          safety check --continue-on-error || echo "::warning::Security vulnerabilities detected by Safety"
         continue-on-error: true
       
       - name: Run Bandit security linter
         run: |
-          bandit -r src/ -f json -o bandit-report.json || true
-          bandit -r src/ -f screen
+          bandit -r src/ -f json -o bandit-report.json -ll || echo "::warning::Security issues detected by Bandit"
+          bandit -r src/ -f screen -ll
         continue-on-error: true
       
       - name: Upload Bandit report
