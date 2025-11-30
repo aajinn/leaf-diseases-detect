@@ -6,9 +6,10 @@ MongoDB models for users, admins, and image analysis records.
 """
 
 from datetime import datetime
-from typing import Optional, List, Annotated
-from pydantic import BaseModel, EmailStr, Field, BeforeValidator
+from typing import Annotated, List, Optional
+
 from bson import ObjectId
+from pydantic import BaseModel, BeforeValidator, EmailStr, Field
 
 
 def validate_object_id(v: any) -> ObjectId:
@@ -26,6 +27,7 @@ PyObjectId = Annotated[ObjectId, BeforeValidator(validate_object_id)]
 
 class UserBase(BaseModel):
     """Base user model"""
+
     email: EmailStr
     username: str = Field(..., min_length=3, max_length=50, pattern="^[a-zA-Z0-9_-]+$")
     full_name: Optional[str] = Field(None, max_length=100)
@@ -35,8 +37,9 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """User creation model"""
+
     password: str = Field(..., min_length=8, max_length=72)
-    
+
     @classmethod
     def validate_password(cls, password: str) -> str:
         """Validate password strength"""
@@ -55,11 +58,12 @@ class UserCreate(UserBase):
 
 class UserInDB(UserBase):
     """User model as stored in database"""
+
     id: Optional[PyObjectId] = Field(default_factory=ObjectId, alias="_id")
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         populate_by_name = True
         arbitrary_types_allowed = True
@@ -71,34 +75,38 @@ class UserInDB(UserBase):
                 "username": "username",
                 "full_name": "Full Name",
                 "is_active": True,
-                "is_admin": False
+                "is_admin": False,
             }
         }
 
 
 class User(UserBase):
     """User response model"""
+
     id: str = Field(alias="_id")
     created_at: datetime
-    
+
     class Config:
         populate_by_name = True
 
 
 class Token(BaseModel):
     """JWT token response"""
+
     access_token: str
     token_type: str = "bearer"
 
 
 class TokenData(BaseModel):
     """Token payload data"""
+
     username: Optional[str] = None
     is_admin: bool = False
 
 
 class YouTubeVideo(BaseModel):
     """YouTube video recommendation"""
+
     title: str
     video_id: str
     url: str
@@ -108,6 +116,7 @@ class YouTubeVideo(BaseModel):
 
 class AnalysisRecord(BaseModel):
     """Disease analysis record"""
+
     id: Optional[PyObjectId] = Field(default_factory=ObjectId, alias="_id")
     user_id: str
     username: str
@@ -124,7 +133,7 @@ class AnalysisRecord(BaseModel):
     description: str = ""
     youtube_videos: List[YouTubeVideo] = []
     analysis_timestamp: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         populate_by_name = True
         arbitrary_types_allowed = True
@@ -139,13 +148,14 @@ class AnalysisRecord(BaseModel):
                 "disease_name": "Brown Spot Disease",
                 "disease_type": "fungal",
                 "severity": "moderate",
-                "confidence": 87.5
+                "confidence": 87.5,
             }
         }
 
 
 class AnalysisResponse(BaseModel):
     """Analysis response with record ID"""
+
     id: str
     disease_detected: bool
     disease_name: Optional[str]

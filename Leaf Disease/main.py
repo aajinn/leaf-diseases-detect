@@ -1,18 +1,18 @@
-import os
 import json
 import logging
+import os
 import sys
-from typing import Dict, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Dict, List, Optional
 
-from groq import Groq
 from dotenv import load_dotenv
-
+from groq import Groq
 
 # Configure logging
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -30,6 +30,7 @@ class DiseaseAnalysisResult:
         disease_name (Optional[str]): Name of the identified disease, None if healthy
         disease_type (str): Category of disease (fungal, bacterial, viral, pest, etc.)
     """
+
     disease_detected: bool
     disease_name: Optional[str]
     disease_type: str
@@ -170,14 +171,14 @@ class LeafDiseaseDetector:
             "description": "A detailed 2-3 sentence description explaining what this disease is, how it affects the plant, and why it's important to address it. For healthy plants, explain the plant's condition and general care tips."
         }"""
 
-    def analyze_leaf_image_base64(self, base64_image: str,
-                                  temperature: float = None,
-                                  max_tokens: int = None) -> Dict:
+    def analyze_leaf_image_base64(
+        self, base64_image: str, temperature: float = None, max_tokens: int = None
+    ) -> Dict:
         """
         Analyze base64 encoded image data for leaf diseases and return JSON result.
 
         First validates that the image contains a plant leaf. If the image shows
-        humans, animals, objects, or other non-plant content, returns an 
+        humans, animals, objects, or other non-plant content, returns an
         'invalid_image' response. For valid leaf images, performs disease analysis.
 
         Args:
@@ -204,8 +205,8 @@ class LeafDiseaseDetector:
                 raise ValueError("base64_image cannot be empty")
 
             # Clean base64 string (remove data URL prefix if present)
-            if base64_image.startswith('data:'):
-                base64_image = base64_image.split(',', 1)[1]
+            if base64_image.startswith("data:"):
+                base64_image = base64_image.split(",", 1)[1]
 
             # Prepare request parameters
             temperature = temperature or self.DEFAULT_TEMPERATURE
@@ -218,17 +219,14 @@ class LeafDiseaseDetector:
                     {
                         "role": "user",
                         "content": [
-                            {
-                                "type": "text",
-                                "text": self.create_analysis_prompt()
-                            },
+                            {"type": "text", "text": self.create_analysis_prompt()},
                             {
                                 "type": "image_url",
                                 "image_url": {
                                     "url": f"data:image/jpeg;base64,{base64_image}"
-                                }
-                            }
-                        ]
+                                },
+                            },
+                        ],
                     }
                 ],
                 temperature=temperature,
@@ -239,8 +237,7 @@ class LeafDiseaseDetector:
             )
 
             logger.info("API request completed successfully")
-            result = self._parse_response(
-                completion.choices[0].message.content)
+            result = self._parse_response(completion.choices[0].message.content)
 
             # Return as dictionary for JSON serialization
             return result.__dict__
@@ -262,11 +259,12 @@ class LeafDiseaseDetector:
         try:
             # Clean up response - remove markdown code blocks if present
             cleaned_response = response_content.strip()
-            if cleaned_response.startswith('```json'):
-                cleaned_response = cleaned_response.replace(
-                    '```json', '').replace('```', '').strip()
-            elif cleaned_response.startswith('```'):
-                cleaned_response = cleaned_response.replace('```', '').strip()
+            if cleaned_response.startswith("```json"):
+                cleaned_response = (
+                    cleaned_response.replace("```json", "").replace("```", "").strip()
+                )
+            elif cleaned_response.startswith("```"):
+                cleaned_response = cleaned_response.replace("```", "").strip()
 
             # Parse JSON
             disease_data = json.loads(cleaned_response)
@@ -274,25 +272,26 @@ class LeafDiseaseDetector:
 
             # Validate required fields and create result object
             return DiseaseAnalysisResult(
-                disease_detected=bool(
-                    disease_data.get('disease_detected', False)),
-                disease_name=disease_data.get('disease_name'),
-                disease_type=disease_data.get('disease_type', 'unknown'),
-                severity=disease_data.get('severity', 'unknown'),
-                confidence=float(disease_data.get('confidence', 0)),
-                symptoms=disease_data.get('symptoms', []),
-                possible_causes=disease_data.get('possible_causes', []),
-                treatment=disease_data.get('treatment', []),
-                description=disease_data.get('description', '')
+                disease_detected=bool(disease_data.get("disease_detected", False)),
+                disease_name=disease_data.get("disease_name"),
+                disease_type=disease_data.get("disease_type", "unknown"),
+                severity=disease_data.get("severity", "unknown"),
+                confidence=float(disease_data.get("confidence", 0)),
+                symptoms=disease_data.get("symptoms", []),
+                possible_causes=disease_data.get("possible_causes", []),
+                treatment=disease_data.get("treatment", []),
+                description=disease_data.get("description", ""),
             )
 
         except json.JSONDecodeError:
             logger.warning(
-                "Failed to parse as JSON, attempting to extract JSON from response")
+                "Failed to parse as JSON, attempting to extract JSON from response"
+            )
 
             # Try to find JSON in the response using regex
             import re
-            json_match = re.search(r'\{.*\}', response_content, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", response_content, re.DOTALL)
             if json_match:
                 try:
                     disease_data = json.loads(json_match.group())
@@ -300,26 +299,27 @@ class LeafDiseaseDetector:
 
                     return DiseaseAnalysisResult(
                         disease_detected=bool(
-                            disease_data.get('disease_detected', False)),
-                        disease_name=disease_data.get('disease_name'),
-                        disease_type=disease_data.get(
-                            'disease_type', 'unknown'),
-                        severity=disease_data.get('severity', 'unknown'),
-                        confidence=float(disease_data.get('confidence', 0)),
-                        symptoms=disease_data.get('symptoms', []),
-                        possible_causes=disease_data.get(
-                            'possible_causes', []),
-                        treatment=disease_data.get('treatment', []),
-                        description=disease_data.get('description', '')
+                            disease_data.get("disease_detected", False)
+                        ),
+                        disease_name=disease_data.get("disease_name"),
+                        disease_type=disease_data.get("disease_type", "unknown"),
+                        severity=disease_data.get("severity", "unknown"),
+                        confidence=float(disease_data.get("confidence", 0)),
+                        symptoms=disease_data.get("symptoms", []),
+                        possible_causes=disease_data.get("possible_causes", []),
+                        treatment=disease_data.get("treatment", []),
+                        description=disease_data.get("description", ""),
                     )
                 except json.JSONDecodeError:
                     pass
 
             # If all parsing attempts fail, log the raw response and raise error
             logger.error(
-                f"Could not parse response as JSON. Raw response: {response_content}")
+                f"Could not parse response as JSON. Raw response: {response_content}"
+            )
             raise ValueError(
-                f"Unable to parse API response as JSON: {response_content[:200]}...")
+                f"Unable to parse API response as JSON: {response_content[:200]}..."
+            )
 
 
 def main():

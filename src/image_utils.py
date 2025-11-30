@@ -5,9 +5,10 @@ Base64 Image Test for Leaf Disease Detection
 This script demonstrates how to send base64 image data directly to the detector.
 """
 
-import json
-import sys,os
 import base64
+import json
+import os
+import sys
 from pathlib import Path
 
 # Add the Leaf Disease directory to Python path
@@ -50,7 +51,7 @@ def convert_image_to_base64_and_test(image_bytes: bytes):
         if not image_bytes:
             return {"error": "No image bytes provided", "disease_detected": False}
 
-        base64_string = base64.b64encode(image_bytes).decode('utf-8')
+        base64_string = base64.b64encode(image_bytes).decode("utf-8")
         return test_with_base64_data(base64_string)
     except Exception as e:
         error_msg = f"Image processing error: {str(e)}"

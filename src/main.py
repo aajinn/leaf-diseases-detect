@@ -1,5 +1,5 @@
-import streamlit as st
 import requests
+import streamlit as st
 
 # Configuration constants
 REQUEST_TIMEOUT = 30  # seconds - timeout for HTTP requests
@@ -8,12 +8,13 @@ REQUEST_TIMEOUT = 30  # seconds - timeout for HTTP requests
 st.set_page_config(
     page_title="Leaf Disease Detection",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
 
 # Enhanced modern CSS
-st.markdown("""
+st.markdown(
+    """
     <style>
     .stApp {
         background: linear-gradient(135deg, #e3f2fd 0%, #f7f9fa 100%);
@@ -67,23 +68,27 @@ st.markdown("""
         margin-bottom: 0.5em;
     }
     </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
-st.markdown("""
+st.markdown(
+    """
     <div style='text-align: center; margin-top: 1em;'>
         <span style='font-size:2.5em;'>🌿</span>
         <h1 style='color: #1565c0; margin-bottom:0;'>Leaf Disease Detection</h1>
         <p style='color: #616161; font-size:1.15em;'>Upload a leaf image to detect diseases and get expert recommendations.</p>
     </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 api_url = "http://leaf-diseases-detect.vercel.app"
 
 col1, col2 = st.columns([1, 2])
 with col1:
-    uploaded_file = st.file_uploader(
-        "Upload Leaf Image", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Upload Leaf Image", type=["jpg", "jpeg", "png"])
     if uploaded_file is not None:
         st.image(uploaded_file, caption="Preview")
 
@@ -93,100 +98,149 @@ with col2:
             with st.spinner("Analyzing image and contacting API..."):
                 try:
                     files = {
-                        "file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                        "file": (
+                            uploaded_file.name,
+                            uploaded_file.getvalue(),
+                            uploaded_file.type,
+                        )
+                    }
                     response = requests.post(
-                        f"{api_url}/disease-detection-file", 
+                        f"{api_url}/disease-detection-file",
                         files=files,
-                        timeout=REQUEST_TIMEOUT
+                        timeout=REQUEST_TIMEOUT,
                     )
                     if response.status_code == 200:
                         result = response.json()
 
                         # Check if it's an invalid image
                         if result.get("disease_type") == "invalid_image":
-                            st.markdown("<div class='result-card'>",
-                                        unsafe_allow_html=True)
                             st.markdown(
-                                "<div class='disease-title'>⚠️ Invalid Image</div>", unsafe_allow_html=True)
+                                "<div class='result-card'>", unsafe_allow_html=True
+                            )
                             st.markdown(
-                                "<div style='color: #ff5722; font-size: 1.1em; margin-bottom: 1em;'>Please upload a clear image of a plant leaf for accurate disease detection.</div>", unsafe_allow_html=True)
+                                "<div class='disease-title'>⚠️ Invalid Image</div>",
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                "<div style='color: #ff5722; font-size: 1.1em; margin-bottom: 1em;'>Please upload a clear image of a plant leaf for accurate disease detection.</div>",
+                                unsafe_allow_html=True,
+                            )
 
                             # Show the symptoms (which contain the error message)
                             if result.get("symptoms"):
                                 st.markdown(
-                                    "<div class='section-title'>Issue</div>", unsafe_allow_html=True)
-                                st.markdown("<ul class='symptom-list'>",
-                                            unsafe_allow_html=True)
+                                    "<div class='section-title'>Issue</div>",
+                                    unsafe_allow_html=True,
+                                )
+                                st.markdown(
+                                    "<ul class='symptom-list'>", unsafe_allow_html=True
+                                )
                                 for symptom in result.get("symptoms", []):
                                     st.markdown(
-                                        f"<li>{symptom}</li>", unsafe_allow_html=True)
+                                        f"<li>{symptom}</li>", unsafe_allow_html=True
+                                    )
                                 st.markdown("</ul>", unsafe_allow_html=True)
 
                             # Show treatment recommendations
                             if result.get("treatment"):
                                 st.markdown(
-                                    "<div class='section-title'>What to do</div>", unsafe_allow_html=True)
-                                st.markdown("<ul class='treatment-list'>",
-                                            unsafe_allow_html=True)
+                                    "<div class='section-title'>What to do</div>",
+                                    unsafe_allow_html=True,
+                                )
+                                st.markdown(
+                                    "<ul class='treatment-list'>",
+                                    unsafe_allow_html=True,
+                                )
                                 for treat in result.get("treatment", []):
                                     st.markdown(
-                                        f"<li>{treat}</li>", unsafe_allow_html=True)
+                                        f"<li>{treat}</li>", unsafe_allow_html=True
+                                    )
                                 st.markdown("</ul>", unsafe_allow_html=True)
 
                             st.markdown("</div>", unsafe_allow_html=True)
 
                         elif result.get("disease_detected"):
-                            st.markdown("<div class='result-card'>",
-                                        unsafe_allow_html=True)
                             st.markdown(
-                                f"<div class='disease-title'>🦠 {result.get('disease_name', 'N/A')}</div>", unsafe_allow_html=True)
+                                "<div class='result-card'>", unsafe_allow_html=True
+                            )
                             st.markdown(
-                                f"<span class='info-badge'>Type: {result.get('disease_type', 'N/A')}</span>", unsafe_allow_html=True)
+                                f"<div class='disease-title'>🦠 {result.get('disease_name', 'N/A')}</div>",
+                                unsafe_allow_html=True,
+                            )
                             st.markdown(
-                                f"<span class='info-badge'>Severity: {result.get('severity', 'N/A')}</span>", unsafe_allow_html=True)
+                                f"<span class='info-badge'>Type: {result.get('disease_type', 'N/A')}</span>",
+                                unsafe_allow_html=True,
+                            )
                             st.markdown(
-                                f"<span class='info-badge'>Confidence: {result.get('confidence', 'N/A')}%</span>", unsafe_allow_html=True)
+                                f"<span class='info-badge'>Severity: {result.get('severity', 'N/A')}</span>",
+                                unsafe_allow_html=True,
+                            )
                             st.markdown(
-                                "<div class='section-title'>Symptoms</div>", unsafe_allow_html=True)
-                            st.markdown("<ul class='symptom-list'>",
-                                        unsafe_allow_html=True)
+                                f"<span class='info-badge'>Confidence: {result.get('confidence', 'N/A')}%</span>",
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                "<div class='section-title'>Symptoms</div>",
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                "<ul class='symptom-list'>", unsafe_allow_html=True
+                            )
                             for symptom in result.get("symptoms", []):
                                 st.markdown(
-                                    f"<li>{symptom}</li>", unsafe_allow_html=True)
+                                    f"<li>{symptom}</li>", unsafe_allow_html=True
+                                )
                             st.markdown("</ul>", unsafe_allow_html=True)
                             st.markdown(
-                                "<div class='section-title'>Possible Causes</div>", unsafe_allow_html=True)
-                            st.markdown("<ul class='cause-list'>",
-                                        unsafe_allow_html=True)
+                                "<div class='section-title'>Possible Causes</div>",
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                "<ul class='cause-list'>", unsafe_allow_html=True
+                            )
                             for cause in result.get("possible_causes", []):
-                                st.markdown(
-                                    f"<li>{cause}</li>", unsafe_allow_html=True)
+                                st.markdown(f"<li>{cause}</li>", unsafe_allow_html=True)
                             st.markdown("</ul>", unsafe_allow_html=True)
                             st.markdown(
-                                "<div class='section-title'>Treatment</div>", unsafe_allow_html=True)
-                            st.markdown("<ul class='treatment-list'>",
-                                        unsafe_allow_html=True)
+                                "<div class='section-title'>Treatment</div>",
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                "<ul class='treatment-list'>", unsafe_allow_html=True
+                            )
                             for treat in result.get("treatment", []):
-                                st.markdown(
-                                    f"<li>{treat}</li>", unsafe_allow_html=True)
+                                st.markdown(f"<li>{treat}</li>", unsafe_allow_html=True)
                             st.markdown("</ul>", unsafe_allow_html=True)
                             st.markdown(
-                                f"<div class='timestamp'>🕒 {result.get('analysis_timestamp', 'N/A')}</div>", unsafe_allow_html=True)
+                                f"<div class='timestamp'>🕒 {result.get('analysis_timestamp', 'N/A')}</div>",
+                                unsafe_allow_html=True,
+                            )
                             st.markdown("</div>", unsafe_allow_html=True)
                         else:
                             # Healthy leaf case
-                            st.markdown("<div class='result-card'>",
-                                        unsafe_allow_html=True)
                             st.markdown(
-                                "<div class='disease-title'>✅ Healthy Leaf</div>", unsafe_allow_html=True)
+                                "<div class='result-card'>", unsafe_allow_html=True
+                            )
                             st.markdown(
-                                "<div style='color: #4caf50; font-size: 1.1em; margin-bottom: 1em;'>No disease detected in this leaf. The plant appears to be healthy!</div>", unsafe_allow_html=True)
+                                "<div class='disease-title'>✅ Healthy Leaf</div>",
+                                unsafe_allow_html=True,
+                            )
                             st.markdown(
-                                f"<span class='info-badge'>Status: {result.get('disease_type', 'healthy')}</span>", unsafe_allow_html=True)
+                                "<div style='color: #4caf50; font-size: 1.1em; margin-bottom: 1em;'>No disease detected in this leaf. The plant appears to be healthy!</div>",
+                                unsafe_allow_html=True,
+                            )
                             st.markdown(
-                                f"<span class='info-badge'>Confidence: {result.get('confidence', 'N/A')}%</span>", unsafe_allow_html=True)
+                                f"<span class='info-badge'>Status: {result.get('disease_type', 'healthy')}</span>",
+                                unsafe_allow_html=True,
+                            )
                             st.markdown(
-                                f"<div class='timestamp'>🕒 {result.get('analysis_timestamp', 'N/A')}</div>", unsafe_allow_html=True)
+                                f"<span class='info-badge'>Confidence: {result.get('confidence', 'N/A')}%</span>",
+                                unsafe_allow_html=True,
+                            )
+                            st.markdown(
+                                f"<div class='timestamp'>🕒 {result.get('analysis_timestamp', 'N/A')}</div>",
+                                unsafe_allow_html=True,
+                            )
                             st.markdown("</div>", unsafe_allow_html=True)
                     else:
                         st.error(f"API Error: {response.status_code}")

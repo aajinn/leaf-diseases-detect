@@ -6,11 +6,11 @@ Handles saving and retrieving leaf images locally.
 """
 
 import os
-import uuid
-from pathlib import Path
-from datetime import datetime
-from typing import Optional
 import shutil
+import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
 
 # Storage configuration
 UPLOAD_DIR = Path("storage/uploads")
@@ -25,30 +25,32 @@ def generate_unique_filename(original_filename: str) -> str:
     return f"{timestamp}_{unique_id}{extension}"
 
 
-def save_image(file_content: bytes, original_filename: str, username: str) -> tuple[str, str]:
+def save_image(
+    file_content: bytes, original_filename: str, username: str
+) -> tuple[str, str]:
     """
     Save image to local storage
-    
+
     Args:
         file_content: Image file content in bytes
         original_filename: Original filename
         username: Username of uploader
-    
+
     Returns:
         tuple: (filename, full_path)
     """
     # Create user directory
     user_dir = UPLOAD_DIR / username
     user_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Generate unique filename
     filename = generate_unique_filename(original_filename)
     file_path = user_dir / filename
-    
+
     # Save file
     with open(file_path, "wb") as f:
         f.write(file_content)
-    
+
     return filename, str(file_path)
 
 

@@ -45,7 +45,7 @@ class AppConfig:
     Example:
         >>> # Create config from environment variables
         >>> config = AppConfig.from_env()
-        >>> 
+        >>>
         >>> # Create config with custom values
         >>> config = AppConfig(
         ...     groq_api_key="your-api-key-here",
@@ -67,10 +67,10 @@ class AppConfig:
 
     # Analysis Configuration
     # Supported image formats
-    supported_formats: tuple = ('.jpg', '.jpeg', '.png', '.bmp', '.tiff')
+    supported_formats: tuple = (".jpg", ".jpeg", ".png", ".bmp", ".tiff")
 
     @classmethod
-    def from_env(cls) -> 'AppConfig':
+    def from_env(cls) -> "AppConfig":
         """
         Create configuration instance from environment variables.
 
@@ -107,9 +107,11 @@ class AppConfig:
             groq_api_key=groq_api_key,
             model_name=os.getenv("MODEL_NAME", cls.model_name),
             model_temperature=float(
-                os.getenv("MODEL_TEMPERATURE", cls.model_temperature)),
+                os.getenv("MODEL_TEMPERATURE", cls.model_temperature)
+            ),
             max_completion_tokens=int(
-                os.getenv("MAX_COMPLETION_TOKENS", cls.max_completion_tokens)),
+                os.getenv("MAX_COMPLETION_TOKENS", cls.max_completion_tokens)
+            ),
             log_level=os.getenv("LOG_LEVEL", cls.log_level),
-            log_file=os.getenv("LOG_FILE", cls.log_file)
+            log_file=os.getenv("LOG_FILE", cls.log_file),
         )

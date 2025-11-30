@@ -5,12 +5,14 @@ Admin Models for API Usage Tracking and Management
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+
 from bson import ObjectId
+from pydantic import BaseModel, Field
 
 
 class APIUsageRecord(BaseModel):
     """Record of API usage for tracking and billing"""
+
     id: Optional[str] = Field(default=None, alias="_id")
     user_id: str
     username: str
@@ -22,7 +24,7 @@ class APIUsageRecord(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     success: bool = True
     error_message: Optional[str] = None
-    
+
     class Config:
         populate_by_name = True
         json_encoders = {ObjectId: str}
@@ -30,6 +32,7 @@ class APIUsageRecord(BaseModel):
 
 class APIConfig(BaseModel):
     """API Configuration settings"""
+
     id: Optional[str] = Field(default=None, alias="_id")
     api_type: str  # "groq" or "perplexity"
     api_key: str
@@ -38,7 +41,7 @@ class APIConfig(BaseModel):
     rate_limit_per_day: Optional[int] = None
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     updated_by: str
-    
+
     class Config:
         populate_by_name = True
         json_encoders = {ObjectId: str}
@@ -46,6 +49,7 @@ class APIConfig(BaseModel):
 
 class UsageStats(BaseModel):
     """Usage statistics summary"""
+
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
@@ -59,6 +63,7 @@ class UsageStats(BaseModel):
 
 class UserStats(BaseModel):
     """User statistics"""
+
     user_id: str
     username: str
     total_analyses: int = 0
@@ -74,11 +79,11 @@ class UserStats(BaseModel):
 GROQ_PRICING = {
     "meta-llama/llama-4-scout-17b-16e-instruct": {
         "input": 0.0,  # Free tier
-        "output": 0.0
+        "output": 0.0,
     }
 }
 
 PERPLEXITY_PRICING = {
     "sonar": 0.20,  # $0.20 per 1M tokens
-    "sonar-pro": 1.00  # $1.00 per 1M tokens
+    "sonar-pro": 1.00,  # $1.00 per 1M tokens
 }
