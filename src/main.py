@@ -1,10 +1,8 @@
-
-
 import streamlit as st
 import requests
 
-import streamlit as st
-import requests
+# Configuration constants
+REQUEST_TIMEOUT = 30  # seconds - timeout for HTTP requests
 
 # Set Streamlit theme to light and wide mode
 st.set_page_config(
@@ -97,7 +95,10 @@ with col2:
                     files = {
                         "file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
                     response = requests.post(
-                        f"{api_url}/disease-detection-file", files=files)
+                        f"{api_url}/disease-detection-file", 
+                        files=files,
+                        timeout=REQUEST_TIMEOUT
+                    )
                     if response.status_code == 200:
                         result = response.json()
 

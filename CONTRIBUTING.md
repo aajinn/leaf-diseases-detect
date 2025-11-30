@@ -191,3 +191,57 @@ Contributors will be recognized in:
 - Project documentation
 
 Thank you for contributing! 🌿
+
+
+## Code Quality Standards
+
+### Error Handling Best Practices
+
+**Always use specific exceptions:**
+```python
+# ❌ Bad - catches everything
+try:
+    process_data()
+except Exception:
+    pass
+
+# ✅ Good - specific exceptions with logging
+try:
+    process_data()
+except (ValueError, KeyError) as e:
+    logger.warning(f"Data processing failed: {e}")
+except Exception as e:
+    logger.error(f"Unexpected error: {e}")
+    raise
+```
+
+**Always add timeouts to HTTP requests:**
+```python
+# ❌ Bad - can hang indefinitely
+response = requests.get(url)
+
+# ✅ Good - has timeout
+response = requests.get(url, timeout=30)
+```
+
+**Log errors appropriately:**
+```python
+import logging
+logger = logging.getLogger(__name__)
+
+try:
+    risky_operation()
+except SpecificError as e:
+    logger.warning(f"Expected error occurred: {e}")
+except Exception as e:
+    logger.error(f"Unexpected error: {e}", exc_info=True)
+```
+
+### Security Best Practices
+
+1. **Never commit secrets** - Use environment variables
+2. **Validate all inputs** - Check file types, sizes, formats
+3. **Use timeouts** - Prevent resource exhaustion
+4. **Handle errors gracefully** - Don't expose internal details
+5. **Keep dependencies updated** - Run `safety check` regularly
+6. **Use specific exceptions** - Avoid bare `except:` clauses

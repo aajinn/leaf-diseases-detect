@@ -233,7 +233,11 @@ Topics: plant health maintenance, disease prevention, watering, fertilization.""
                 try:
                     video = self.parse_video_info(url, content)
                     videos.append(video)
-                except Exception:
+                except (KeyError, ValueError, TypeError, AttributeError) as e:
+                    logger.warning(f"Failed to parse video info for {url}: {e}")
+                    continue
+                except Exception as e:
+                    logger.error(f"Unexpected error processing video {url}: {e}")
                     continue
             
             logger.info(f"Fetched {len(videos)} general care videos")
