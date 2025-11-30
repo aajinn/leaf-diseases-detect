@@ -1,36 +1,32 @@
 ---
-name: Bug Report
+name: Bug report
 about: Create a report to help us improve
-title: '[BUG] '
+title: ''
 labels: bug
 assignees: ''
+
 ---
 
-## Bug Description
-<!-- A clear and concise description of what the bug is -->
+**Describe the bug**
+A clear and concise description of what the bug is.
 
-## Steps to Reproduce
+**To Reproduce**
+Steps to reproduce the behavior:
 1. Go to '...'
-2. Click on '...'
-3. Scroll down to '...'
+2. Click on '....'
+3. Scroll down to '....'
 4. See error
 
-## Expected Behavior
-<!-- A clear and concise description of what you expected to happen -->
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
-## Actual Behavior
-<!-- What actually happened -->
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-## Screenshots
-<!-- If applicable, add screenshots to help explain your problem -->
+**Environment:**
+ - OS: [e.g. Windows, Linux, macOS]
+ - Python Version: [e.g. 3.9]
+ - Browser [e.g. chrome, safari]
 
-## Environment
-- OS: [e.g. Windows 11, Ubuntu 22.04]
-- Python Version: [e.g. 3.9.7]
-- Browser (if applicable): [e.g. Chrome 120]
-
-## Additional Context
-<!-- Add any other context about the problem here -->
-
-## Possible Solution
-<!-- Optional: suggest a fix or reason for the bug -->
+**Additional context**
+Add any other context about the problem here.
