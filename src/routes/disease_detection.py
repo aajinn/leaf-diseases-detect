@@ -13,8 +13,7 @@ from fastapi.responses import JSONResponse
 
 from src.auth.security import get_current_active_user
 from src.database.connection import ANALYSIS_COLLECTION, MongoDB
-from src.database.models import (AnalysisRecord, AnalysisResponse, UserInDB,
-                                 YouTubeVideo)
+from src.database.models import AnalysisRecord, AnalysisResponse, UserInDB, YouTubeVideo
 from src.image_utils import test_with_base64_data
 from src.services.perplexity_service import get_perplexity_service
 from src.storage.image_storage import save_image
