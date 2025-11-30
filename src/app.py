@@ -47,6 +47,7 @@ app.add_middleware(
 import os
 
 from fastapi.responses import FileResponse
+
 # Serve static files (frontend)
 from fastapi.staticfiles import StaticFiles
 
