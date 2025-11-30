@@ -11,8 +11,10 @@ from dotenv import load_dotenv, set_key
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.auth.security import get_current_admin_user
-from src.database.admin_models import APIConfig, APIUsageRecord, UsageStats, UserStats
-from src.database.connection import ANALYSIS_COLLECTION, USERS_COLLECTION, MongoDB
+from src.database.admin_models import (APIConfig, APIUsageRecord, UsageStats,
+                                       UserStats)
+from src.database.connection import (ANALYSIS_COLLECTION, USERS_COLLECTION,
+                                     MongoDB)
 from src.database.models import UserInDB
 
 load_dotenv()

@@ -10,14 +10,9 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from src.auth.security import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    authenticate_user,
-    create_access_token,
-    get_current_active_user,
-    get_current_admin_user,
-    get_password_hash,
-)
+from src.auth.security import (ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user,
+                               create_access_token, get_current_active_user,
+                               get_current_admin_user, get_password_hash)
 from src.database.connection import USERS_COLLECTION, MongoDB
 from src.database.models import Token, User, UserCreate, UserInDB
 
