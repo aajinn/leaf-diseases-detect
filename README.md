@@ -28,7 +28,7 @@ An enterprise-grade AI-powered leaf disease detection system featuring a dual-in
 - **FastAPI Backend (src/app.py)**: RESTful API service with automatic OpenAPI documentation
 - **Web Frontend (frontend/)**: Modern responsive UI with Tailwind CSS
 - **Admin Panel (frontend/admin.html)**: Comprehensive system management dashboard
-- **Core AI Engine (Leaf Disease/main.py)**: Advanced disease detection engine powered by Meta Llama Vision
+- **Core AI Engine (src/core/disease_detector.py)**: Advanced disease detection engine powered by Meta Llama Vision
 - **Authentication System**: JWT-based secure authentication with session management
 - **API Integration**: Groq AI for disease detection, Perplexity AI for YouTube recommendations
 - **Cloud Deployment**: Production-ready with Vercel integration and scalable architecture
@@ -200,7 +200,7 @@ Root endpoint providing API information and status.
 - version: "1.0.0"
 - endpoints: Available endpoint descriptions
 
-### Core Detection Engine (Leaf Disease/main.py)
+### Core Detection Engine (src/core/disease_detector.py)
 
 #### LeafDiseaseDetector.analyze_leaf_image_base64()
 Core analysis method for base64 encoded images.
@@ -222,7 +222,7 @@ Initialize detector with LeafDiseaseDetector(), then call analyze_leaf_image_bas
 **Run comprehensive tests:**
 - API tests: python test_api.py
 - Image processing: python utils.py
-- Core detection: python "Leaf Disease/main.py"
+- Core detection: python -m src.core.disease_detector
 
 ### Manual Testing Options
 
@@ -443,7 +443,7 @@ The analyze_leaf_image_base64 method follows these steps:
 - app.py (FastAPI backend with API endpoints)
 - utils.py (Shared utilities and helpers)
 - test_api.py (Integration tests)
-- Leaf Disease/ (Core AI detection engine and configuration)
+- src/core/ (Core AI detection engine)
 - tests/ (Unit test directory for all components)
 - docs/ (Additional documentation)
 

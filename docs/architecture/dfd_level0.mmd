@@ -3,7 +3,7 @@ flowchart LR
   UI[Streamlit UI<br/>(`main.py`)]
   API[FastAPI Server<br/>(`app.py`)]
   Utils[Utils<br/>(`utils.py`)]
-  Detector[LeafDiseaseDetector<br/>(`Leaf Disease/main.py`)]
+  Detector[LeafDiseaseDetector<br/>(`src/core/disease_detector.py`)]
   Groq[Groq Model API<br/>(external)]
   
   User -->|Upload image (jpg/png)| UI

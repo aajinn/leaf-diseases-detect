@@ -134,12 +134,13 @@ leaf-diseases-detect/
 │   └── uploads/               # User images
 ├── scripts/                   # Utility scripts
 │   └── create_admin.py        # Create admin user
-├── Leaf Disease/              # AI detection engine
-│   ├── main.py                # Detection logic
-│   └── config.py              # Configuration
-├── app.py                     # Main FastAPI app
-├── main.py                    # Streamlit frontend (legacy)
-├── utils.py                   # Helper functions
+├── src/                       # Source code
+│   ├── core/                 # AI detection engine
+│   │   ├── __init__.py
+│   │   └── disease_detector.py  # Detection logic
+│   ├── app.py                # Main FastAPI app
+│   ├── main.py               # Streamlit frontend
+│   └── utils.py              # Helper functions
 ├── requirements.txt           # Dependencies
 └── .env                       # Environment variables
 ```

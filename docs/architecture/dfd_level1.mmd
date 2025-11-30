@@ -7,7 +7,7 @@ flowchart LR
     API[FastAPI Endpoint<br/>(POST /disease-detection-file)]
     UTIL[convert_image_to_base64_and_test<br/>(`utils.py`)]
     TEST[test_with_base64_data<br/>(`utils.py`)]
-    DET[LeafDiseaseDetector<br/>(`Leaf Disease/main.py`)]
+    DET[LeafDiseaseDetector<br/>(`src/core/disease_detector.py`)]
     PARSE[_parse_response()]
     PROMPT[create_analysis_prompt()]
     GROQ[Groq API (external)]
