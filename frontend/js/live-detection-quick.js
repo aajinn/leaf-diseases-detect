@@ -346,13 +346,11 @@ function displayQuickResult(result) {
                     </div>
                 </div>
                 
-                <!-- Full Analysis Button -->
-                <button onclick="goToFullAnalysis()" 
-                    class="w-full bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-lg hover:from-secondary hover:to-primary transition font-bold text-lg shadow-xl">
-                    <i class="fas fa-microscope mr-2"></i>View Full Analysis & Treatment
-                </button>
             </div>
         `;
+        
+        // Show full analysis button
+        showFullAnalysisButton();
     } else {
         content.innerHTML = `
             <div class="space-y-4">
@@ -381,13 +379,29 @@ function displayQuickResult(result) {
                     <p class="text-sm text-gray-400 mt-2">Continue monitoring for best results</p>
                 </div>
                 
-                <!-- Full Analysis Button -->
-                <button onclick="goToFullAnalysis()" 
-                    class="w-full bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-lg hover:from-secondary hover:to-primary transition font-bold text-lg shadow-xl">
-                    <i class="fas fa-info-circle mr-2"></i>View Detailed Report
-                </button>
             </div>
         `;
+        
+        // Show full analysis button
+        showFullAnalysisButton();
+    }
+}
+
+function showFullAnalysisButton() {
+    const btn = document.getElementById('fullAnalysisBtn');
+    console.log('Showing full analysis button, element found:', !!btn);
+    if (btn) {
+        btn.classList.remove('hidden');
+        console.log('Full analysis button shown');
+    } else {
+        console.error('fullAnalysisBtn element not found!');
+    }
+}
+
+function hideFullAnalysisButton() {
+    const btn = document.getElementById('fullAnalysisBtn');
+    if (btn) {
+        btn.classList.add('hidden');
     }
 }
 
