@@ -5,10 +5,13 @@ Admin Routes for System Management
 
 import os
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from dotenv import load_dotenv, set_key
 from fastapi import APIRouter, Depends, HTTPException, status
+from functools import lru_cache
+import hashlib
+import json
 
 from src.auth.security import get_current_admin_user
 from src.database.admin_models import (APIConfig, APIUsageRecord, UsageStats,
@@ -16,10 +19,36 @@ from src.database.admin_models import (APIConfig, APIUsageRecord, UsageStats,
 from src.database.connection import (ANALYSIS_COLLECTION, USERS_COLLECTION,
                                      MongoDB)
 from src.database.models import UserInDB
+from services.analytics_service import AnalyticsService
 
 load_dotenv()
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+
+# Simple in-memory cache with TTL
+_cache: Dict[str, tuple[datetime, any]] = {}
+CACHE_TTL_SECONDS = 60  # Cache for 1 minute
+
+
+def get_cached_or_compute(cache_key: str, compute_func, ttl_seconds: int = CACHE_TTL_SECONDS):
+    """Get cached result or compute new one"""
+    now = datetime.utcnow()
+    
+    if cache_key in _cache:
+        cached_time, cached_value = _cache[cache_key]
+        if (now - cached_time).total_seconds() < ttl_seconds:
+            return cached_value
+    
+    # Compute new value
+    result = compute_func()
+    _cache[cache_key] = (now, result)
+    
+    # Clean old cache entries (simple cleanup)
+    if len(_cache) > 100:
+        cutoff = now - timedelta(seconds=ttl_seconds * 2)
+        _cache.clear()  # Simple approach: clear all if too many
+    
+    return result
 
 # Collection names
 API_USAGE_COLLECTION = "api_usage"
@@ -387,4 +416,94 @@ async def get_usage_chart_data(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch chart data: {str(e)}",
+        )
+
+
+@router.get("/analytics/trends")
+async def get_analytics_trends(
+    days: int = 30, current_admin: UserInDB = Depends(get_current_admin_user)
+):
+    """
+    Get comprehensive analytics trends (CACHED for 1 minute)
+    
+    Returns detailed trend data including:
+    - Daily API calls, analyses, costs
+    - Growth rates and averages
+    - API breakdown (Groq vs Perplexity)
+    
+    Performance: Uses MongoDB aggregation pipelines and in-memory caching
+    """
+    try:
+        cache_key = f"analytics_trends_{days}"
+        
+        # Check cache first
+        now = datetime.utcnow()
+        if cache_key in _cache:
+            cached_time, cached_value = _cache[cache_key]
+            if (now - cached_time).total_seconds() < CACHE_TTL_SECONDS:
+                return cached_value
+        
+        # Compute new value
+        trends = await AnalyticsService.get_trends(days)
+        _cache[cache_key] = (now, trends)
+        
+        return trends
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch analytics trends: {str(e)}",
+        )
+
+
+@router.get("/analytics/user-activity")
+async def get_user_activity_trends(
+    days: int = 30, current_admin: UserInDB = Depends(get_current_admin_user)
+):
+    """Get user activity trends over time (CACHED for 1 minute)"""
+    try:
+        cache_key = f"user_activity_{days}"
+        
+        # Check cache
+        now = datetime.utcnow()
+        if cache_key in _cache:
+            cached_time, cached_value = _cache[cache_key]
+            if (now - cached_time).total_seconds() < CACHE_TTL_SECONDS:
+                return cached_value
+        
+        # Compute new value
+        activity = await AnalyticsService.get_user_activity_trends(days)
+        _cache[cache_key] = (now, activity)
+        
+        return activity
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch user activity trends: {str(e)}",
+        )
+
+
+@router.get("/analytics/cost-breakdown")
+async def get_cost_breakdown(
+    days: int = 30, current_admin: UserInDB = Depends(get_current_admin_user)
+):
+    """Get detailed cost breakdown by API and model (CACHED for 1 minute)"""
+    try:
+        cache_key = f"cost_breakdown_{days}"
+        
+        # Check cache
+        now = datetime.utcnow()
+        if cache_key in _cache:
+            cached_time, cached_value = _cache[cache_key]
+            if (now - cached_time).total_seconds() < CACHE_TTL_SECONDS:
+                return cached_value
+        
+        # Compute new value
+        breakdown = await AnalyticsService.get_cost_breakdown(days)
+        _cache[cache_key] = (now, breakdown)
+        
+        return breakdown
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch cost breakdown: {str(e)}",
         )

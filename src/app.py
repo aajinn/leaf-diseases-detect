@@ -158,6 +158,9 @@ async def api_info():
             "admin": {
                 "list_users": "/auth/users (GET, admin only)",
                 "delete_user": "/auth/users/{username} (DELETE, admin only)",
+                "analytics_trends": "/admin/analytics/trends (GET, admin only)",
+                "user_activity": "/admin/analytics/user-activity (GET, admin only)",
+                "cost_breakdown": "/admin/analytics/cost-breakdown (GET, admin only)",
             },
         },
         "docs": "/docs",
