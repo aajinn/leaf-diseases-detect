@@ -76,11 +76,24 @@ class UserStats(BaseModel):
 
 
 # API Pricing (per 1M tokens or per request)
+# Groq pricing as of 2024 - https://groq.com/pricing/
 GROQ_PRICING = {
     "meta-llama/llama-4-scout-17b-16e-instruct": {
-        "input": 0.0,  # Free tier
-        "output": 0.0,
-    }
+        "input": 0.05,  # $0.05 per 1M input tokens
+        "output": 0.08,  # $0.08 per 1M output tokens
+    },
+    "llama-3.3-70b-versatile": {
+        "input": 0.59,
+        "output": 0.79,
+    },
+    "llama-3.1-70b-versatile": {
+        "input": 0.59,
+        "output": 0.79,
+    },
+    "llama-3.1-8b-instant": {
+        "input": 0.05,
+        "output": 0.08,
+    },
 }
 
 PERPLEXITY_PRICING = {

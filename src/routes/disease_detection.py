@@ -87,13 +87,19 @@ async def detect_disease(
             f"Description in result: {result.get('description', 'NOT FOUND') if result else 'None'}"
         )
 
-        # Track Groq API usage (estimate tokens)
-        estimated_tokens = len(base64_string) // 4 + 500  # Rough estimate
+        # Track Groq API usage with actual token counts
+        token_usage = result.get("token_usage", {}) if result else {}
+        input_tokens = token_usage.get("prompt_tokens")
+        output_tokens = token_usage.get("completion_tokens")
+        total_tokens = token_usage.get("total_tokens", len(base64_string) // 4 + 500)
+        
         await track_groq_usage(
             user_id=str(current_user.id),
             username=current_user.username,
             model="meta-llama/llama-4-scout-17b-16e-instruct",
-            tokens_used=estimated_tokens,
+            tokens_used=total_tokens,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
             success=result is not None and not result.get("error"),
         )
 

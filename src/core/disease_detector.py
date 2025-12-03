@@ -235,8 +235,22 @@ class LeafDiseaseDetector:
             logger.info("API request completed successfully")
             result = self._parse_response(completion.choices[0].message.content)
 
+            # Add token usage information from API response
+            result_dict = result.__dict__
+            if hasattr(completion, "usage") and completion.usage:
+                result_dict["token_usage"] = {
+                    "prompt_tokens": completion.usage.prompt_tokens,
+                    "completion_tokens": completion.usage.completion_tokens,
+                    "total_tokens": completion.usage.total_tokens,
+                }
+                logger.info(
+                    f"Token usage - Input: {completion.usage.prompt_tokens}, "
+                    f"Output: {completion.usage.completion_tokens}, "
+                    f"Total: {completion.usage.total_tokens}"
+                )
+
             # Return as dictionary for JSON serialization
-            return result.__dict__
+            return result_dict
 
         except Exception as e:
             logger.error(f"Analysis failed for base64 image data: {str(e)}")
