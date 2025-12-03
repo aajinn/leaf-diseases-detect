@@ -111,10 +111,60 @@
             <div class="p-6">
                 <!-- Overview Tab -->
                 <div id="content-overview" class="tab-content">
-                    <h3 class="text-xl font-bold mb-4">Usage Overview (Last 30 Days)</h3>
-                    <canvas id="usageChart" class="w-full" height="100"></canvas>
-                    
-                    <div class="grid md:grid-cols-2 gap-6 mt-8">
+                    <!-- Time Range Selector -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Analytics Dashboard</h3>
+                        <select id="trendsDaysFilter" onchange="loadAnalyticsTrends()" class="px-4 py-2 border rounded-lg">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
+                            <p class="text-sm text-blue-700 font-medium">Avg API Calls/Day</p>
+                            <p id="avgAPICalls" class="text-2xl font-bold text-blue-900">0</p>
+                            <p id="growthRate" class="text-xs text-blue-600 mt-1">0% growth</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
+                            <p class="text-sm text-green-700 font-medium">Avg Analyses/Day</p>
+                            <p id="avgAnalyses" class="text-2xl font-bold text-green-900">0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4">
+                            <p class="text-sm text-orange-700 font-medium">Avg Cost/Day</p>
+                            <p id="avgCost" class="text-2xl font-bold text-orange-900">$0.00</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
+                            <p class="text-sm text-purple-700 font-medium">Total Tokens</p>
+                            <p id="totalTokens" class="text-2xl font-bold text-purple-900">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Main Trends Chart -->
+                    <div class="bg-white rounded-lg p-4 mb-6 shadow">
+                        <h4 class="font-bold mb-3">Usage Trends</h4>
+                        <canvas id="usageChart" class="w-full" height="80"></canvas>
+                    </div>
+
+                    <!-- Additional Charts Row -->
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <!-- API Breakdown Chart -->
+                        <div class="bg-white rounded-lg p-4 shadow">
+                            <h4 class="font-bold mb-3">API Usage Distribution</h4>
+                            <canvas id="apiBreakdownChart" height="200"></canvas>
+                        </div>
+
+                        <!-- Disease Detection Chart -->
+                        <div class="bg-white rounded-lg p-4 shadow">
+                            <h4 class="font-bold mb-3">Disease Detection Trends</h4>
+                            <canvas id="diseaseChart" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Cost Analysis -->
+                    <div class="grid md:grid-cols-2 gap-6 mt-6">
                         <div>
                             <h4 class="font-bold mb-3">API Cost Breakdown</h4>
                             <div class="space-y-2">
@@ -142,6 +192,12 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- User Activity Chart -->
+                    <div class="bg-white rounded-lg p-4 mt-6 shadow">
+                        <h4 class="font-bold mb-3">Daily Active Users</h4>
+                        <canvas id="userActivityChart" height="80"></canvas>
                     </div>
                 </div>
 
@@ -229,5 +285,6 @@
     <script src="js/notifications.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/admin.js"></script>
+    <script src="js/admin-analytics-fix.js"></script>
 </body>
 </html>

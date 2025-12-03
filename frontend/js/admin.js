@@ -1,13 +1,16 @@
 // Admin Panel JavaScript
 
 let usageChart = null;
+let apiBreakdownChart = null;
+let diseaseChart = null;
+let userActivityChart = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAdminAccess();
     await loadUserInfo();
     await loadOverviewStats();
-    await loadUsageChart();
+    await loadAnalyticsTrends();
 });
 
 async function checkAdminAccess() {
@@ -50,74 +53,323 @@ async function loadOverviewStats() {
     }
 }
 
-async function loadUsageChart() {
+async function loadAnalyticsTrends() {
     try {
-        const response = await authenticatedFetch(`${API_URL}/admin/usage-chart?days=30`);
-        if (response.ok) {
-            const data = await response.json();
+        const days = document.getElementById('trendsDaysFilter')?.value || 30;
+        
+        // Load main trends
+        const trendsResponse = await authenticatedFetch(`${API_URL}/admin/analytics/trends?days=${days}`);
+        if (trendsResponse.ok) {
+            const trends = await trendsResponse.json();
             
-            const ctx = document.getElementById('usageChart').getContext('2d');
-            
-            if (usageChart) {
-                usageChart.destroy();
+            // Check if there's any data
+            if (!trends.summary.has_data) {
+                showNoDataMessage();
+                return;
             }
             
-            usageChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.daily_data.map(d => d.date),
-                    datasets: [
-                        {
-                            label: 'API Calls',
-                            data: data.daily_data.map(d => d.api_calls),
-                            borderColor: 'rgb(147, 51, 234)',
-                            backgroundColor: 'rgba(147, 51, 234, 0.1)',
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Analyses',
-                            data: data.daily_data.map(d => d.analyses),
-                            borderColor: 'rgb(59, 130, 246)',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Cost ($)',
-                            data: data.daily_data.map(d => d.cost),
-                            borderColor: 'rgb(249, 115, 22)',
-                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                            tension: 0.4,
-                            yAxisID: 'y1'
-                        }
-                    ]
+            // Update summary cards
+            document.getElementById('avgAPICalls').textContent = trends.summary.avg_api_calls_per_day.toFixed(1);
+            document.getElementById('avgAnalyses').textContent = trends.summary.avg_analyses_per_day.toFixed(1);
+            document.getElementById('avgCost').textContent = `$${trends.summary.avg_cost_per_day.toFixed(4)}`;
+            document.getElementById('totalTokens').textContent = trends.summary.total_tokens.toLocaleString();
+            
+            const growthRate = trends.summary.growth_rate_percent;
+            const growthEl = document.getElementById('growthRate');
+            growthEl.textContent = `${growthRate > 0 ? '+' : ''}${growthRate.toFixed(1)}% growth`;
+            growthEl.className = `text-xs mt-1 ${growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            
+            // Update main usage chart
+            renderUsageChart(trends.daily_trends);
+            
+            // Update API breakdown chart
+            renderAPIBreakdownChart(trends.daily_trends);
+            
+            // Update disease detection chart
+            renderDiseaseChart(trends.daily_trends);
+        }
+        
+        // Load user activity
+        const activityResponse = await authenticatedFetch(`${API_URL}/admin/analytics/user-activity?days=${days}`);
+        if (activityResponse.ok) {
+            const activity = await activityResponse.json();
+            renderUserActivityChart(activity.daily_active_users);
+        }
+        
+    } catch (error) {
+        console.error('Error loading analytics trends:', error);
+    }
+}
+
+function showNoDataMessage() {
+    const overviewContent = document.getElementById('content-overview');
+    overviewContent.innerHTML = `
+        <div class="text-center py-12">
+            <div class="mb-6">
+                <i class="fas fa-chart-line text-gray-300 text-6xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-700 mb-3">No Analytics Data Available</h3>
+            <p class="text-gray-600 mb-6">There's no data to display yet. Start using the application to generate analytics.</p>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto text-left">
+                <h4 class="font-bold text-blue-900 mb-3">
+                    <i class="fas fa-lightbulb mr-2"></i>Want to see sample data?
+                </h4>
+                <p class="text-blue-800 mb-4">Run the sample data generator to populate the dashboard with test data:</p>
+                <div class="bg-white rounded p-4 font-mono text-sm mb-4">
+                    <div class="text-gray-700 mb-2"># Windows:</div>
+                    <div class="text-blue-600">add_sample_data.bat</div>
+                    <div class="text-gray-700 mt-3 mb-2"># Or directly:</div>
+                    <div class="text-blue-600">python scripts/add_sample_data.py</div>
+                </div>
+                <p class="text-sm text-blue-700">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    This will create 30 days of sample analytics data for testing.
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+function renderUsageChart(dailyTrends) {
+    const ctx = document.getElementById('usageChart').getContext('2d');
+    
+    if (usageChart) {
+        usageChart.destroy();
+    }
+    
+    usageChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dailyTrends.map(d => d.date),
+            datasets: [
+                {
+                    label: 'API Calls',
+                    data: dailyTrends.map(d => d.api_calls),
+                    borderColor: 'rgb(147, 51, 234)',
+                    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
                 },
-                options: {
-                    responsive: true,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        },
+                {
+                    label: 'Analyses',
+                    data: dailyTrends.map(d => d.analyses),
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Cost ($)',
+                    data: dailyTrends.map(d => d.cost),
+                    borderColor: 'rgb(249, 115, 22)',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y1',
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.dataset.label === 'Cost ($)') {
+                                label += '$' + context.parsed.y.toFixed(4);
+                            } else {
+                                label += context.parsed.y;
+                            }
+                            return label;
+                        }
                     }
                 }
-            });
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Count'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Cost ($)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                },
+            }
         }
-    } catch (error) {
-        console.error('Error loading usage chart:', error);
+    });
+}
+
+function renderAPIBreakdownChart(dailyTrends) {
+    const ctx = document.getElementById('apiBreakdownChart').getContext('2d');
+    
+    if (apiBreakdownChart) {
+        apiBreakdownChart.destroy();
     }
+    
+    apiBreakdownChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dailyTrends.map(d => d.date),
+            datasets: [
+                {
+                    label: 'Groq API',
+                    data: dailyTrends.map(d => d.groq_calls),
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Perplexity API',
+                    data: dailyTrends.map(d => d.perplexity_calls),
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                },
+                y: {
+                    stacked: true,
+                    title: {
+                        display: true,
+                        text: 'API Calls'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderDiseaseChart(dailyTrends) {
+    const ctx = document.getElementById('diseaseChart').getContext('2d');
+    
+    if (diseaseChart) {
+        diseaseChart.destroy();
+    }
+    
+    diseaseChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dailyTrends.map(d => d.date),
+            datasets: [
+                {
+                    label: 'Diseases Detected',
+                    data: dailyTrends.map(d => d.diseases_detected),
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Healthy Plants',
+                    data: dailyTrends.map(d => d.healthy_plants),
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Count'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderUserActivityChart(dailyActiveUsers) {
+    const ctx = document.getElementById('userActivityChart').getContext('2d');
+    
+    if (userActivityChart) {
+        userActivityChart.destroy();
+    }
+    
+    userActivityChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dailyActiveUsers.map(d => d.date),
+            datasets: [
+                {
+                    label: 'Active Users',
+                    data: dailyActiveUsers.map(d => d.active_users),
+                    backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                    borderColor: 'rgb(139, 92, 246)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Users'
+                    },
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
 }
 
 async function loadUsers() {
