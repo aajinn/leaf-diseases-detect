@@ -887,10 +887,20 @@ async function generatePrescription(analysisId) {
         const data = await response.json();
 
         if (data.success) {
-            showNotification('Prescription generated successfully!', 'success');
+            // Check if it's a new prescription or existing one
+            const isExisting = data.message && data.message.includes('already exists');
+            const message = isExisting 
+                ? 'A prescription already exists for this analysis!' 
+                : 'Prescription generated successfully!';
+            
+            showNotification(message, 'success');
             
             // Show option to view prescription
-            const viewPrescription = confirm('Prescription created! Would you like to view it now?');
+            const viewPrescription = confirm(
+                isExisting 
+                    ? 'A prescription was already created for this analysis. Would you like to view it now?' 
+                    : 'Prescription created! Would you like to view it now?'
+            );
             if (viewPrescription) {
                 window.location.href = '/prescriptions';
             }

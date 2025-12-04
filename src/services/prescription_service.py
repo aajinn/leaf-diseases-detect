@@ -421,3 +421,29 @@ class PrescriptionService:
         except Exception as e:
             logger.error(f"Failed to get prescription: {str(e)}\"")
             return None
+
+    
+    @classmethod
+    async def get_prescription_by_analysis_id(cls, analysis_id: str) -> Optional[Prescription]:
+        """
+        Get prescription by analysis ID
+        
+        Args:
+            analysis_id: Analysis identifier
+            
+        Returns:
+            Prescription if found, None otherwise
+        """
+        try:
+            collection = MongoDB.get_collection(PRESCRIPTION_COLLECTION)
+            doc = await collection.find_one({"analysis_id": analysis_id})
+            
+            if doc:
+                doc["_id"] = str(doc["_id"])
+                return Prescription(**doc)
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to get prescription by analysis ID: {str(e)}")
+            return None

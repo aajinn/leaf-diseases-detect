@@ -50,9 +50,26 @@ async def generate_prescription(
         current_user: Authenticated user
         
     Returns:
-        Generated prescription
+        Generated prescription (or existing one if already created)
     """
     try:
+        # Check if prescription already exists for this analysis
+        existing_prescription = await PrescriptionService.get_prescription_by_analysis_id(
+            request.analysis_id
+        )
+        
+        if existing_prescription:
+            # Verify user owns this prescription
+            if existing_prescription.user_id != str(current_user.id):
+                raise HTTPException(status_code=403, detail="Access denied")
+            
+            return PrescriptionResponse(
+                success=True,
+                message="Prescription already exists for this analysis",
+                prescription=existing_prescription.dict(by_alias=True)
+            )
+        
+        # Generate new prescription
         prescription = await PrescriptionService.generate_prescription(
             user_id=str(current_user.id),
             username=current_user.username,
@@ -69,6 +86,8 @@ async def generate_prescription(
             prescription=prescription.dict(by_alias=True)
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to generate prescription: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

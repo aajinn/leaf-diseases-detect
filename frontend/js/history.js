@@ -433,7 +433,12 @@ async function generatePrescriptionFromHistory(recordId) {
         const data = await prescriptionResponse.json();
 
         if (data.success) {
-            alert('Prescription generated successfully!');
+            const isExisting = data.message && data.message.includes('already exists');
+            const message = isExisting 
+                ? 'A prescription already exists for this analysis!' 
+                : 'Prescription generated successfully!';
+            
+            alert(message);
             
             // Ask if user wants to view it
             const viewPrescription = confirm('Would you like to view the prescription now?');
