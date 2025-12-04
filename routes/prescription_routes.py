@@ -228,6 +228,16 @@ async def get_printable_prescription(
                     "type": prod.type,
                     "ingredient": prod.active_ingredient,
                     "dosage": prod.dosage,
+                    "cost": prod.estimated_cost,
+                    "cost_inr": prod.estimated_cost_inr,
+                    "purchase_links": [
+                        {
+                            "platform": link.platform,
+                            "url": link.url,
+                            "price": link.price
+                        }
+                        for link in prod.purchase_links
+                    ] if prod.purchase_links else [],
                     "method": prod.application_method,
                     "frequency": prod.frequency,
                     "duration": prod.duration,

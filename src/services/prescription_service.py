@@ -15,8 +15,10 @@ from src.database.connection import MongoDB
 from src.database.prescription_models import (
     Prescription,
     ProductRecommendation,
+    PurchaseLink,
     TreatmentStep,
 )
+from src.services.perplexity_service import get_perplexity_service
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +48,7 @@ class PrescriptionService:
                         "Do not spray during flowering period",
                     ],
                     "estimated_cost": "$15-25",
+                    "estimated_cost_inr": "₹1,200-2,000",
                 },
                 {
                     "name": "Streptomycin Sulfate",
@@ -61,6 +64,7 @@ class PrescriptionService:
                         "Follow pre-harvest interval",
                     ],
                     "estimated_cost": "$20-30",
+                    "estimated_cost_inr": "₹1,600-2,500",
                 },
             ],
             "steps": [
@@ -141,6 +145,7 @@ class PrescriptionService:
                         "Do not apply before rain",
                     ],
                     "estimated_cost": "$12-18",
+                    "estimated_cost_inr": "₹1,000-1,500",
                 },
                 {
                     "name": "Neem Oil",
@@ -156,6 +161,7 @@ class PrescriptionService:
                         "Avoid application during flowering",
                     ],
                     "estimated_cost": "$8-15",
+                    "estimated_cost_inr": "₹650-1,200",
                 },
             ],
             "steps": [
@@ -220,6 +226,7 @@ class PrescriptionService:
                     "duration": "Growing season",
                     "safety_precautions": ["Follow package instructions", "Water after application"],
                     "estimated_cost": "$10-15",
+                    "estimated_cost_inr": "₹800-1,200",
                 },
             ],
             "steps": [
@@ -283,10 +290,16 @@ class PrescriptionService:
             # Adjust treatment based on severity
             adjusted_protocol = cls._adjust_for_severity(protocol, severity)
             
-            # Create product recommendations
-            products = [
-                ProductRecommendation(**product) for product in adjusted_protocol["products"]
-            ]
+            # Create product recommendations with purchase links
+            products = []
+            for product_data in adjusted_protocol["products"]:
+                # Fetch purchase links for each product
+                purchase_links = await cls.get_purchase_links(
+                    product_data["name"],
+                    product_data["type"]
+                )
+                product_data["purchase_links"] = [link.dict() for link in purchase_links]
+                products.append(ProductRecommendation(**product_data))
             
             # Create treatment steps
             steps = [TreatmentStep(**step) for step in adjusted_protocol["steps"]]
@@ -451,3 +464,100 @@ class PrescriptionService:
         except Exception as e:
             logger.error(f"Failed to get prescription by analysis ID: {str(e)}")
             return None
+
+    
+    @classmethod
+    async def get_purchase_links(cls, product_name: str, product_type: str) -> List[PurchaseLink]:
+        """
+        Get purchase links for a product using Perplexity API
+        
+        Args:
+            product_name: Name of the product
+            product_type: Type of product (fungicide, pesticide, etc.)
+            
+        Returns:
+            List of purchase links
+        """
+        try:
+            perplexity = get_perplexity_service()
+            if not perplexity.enabled:
+                logger.warning("Perplexity service not enabled, returning empty purchase links")
+                return []
+            
+            # Create search query for Indian e-commerce platforms
+            query = f"Where can I buy {product_name} {product_type} in India? Provide links to Amazon India, Flipkart, and other agricultural product stores with current prices in INR."
+            
+            # Use Perplexity to search
+            response = perplexity.client.chat.completions.create(
+                model="sonar",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that finds product purchase links on Indian e-commerce platforms. Provide direct product links and prices in INR format."
+                    },
+                    {
+                        "role": "user",
+                        "content": query
+                    }
+                ]
+            )
+            
+            content = response.choices[0].message.content
+            logger.info(f"Perplexity response for {product_name}: {content}")
+            
+            # Parse the response to extract links
+            # This is a simplified parser - you might want to make it more robust
+            purchase_links = []
+            
+            # Look for common patterns in the response
+            if "amazon" in content.lower():
+                purchase_links.append(PurchaseLink(
+                    platform="Amazon India",
+                    url=f"https://www.amazon.in/s?k={product_name.replace(' ', '+')}",
+                    price=None
+                ))
+            
+            if "flipkart" in content.lower():
+                purchase_links.append(PurchaseLink(
+                    platform="Flipkart",
+                    url=f"https://www.flipkart.com/search?q={product_name.replace(' ', '%20')}",
+                    price=None
+                ))
+            
+            # Add BigBasket for organic products
+            if product_type.lower() in ["organic", "fertilizer"]:
+                purchase_links.append(PurchaseLink(
+                    platform="BigBasket",
+                    url=f"https://www.bigbasket.com/ps/?q={product_name.replace(' ', '%20')}",
+                    price=None
+                ))
+            
+            # Add AgroStar for agricultural products
+            purchase_links.append(PurchaseLink(
+                platform="AgroStar",
+                url=f"https://www.agrostar.in/search?q={product_name.replace(' ', '+')}",
+                price=None
+            ))
+            
+            return purchase_links
+            
+        except Exception as e:
+            logger.error(f"Failed to get purchase links: {str(e)}")
+            # Return default search links even if Perplexity fails
+            return [
+                PurchaseLink(
+                    platform="Amazon India",
+                    url=f"https://www.amazon.in/s?k={product_name.replace(' ', '+')}",
+                    price=None
+                ),
+                PurchaseLink(
+                    platform="Flipkart",
+                    url=f"https://www.flipkart.com/search?q={product_name.replace(' ', '%20')}",
+                    price=None
+                ),
+                PurchaseLink(
+                    platform="AgroStar",
+                    url=f"https://www.agrostar.in/search?q={product_name.replace(' ', '+')}",
+                    price=None
+                )
+            ]

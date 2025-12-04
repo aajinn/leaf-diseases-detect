@@ -477,8 +477,8 @@ async function generatePrescriptionFromHistory(recordId, buttonElement) {
             
             showNotification(message, 'success');
             
-            // Ask if user wants to view it
-            const viewPrescription = confirm('Would you like to view the prescription now?');
+            // Show beautiful confirmation modal
+            const viewPrescription = await showPrescriptionConfirm(isExisting);
             if (viewPrescription) {
                 window.location.href = '/prescriptions';
             } else {

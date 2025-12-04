@@ -908,12 +908,8 @@ async function generatePrescription(analysisId) {
             
             showNotification(message, 'success');
             
-            // Show option to view prescription
-            const viewPrescription = confirm(
-                isExisting 
-                    ? 'A prescription was already created for this analysis. Would you like to view it now?' 
-                    : 'Prescription created! Would you like to view it now?'
-            );
+            // Show beautiful confirmation modal
+            const viewPrescription = await showPrescriptionConfirm(isExisting);
             if (viewPrescription) {
                 window.location.href = '/prescriptions';
             }

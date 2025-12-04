@@ -10,6 +10,13 @@ from bson import ObjectId
 from pydantic import BaseModel, Field
 
 
+class PurchaseLink(BaseModel):
+    """Purchase link for a product"""
+    platform: str  # "Amazon", "Flipkart", "BigBasket", etc.
+    url: str
+    price: Optional[str] = None
+
+
 class ProductRecommendation(BaseModel):
     """Product recommendation for treatment"""
 
@@ -22,6 +29,8 @@ class ProductRecommendation(BaseModel):
     duration: str
     safety_precautions: List[str] = []
     estimated_cost: Optional[str] = None
+    estimated_cost_inr: Optional[str] = None  # Indian Rupees
+    purchase_links: List[PurchaseLink] = []
 
 
 class TreatmentStep(BaseModel):

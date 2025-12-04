@@ -361,18 +361,46 @@
                     </div>
 
                     <!-- Products -->
-                    <div class="section-title">Product Recommendations</div>
+                    <div class="section-title">Product Recommendations & Purchase Links</div>
                     ${prescription.products.map(product => `
-                        <div class="product-card">
-                            <div class="text-lg font-bold text-gray-800 mb-3">${product.name}</div>
+                        <div class="product-card border-l-4 border-green-500">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="text-lg font-bold text-gray-800">${product.name}</div>
+                                ${product.cost_inr ? `
+                                    <div class="text-right">
+                                        <div class="text-xl font-bold text-green-600">${product.cost_inr}</div>
+                                        <div class="text-xs text-gray-500">${product.cost || ''}</div>
+                                    </div>
+                                ` : ''}
+                            </div>
                             <div class="grid grid-cols-2 gap-3 text-sm mb-3">
                                 <div><strong>Type:</strong> ${product.type}</div>
-                                <div><strong>Cost:</strong> ${product.cost || 'N/A'}</div>
                                 <div><strong>Active Ingredient:</strong> ${product.ingredient || 'N/A'}</div>
                                 <div><strong>Dosage:</strong> ${product.dosage}</div>
                                 <div><strong>Method:</strong> ${product.method}</div>
                                 <div><strong>Frequency:</strong> ${product.frequency}</div>
+                                <div><strong>Duration:</strong> ${product.duration}</div>
                             </div>
+                            
+                            ${product.purchase_links && product.purchase_links.length > 0 ? `
+                                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-shopping-cart text-blue-600 mr-2"></i>
+                                        <strong class="text-sm text-blue-800">Buy Online:</strong>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${product.purchase_links.map(link => `
+                                            <a href="${link.url}" target="_blank" rel="noopener noreferrer" 
+                                               class="inline-flex items-center px-4 py-2 bg-white border-2 border-blue-500 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition font-semibold text-sm">
+                                                <i class="fas fa-external-link-alt mr-2"></i>
+                                                ${link.platform}
+                                                ${link.price ? `<span class="ml-2 text-xs">(${link.price})</span>` : ''}
+                                            </a>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
                             ${product.safety.length > 0 ? `
                                 <div class="mt-3">
                                     <strong class="text-sm">Safety Precautions:</strong>
