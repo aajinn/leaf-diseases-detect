@@ -507,3 +507,42 @@ async def get_cost_breakdown(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch cost breakdown: {str(e)}",
         )
+
+
+
+@router.get("/analytics/prescriptions")
+async def get_prescription_analytics(
+    days: int = 30,
+    current_admin: UserInDB = Depends(get_current_admin_user)
+):
+    """
+    Get prescription analytics and statistics
+    
+    Args:
+        days: Number of days to analyze (default: 30)
+        current_admin: Authenticated admin user
+        
+    Returns:
+        Prescription statistics including:
+        - Total prescriptions generated
+        - Breakdown by priority (urgent, high, moderate, low)
+        - Breakdown by disease type
+        - Status distribution (active, completed, expired)
+        - Daily generation trend
+        - Top users by prescription count
+    """
+    try:
+        stats = await AnalyticsService.get_prescription_stats(days)
+        
+        return {
+            "success": True,
+            "period_days": days,
+            "stats": stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get prescription analytics: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch prescription analytics: {str(e)}"
+        )

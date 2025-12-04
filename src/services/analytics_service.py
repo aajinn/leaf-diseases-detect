@@ -352,3 +352,119 @@ class AnalyticsService:
         except Exception as e:
             logger.error(f"Failed to get cost breakdown: {str(e)}")
             raise
+
+
+    @staticmethod
+    async def get_prescription_stats(days: int = 30) -> Dict:
+        """
+        Get prescription statistics
+        
+        Args:
+            days: Number of days to analyze
+            
+        Returns:
+            Dictionary containing prescription statistics
+        """
+        try:
+            from src.services.prescription_service import PRESCRIPTION_COLLECTION
+            
+            prescription_collection = MongoDB.get_collection(PRESCRIPTION_COLLECTION)
+            start_date = datetime.utcnow() - timedelta(days=days)
+            
+            # Aggregation pipeline for prescription stats
+            pipeline = [
+                {"$match": {"created_at": {"$gte": start_date}}},
+                {
+                    "$facet": {
+                        # Total prescriptions
+                        "total": [{"$count": "count"}],
+                        
+                        # By priority
+                        "by_priority": [
+                            {"$group": {
+                                "_id": "$treatment_priority",
+                                "count": {"$sum": 1}
+                            }},
+                            {"$sort": {"count": -1}}
+                        ],
+                        
+                        # By disease
+                        "by_disease": [
+                            {"$group": {
+                                "_id": "$disease_name",
+                                "count": {"$sum": 1}
+                            }},
+                            {"$sort": {"count": -1}},
+                            {"$limit": 10}
+                        ],
+                        
+                        # By status
+                        "by_status": [
+                            {"$group": {
+                                "_id": "$status",
+                                "count": {"$sum": 1}
+                            }}
+                        ],
+                        
+                        # Daily trend
+                        "daily_trend": [
+                            {
+                                "$group": {
+                                    "_id": {
+                                        "$dateToString": {
+                                            "format": "%Y-%m-%d",
+                                            "date": "$created_at"
+                                        }
+                                    },
+                                    "count": {"$sum": 1}
+                                }
+                            },
+                            {"$sort": {"_id": 1}}
+                        ],
+                        
+                        # Top users
+                        "top_users": [
+                            {"$group": {
+                                "_id": "$username",
+                                "count": {"$sum": 1}
+                            }},
+                            {"$sort": {"count": -1}},
+                            {"$limit": 5}
+                        ]
+                    }
+                }
+            ]
+            
+            result = await prescription_collection.aggregate(pipeline).to_list(length=1)
+            
+            if not result:
+                return {
+                    "total_prescriptions": 0,
+                    "by_priority": [],
+                    "by_disease": [],
+                    "by_status": [],
+                    "daily_trend": [],
+                    "top_users": []
+                }
+            
+            data = result[0]
+            
+            return {
+                "total_prescriptions": data["total"][0]["count"] if data["total"] else 0,
+                "by_priority": data["by_priority"],
+                "by_disease": data["by_disease"],
+                "by_status": data["by_status"],
+                "daily_trend": data["daily_trend"],
+                "top_users": data["top_users"]
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to get prescription stats: {str(e)}")
+            return {
+                "total_prescriptions": 0,
+                "by_priority": [],
+                "by_disease": [],
+                "by_status": [],
+                "daily_trend": [],
+                "top_users": []
+            }

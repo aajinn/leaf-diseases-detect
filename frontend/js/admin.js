@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
     await loadOverviewStats();
     await loadAnalyticsTrends();
+    await loadPrescriptionAnalytics();
 });
 
 async function checkAdminAccess() {
@@ -623,5 +624,160 @@ function switchTab(tabName) {
         loadAPIUsage();
     } else if (tabName === 'api-config') {
         loadAPIConfig();
+    } else if (tabName === 'prescriptions') {
+        loadPrescriptionAnalytics();
     }
+}
+
+
+// Load prescription analytics
+async function loadPrescriptionAnalytics() {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/admin/analytics/prescriptions?days=30`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const stats = data.stats;
+            
+            // Update summary cards
+            document.getElementById('prescTotal').textContent = stats.total_prescriptions || 0;
+            document.getElementById('totalPrescriptions').textContent = stats.total_prescriptions || 0;
+            
+            // Count by priority
+            const urgentCount = stats.by_priority.find(p => p._id === 'urgent')?.count || 0;
+            document.getElementById('prescUrgent').textContent = urgentCount;
+            
+            // Count by status
+            const activeCount = stats.by_status.find(s => s._id === 'active')?.count || 0;
+            const completedCount = stats.by_status.find(s => s._id === 'completed')?.count || 0;
+            document.getElementById('prescActive').textContent = activeCount;
+            document.getElementById('prescCompleted').textContent = completedCount;
+            
+            // Display by priority
+            displayPrescriptionsByPriority(stats.by_priority);
+            
+            // Display by disease
+            displayPrescriptionsByDisease(stats.by_disease);
+            
+            // Display daily trend
+            displayPrescriptionDailyTrend(stats.daily_trend);
+            
+            // Display top users
+            displayPrescriptionTopUsers(stats.top_users);
+        }
+    } catch (error) {
+        console.error('Error loading prescription analytics:', error);
+    }
+}
+
+function displayPrescriptionsByPriority(data) {
+    const container = document.getElementById('prescByPriority');
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">No data available</p>';
+        return;
+    }
+    
+    const priorityColors = {
+        'urgent': 'bg-red-500',
+        'high': 'bg-orange-500',
+        'moderate': 'bg-yellow-500',
+        'low': 'bg-green-500'
+    };
+    
+    const total = data.reduce((sum, item) => sum + item.count, 0);
+    
+    container.innerHTML = data.map(item => {
+        const percentage = ((item.count / total) * 100).toFixed(1);
+        const color = priorityColors[item._id] || 'bg-gray-500';
+        
+        return `
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium capitalize">${item._id}</span>
+                    <span class="text-sm text-gray-600">${item.count} (${percentage}%)</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="${color} h-2 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function displayPrescriptionsByDisease(data) {
+    const container = document.getElementById('prescByDisease');
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">No data available</p>';
+        return;
+    }
+    
+    const total = data.reduce((sum, item) => sum + item.count, 0);
+    
+    container.innerHTML = data.map((item, index) => {
+        const percentage = ((item.count / total) * 100).toFixed(1);
+        const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
+        const color = colors[index % colors.length];
+        
+        return `
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium">${item._id}</span>
+                    <span class="text-sm text-gray-600">${item.count} (${percentage}%)</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="${color} h-2 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function displayPrescriptionDailyTrend(data) {
+    const container = document.getElementById('prescDailyTrend');
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-8">No data available</p>';
+        return;
+    }
+    
+    // Simple bar chart
+    const maxCount = Math.max(...data.map(d => d.count));
+    
+    container.innerHTML = `
+        <div class="flex items-end justify-between h-full space-x-1">
+            ${data.map(item => {
+                const height = (item.count / maxCount) * 100;
+                return `
+                    <div class="flex-1 flex flex-col items-center">
+                        <div class="w-full bg-green-500 rounded-t hover:bg-green-600 transition" 
+                             style="height: ${height}%"
+                             title="${item._id}: ${item.count} prescriptions"></div>
+                        <span class="text-xs text-gray-500 mt-2 transform -rotate-45 origin-top-left">${item._id.slice(5)}</span>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+function displayPrescriptionTopUsers(data) {
+    const container = document.getElementById('prescTopUsers');
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">No data available</p>';
+        return;
+    }
+    
+    container.innerHTML = data.map((item, index) => {
+        const medals = ['🥇', '🥈', '🥉'];
+        const medal = medals[index] || '🏅';
+        
+        return `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">${medal}</span>
+                    <span class="font-medium">${item._id}</span>
+                </div>
+                <span class="text-lg font-bold text-green-600">${item.count}</span>
+            </div>
+        `;
+    }).join('');
 }
