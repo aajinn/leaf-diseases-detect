@@ -317,8 +317,10 @@ class PrescriptionService:
             
             # Save to database
             collection = MongoDB.get_collection(PRESCRIPTION_COLLECTION)
-            # Exclude _id field when inserting (MongoDB will generate it)
-            prescription_dict = prescription.dict(by_alias=True, exclude={"_id"})
+            # Exclude id field when inserting (MongoDB will generate _id)
+            prescription_dict = prescription.dict(by_alias=True, exclude={"id"})
+            # Remove _id if it exists in the dict
+            prescription_dict.pop("_id", None)
             result = await collection.insert_one(prescription_dict)
             prescription.id = str(result.inserted_id)
             
