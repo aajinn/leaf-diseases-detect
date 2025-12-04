@@ -1,5 +1,5 @@
 // API Configuration
-const API_URL = 'http://localhost:8000';
+const API_URL =  "https://leaf-diseases-detect-c1se.onrender.com";
 
 // Session Management
 class SessionManager {
