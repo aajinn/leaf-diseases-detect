@@ -85,40 +85,26 @@ leaf-disease-detection/
 │   ├── 📂 setup/                    # Setup Guides
 │   │   ├── QUICKSTART.md            # 5-minute setup
 │   │   ├── INSTALLATION.md          # Detailed installation
-│   │   ├── COMPLETE_SETUP.md        # Complete walkthrough
-│   │   ├── FINAL_SETUP.md           # Final configuration
-│   │   └── SETUP_COMPLETE.md        # Post-setup verification
+│   │   └── ADMIN_SETUP.md           # Admin configuration
 │   │
 │   ├── 📂 features/                 # Feature Documentation
 │   │   ├── AUTHENTICATION.md        # Auth system guide
 │   │   ├── FRONTEND_GUIDE.md        # Frontend architecture
 │   │   ├── VALIDATION_GUIDE.md      # Input validation
-│   │   ├── YOUTUBE_INTEGRATION.md   # YouTube video feature
-│   │   └── YOUTUBE_QUICKSTART.md    # Quick YouTube setup
+│   │   ├── PRESCRIPTION_GENERATOR.md # Prescription system
+│   │   ├── ADMIN_PANEL.md           # Admin features
+│   │   └── PDF_EXPORT.md            # PDF generation
 │   │
-│   ├── 📂 architecture/             # Architecture Docs
-│   │   ├── architecture.md          # System architecture
-│   │   ├── dfd_level0.mmd           # Data flow diagram L0
-│   │   └── dfd_level1.mmd           # Data flow diagram L1
-│   │
-│   ├── 📂 planning/                 # Planning Documents
-│   │   ├── FEATURE_ENHANCEMENT_PLAN.md  # Feature roadmap
-│   │   ├── IMPLEMENTATION_SUMMARY.md    # Implementation log
-│   │   ├── CHANGES.md                   # Change history
-│   │   └── PROJECT_RESTRUCTURE_PLAN.md  # Restructure plan
-│   │
-│   └── 📂 media/                    # Documentation Assets
-│       └── (screenshots, diagrams, videos)
+│   └── 📂 architecture/             # Architecture Docs
+│       ├── architecture.md          # System architecture
+│       ├── dfd_level0.mmd           # Data flow diagram L0
+│       └── dfd_level1.mmd           # Data flow diagram L1
 │
 ├── 📂 config/                       # ⭐ CONFIGURATION
 │   ├── .streamlit/                  # Streamlit config
 │   │   └── config.toml
 │   └── .devcontainer/               # Dev container config
 │       └── devcontainer.json
-│
-├── 📂 assets/                       # ⭐ STATIC ASSETS
-│   └── test-images/                 # Test leaf images
-│       └── (sample images for testing)
 │
 └── 📂 logs/                         # Application logs (gitignored)
     └── disease_detection.log
@@ -187,19 +173,6 @@ Comprehensive documentation organized by category.
 - `setup/` - Installation and setup guides
 - `features/` - Feature-specific documentation
 - `architecture/` - System design and architecture
-- `planning/` - Roadmaps and planning documents
-- `media/` - Screenshots and diagrams
-
-### `config/` - Configuration Files
-Application configuration files.
-
-- `.streamlit/` - Streamlit configuration
-- `.devcontainer/` - VS Code dev container setup
-
-### `assets/` - Static Assets
-Static files like test images and media.
-
-- `test-images/` - Sample leaf images for testing
 
 ---
 
@@ -220,15 +193,6 @@ uvicorn src.app:app --reload --host 0.0.0.0 --port 8000
 streamlit run src/main.py --server.port 8501
 
 # Access at: http://localhost:8501
-```
-
-### Both Services
-```bash
-# Terminal 1
-uvicorn src.app:app --reload --port 8000
-
-# Terminal 2
-streamlit run src/main.py --server.port 8501
 ```
 
 ---
@@ -290,7 +254,7 @@ cp .env.example .env
 uvicorn src.app:app --reload
 
 # Terminal 2: Frontend (optional)
-streamlit run src/main.py
+streamlit run src.main.py
 ```
 
 ### 3. Make Changes
@@ -311,44 +275,17 @@ python -m pytest tests/test_api.py
 python -m pytest tests/ --cov=src
 ```
 
-### 5. Commit Changes
-```bash
-git add .
-git commit -m "feat: Add new feature"
-git push origin main
-```
-
 ---
 
 ## 📚 Documentation Quick Links
 
-- **Getting Started**: [docs/setup/QUICKSTART.md](docs/setup/QUICKSTART.md)
-- **Full Setup**: [docs/setup/INSTALLATION.md](docs/setup/INSTALLATION.md)
-- **Authentication**: [docs/features/AUTHENTICATION.md](docs/features/AUTHENTICATION.md)
-- **YouTube Integration**: [docs/features/YOUTUBE_INTEGRATION.md](docs/features/YOUTUBE_INTEGRATION.md)
-- **Architecture**: [docs/architecture/architecture.md](docs/architecture/architecture.md)
-- **Feature Roadmap**: [docs/planning/FEATURE_ENHANCEMENT_PLAN.md](docs/planning/FEATURE_ENHANCEMENT_PLAN.md)
+- **Getting Started**: [setup/QUICKSTART.md](setup/QUICKSTART.md)
+- **Full Setup**: [setup/INSTALLATION.md](setup/INSTALLATION.md)
+- **Authentication**: [features/AUTHENTICATION.md](features/AUTHENTICATION.md)
+- **Architecture**: [architecture/architecture.md](architecture/architecture.md)
 
 ---
 
-## 🤝 Contributing
-
-1. Follow the folder structure conventions
-2. Add tests for new features
-3. Update documentation
-4. Use absolute imports from `src`
-5. Run tests before committing
-
----
-
-## 📞 Support
-
-- **Documentation**: Start with [docs/README.md](docs/README.md)
-- **Issues**: GitHub Issues
-- **Discussions**: GitHub Discussions
-
----
-
-**Last Updated**: November 28, 2025  
+**Last Updated**: December 4, 2024  
 **Version**: 2.0  
 **Status**: ✅ Production Ready
