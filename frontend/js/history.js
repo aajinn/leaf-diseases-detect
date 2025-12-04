@@ -207,7 +207,7 @@ function showDetailModal(record) {
                 </div>
                 ` : ''}
                 <div class="mt-4 flex space-x-3">
-                    <button onclick="generatePrescriptionFromHistory('${record.id}')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition font-semibold flex items-center text-sm">
+                    <button onclick="generatePrescriptionFromHistory('${record.id}', this)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition font-semibold flex items-center text-sm">
                         <i class="fas fa-prescription mr-2"></i>
                         Generate Prescription
                     </button>
@@ -386,13 +386,30 @@ document.getElementById('detailModal')?.addEventListener('click', (e) => {
 
 
 // Generate prescription from history record
-async function generatePrescriptionFromHistory(recordId) {
+async function generatePrescriptionFromHistory(recordId, buttonElement) {
+    let button = buttonElement;
+    let originalText = '';
+    
     try {
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('Please login to generate prescription');
+            showNotification('Please login to generate prescription', 'error');
             return;
         }
+
+        // Get button reference if not passed
+        if (!button && event && event.target) {
+            button = event.target.closest('button');
+        }
+
+        // Show loading state
+        if (button) {
+            originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+            button.disabled = true;
+        }
+
+        console.log('Fetching analysis record:', recordId);
 
         // Get the record details
         const response = await fetch(`/api/analyses/${recordId}`, {
@@ -401,18 +418,29 @@ async function generatePrescriptionFromHistory(recordId) {
             }
         });
 
+        if (!response.ok) {
+            throw new Error(`Failed to fetch analysis: ${response.status}`);
+        }
+
         const record = await response.json();
+        console.log('Analysis record:', record);
 
         if (!record.disease_detected) {
-            alert('Cannot generate prescription for healthy plants');
+            showNotification('Cannot generate prescription for healthy plants', 'warning');
+            if (button) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
             return;
         }
 
-        // Show loading
-        const button = event.target.closest('button');
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
-        button.disabled = true;
+        console.log('Generating prescription with data:', {
+            analysis_id: recordId,
+            disease_name: record.disease_name,
+            disease_type: record.disease_type,
+            severity: record.severity,
+            confidence: record.confidence / 100
+        });
 
         // Generate prescription
         const prescriptionResponse = await fetch('/api/prescriptions/generate', {
@@ -430,7 +458,16 @@ async function generatePrescriptionFromHistory(recordId) {
             })
         });
 
+        console.log('Prescription response status:', prescriptionResponse.status);
+
+        if (!prescriptionResponse.ok) {
+            const errorData = await prescriptionResponse.json();
+            console.error('Prescription error:', errorData);
+            throw new Error(errorData.detail || 'Failed to generate prescription');
+        }
+
         const data = await prescriptionResponse.json();
+        console.log('Prescription data:', data);
 
         if (data.success) {
             const isExisting = data.message && data.message.includes('already exists');
@@ -438,27 +475,28 @@ async function generatePrescriptionFromHistory(recordId) {
                 ? 'A prescription already exists for this analysis!' 
                 : 'Prescription generated successfully!';
             
-            alert(message);
+            showNotification(message, 'success');
             
             // Ask if user wants to view it
             const viewPrescription = confirm('Would you like to view the prescription now?');
             if (viewPrescription) {
                 window.location.href = '/prescriptions';
             } else {
-                button.innerHTML = originalText;
-                button.disabled = false;
+                if (button) {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
             }
         } else {
-            alert('Failed to generate prescription: ' + (data.message || 'Unknown error'));
-            button.innerHTML = originalText;
-            button.disabled = false;
+            throw new Error(data.message || 'Unknown error');
         }
     } catch (error) {
         console.error('Error generating prescription:', error);
-        alert('Error generating prescription. Please try again.');
-        if (event.target) {
-            const button = event.target.closest('button');
-            button.innerHTML = '<i class="fas fa-prescription mr-2"></i>Generate Prescription';
+        showNotification('Error: ' + error.message, 'error');
+        
+        // Restore button state
+        if (button && originalText) {
+            button.innerHTML = originalText;
             button.disabled = false;
         }
     }

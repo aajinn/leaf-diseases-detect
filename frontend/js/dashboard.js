@@ -868,13 +868,15 @@ async function generatePrescription(analysisId) {
             return;
         }
 
-        console.log('Generating prescription for:', {
+        const requestData = {
             analysis_id: analysisId,
             disease_name: result.disease_name,
             disease_type: result.disease_type,
             severity: result.severity,
             confidence: result.confidence / 100
-        });
+        };
+
+        console.log('Generating prescription with data:', requestData);
 
         // Generate prescription
         const response = await fetch('/api/prescriptions/generate', {
@@ -883,23 +885,19 @@ async function generatePrescription(analysisId) {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                analysis_id: analysisId,
-                disease_name: result.disease_name,
-                disease_type: result.disease_type,
-                severity: result.severity,
-                confidence: result.confidence / 100
-            })
+            body: JSON.stringify(requestData)
         });
+
+        console.log('Prescription response status:', response.status);
 
         if (!response.ok) {
             const errorData = await response.json();
             console.error('Server error:', errorData);
-            showNotification('Failed to generate prescription: ' + (errorData.detail || 'Server error'), 'error');
-            return;
+            throw new Error(errorData.detail || 'Server error');
         }
 
         const data = await response.json();
+        console.log('Prescription response data:', data);
 
         if (data.success) {
             // Check if it's a new prescription or existing one
@@ -920,10 +918,10 @@ async function generatePrescription(analysisId) {
                 window.location.href = '/prescriptions';
             }
         } else {
-            showNotification('Failed to generate prescription: ' + (data.message || 'Unknown error'), 'error');
+            throw new Error(data.message || 'Unknown error');
         }
     } catch (error) {
         console.error('Error generating prescription:', error);
-        showNotification('Error generating prescription. Please try again.', 'error');
+        showNotification('Error: ' + error.message, 'error');
     }
 }
