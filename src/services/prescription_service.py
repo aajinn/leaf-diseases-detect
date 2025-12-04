@@ -317,7 +317,9 @@ class PrescriptionService:
             
             # Save to database
             collection = MongoDB.get_collection(PRESCRIPTION_COLLECTION)
-            result = await collection.insert_one(prescription.dict(by_alias=True))
+            # Exclude _id field when inserting (MongoDB will generate it)
+            prescription_dict = prescription.dict(by_alias=True, exclude={"_id"})
+            result = await collection.insert_one(prescription_dict)
             prescription.id = str(result.inserted_id)
             
             logger.info(f"Generated prescription {prescription_id} for user {username}")
