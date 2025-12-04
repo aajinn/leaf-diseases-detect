@@ -1,239 +1,192 @@
-# Sample Data Scripts
+# Prescription Data Scripts
 
-## Overview
-These scripts help you populate the database with sample analytics data for testing the admin dashboard.
+Scripts for managing prescription sample data for testing and development.
 
 ## Quick Start
 
-### Windows Users
-Simply double-click or run:
+### Add Sample Prescriptions
+
+The easiest way to add sample data:
+
 ```bash
-add_sample_data.bat
+python scripts/add_sample_prescriptions.py
 ```
 
-### All Platforms
-```bash
-python scripts/add_sample_data.py
+This will:
+- Generate 50 sample prescriptions
+- Distribute them across 5 sample users
+- Cover 8 different diseases
+- Span the last 30 days
+- Include various priorities and statuses
+- Show statistics after completion
+
+**Output Example:**
 ```
+🌱 PRESCRIPTION SAMPLE DATA GENERATOR
+====================================
 
-## What Gets Created
+Generating prescriptions...
+  ✓ 10/50 prescriptions created
+  ✓ 20/50 prescriptions created
+  ✓ 30/50 prescriptions created
+  ✓ 40/50 prescriptions created
+  ✓ 50/50 prescriptions created
 
-The script generates **30 days** of sample data including:
+✅ Successfully generated 50 prescriptions!
 
-### API Usage Records
-- **Groq API calls** for disease detection
-  - Various models (llama-4-scout, llama-3.1-70b, llama-3.1-8b)
-  - Realistic token counts (800-1500 input, 200-500 output)
-  - Accurate cost calculations based on model pricing
+📊 DATABASE STATISTICS
+  Total prescriptions: 50
   
-- **Perplexity API calls** for additional information
-  - Sonar and Sonar-Pro models
-  - 25% of analyses include Perplexity calls
-  - Realistic token usage (500-1000 tokens)
+  By Priority:
+    • moderate: 20
+    • high: 15
+    • urgent: 10
+    • low: 5
+```
 
-### Analysis Records
-- Disease detection results
-- Mix of diseased (65%) and healthy (35%) plants
-- Various disease types:
-  - Apple Scab
-  - Black Rot
-  - Tomato Blight
-  - Grape Rot
-  - Corn Rust
-  - And more...
-- Confidence scores (75-95%)
-- Timestamps spread throughout business hours (8 AM - 8 PM)
+## Advanced Usage
 
-### Sample Users
-The script creates data for 4 demo users:
-- alice (user_001)
-- bob (user_002)
-- charlie (user_003)
-- diana (user_004)
+### Seed Prescription Data (Advanced)
 
-### Growth Trend
-Data includes a realistic growth pattern:
-- Starts with 3-8 analyses per day
-- Gradually increases over the 30-day period
-- Simulates organic user growth
+For more control over the data generation:
 
-## Sample Data Statistics
-
-After running the script, you'll have approximately:
-- **150-250** API usage records
-- **120-200** analysis records
-- **$0.50-$2.00** in estimated API costs
-- **100,000-300,000** total tokens used
-
-## Requirements
-
-### Python Packages
 ```bash
-pip install pymongo python-dotenv
+# Generate 50 prescriptions (default)
+python scripts/seed_prescription_data.py generate
+
+# Generate custom number
+python scripts/seed_prescription_data.py generate --count 100
+
+# Show current statistics
+python scripts/seed_prescription_data.py stats
+
+# Clear all prescription data (DANGEROUS!)
+python scripts/seed_prescription_data.py clear
 ```
 
-### MongoDB
-- MongoDB must be running
-- Connection details in `.env` file:
-  ```
-  MONGODB_URL=mongodb://localhost:27017
-  MONGODB_DB_NAME=leaf_disease_db
-  ```
+## Sample Data Details
 
-## Usage Examples
+### Users (5 sample users)
+- farmer_raj
+- agri_priya
+- farm_kumar
+- green_thumb
+- crop_master
 
-### Basic Usage
-```bash
-python scripts/add_sample_data.py
-```
+### Diseases (8 types)
+- Bacterial Blight (bacterial, severe)
+- Fungal Leaf Spot (fungal, moderate)
+- Powdery Mildew (fungal, mild)
+- Leaf Rust (fungal, moderate)
+- Bacterial Wilt (bacterial, severe)
+- Early Blight (fungal, moderate)
+- Late Blight (fungal, severe)
+- Anthracnose (fungal, moderate)
 
-### Check Before Adding
-The script will:
-1. Check if data already exists
-2. Ask for confirmation if >50 records found
-3. Show progress every 10 days
-4. Display summary statistics when complete
+### Priorities (weighted distribution)
+- Urgent: 20%
+- High: 30%
+- Moderate: 40%
+- Low: 10%
 
-### Output Example
-```
-============================================================
-  Sample Analytics Data Generator
-============================================================
+### Statuses (weighted distribution)
+- Active: 70%
+- Completed: 20%
+- Expired: 10%
 
-✓ Connected to MongoDB: leaf_disease_db
-  Current API usage records: 0
-
-📊 Generating 30 days of sample data...
-  ✓ Day 10/30 complete
-  ✓ Day 20/30 complete
-  ✓ Day 30/30 complete
-
-✅ Sample data added successfully!
-   - API usage records: 187
-   - Analysis records: 156
-   - Total estimated cost: $1.2345
-
-🎉 Visit /admin to view the analytics dashboard!
-```
+### Date Range
+- Created: Random dates within last 30 days
+- Expires: 90 days after creation
 
 ## Viewing the Data
 
-After running the script:
+After generating sample data:
 
-1. Start your application:
-   ```bash
-   start_app.bat
-   # or
-   uvicorn src.app:app --reload
-   ```
+1. **Admin Dashboard**
+   - Navigate to `/admin`
+   - Click on "Prescriptions" tab
+   - View analytics and charts
 
-2. Navigate to the admin panel:
-   ```
-   http://localhost:8000/admin
-   ```
-
-3. Login with admin credentials
-
-4. View the Overview tab to see:
-   - Usage trends chart
-   - API distribution chart
-   - Disease detection trends
-   - Daily active users
-   - Summary statistics
-
-## Advanced Script (Async)
-
-For more control, use the async version:
-```bash
-python scripts/populate_analytics_data.py
-```
-
-This version:
-- Uses async MongoDB operations
-- More detailed progress reporting
-- Additional configuration options
-- Better for large datasets
+2. **User Prescriptions**
+   - Login as any user
+   - Navigate to `/prescriptions`
+   - View prescription list
 
 ## Troubleshooting
 
-### "MongoDB connection failed"
-- Ensure MongoDB is running
-- Check `MONGODB_URL` in `.env`
-- Verify network connectivity
-
-### "Module not found: pymongo"
+### "Module not found" error
+Make sure you're running from the project root:
 ```bash
-pip install pymongo
+cd /path/to/leaf-diseases-detect
+python scripts/add_sample_prescriptions.py
 ```
 
-### "Module not found: dotenv"
-```bash
-pip install python-dotenv
-```
+### Database connection error
+1. Check MongoDB is running
+2. Verify `.env` file has correct `MONGODB_URL`
+3. Ensure database name is correct
 
-### Data Not Showing in Dashboard
+### No data showing in admin
 1. Refresh the admin page
 2. Check browser console for errors
-3. Verify you're logged in as admin
-4. Try different time ranges (7/30/90 days)
+3. Verify prescriptions were created:
+   ```bash
+   python scripts/seed_prescription_data.py stats
+   ```
 
-### Want to Reset Data
-To clear all sample data:
-```javascript
-// In MongoDB shell or Compass
-db.api_usage.deleteMany({})
-db.analysis_records.deleteMany({})
-```
+## Cleaning Up
 
-## Customization
+To remove all prescription data:
 
-You can modify `scripts/add_sample_data.py` to:
-- Change the number of days
-- Adjust daily activity levels
-- Add more users
-- Include different disease types
-- Modify cost calculations
-- Change API usage patterns
-
-### Example: Generate 90 Days
-```python
-# In add_sample_data.py, change:
-for day in range(30):  # Change to 90
-```
-
-### Example: More Activity
-```python
-# Change daily count:
-daily_count = random.randint(10, 20)  # Instead of 3-8
-```
-
-## Best Practices
-
-1. **Run once**: The script is designed to add data, not replace it
-2. **Check first**: Script warns if data exists
-3. **Test environment**: Use on development/test databases
-4. **Backup**: Backup production data before running
-5. **Review**: Check the generated data makes sense for your use case
-
-## Integration with CI/CD
-
-Add to your test setup:
 ```bash
-# In your test script
-python scripts/add_sample_data.py
-pytest tests/
+python scripts/seed_prescription_data.py clear
 ```
+
+**⚠️ WARNING**: This will delete ALL prescriptions, including real user data!
+
+## Development
+
+### Adding More Sample Data
+
+Edit `add_sample_prescriptions.py` to customize:
+
+```python
+# Add more users
+users = [
+    {"id": "user6", "username": "new_farmer"},
+    # ... more users
+]
+
+# Add more diseases
+diseases = [
+    {"name": "New Disease", "type": "fungal", "severity": "moderate"},
+    # ... more diseases
+]
+
+# Change count
+count = 100  # Generate 100 prescriptions
+```
+
+### Testing Analytics
+
+1. Generate sample data
+2. Open admin dashboard
+3. Check "Prescriptions" tab
+4. Verify all charts display correctly
+5. Test different time ranges
+
+## Notes
+
+- Sample data uses fake user IDs
+- Analysis IDs are generated as `sample_analysis_{i}_{timestamp}`
+- Prescription IDs follow normal format: `RX-YYYYMMDD-XXXXXXXX`
+- All prescriptions have full product recommendations and treatment steps
+- Purchase links are generated for each product
 
 ## Support
 
-For issues:
-1. Check MongoDB is running: `mongosh` or MongoDB Compass
-2. Verify `.env` configuration
-3. Check Python version: `python --version` (3.7+)
-4. Review script output for specific errors
-
-## Related Documentation
-
-- [Analytics Dashboard Documentation](../docs/features/ANALYTICS_TRENDS.md)
-- [Analytics Implementation Guide](../ANALYTICS_IMPLEMENTATION.md)
-- [Analytics Quick Start](../ANALYTICS_QUICKSTART.md)
+If you encounter issues:
+1. Check MongoDB connection
+2. Verify all dependencies are installed
+3. Check server logs for errors
+4. Ensure prescription service is working correctly
