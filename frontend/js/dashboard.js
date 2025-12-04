@@ -664,6 +664,10 @@ function displayResults(result) {
     const resultsDiv = document.getElementById('results');
     const resultsContent = document.getElementById('resultsContent');
 
+    console.log('Displaying results for:', result);
+    console.log('Disease detected:', result.disease_detected);
+    console.log('Analysis ID:', result.id);
+
     let html = '';
 
     if (result.disease_type === 'invalid_image') {
@@ -698,16 +702,6 @@ function displayResults(result) {
                         <div class="text-sm text-red-500">Confidence</div>
                     </div>
                 </div>
-                <div class="mt-4 flex space-x-3">
-                    <button onclick="generatePrescription('${result.id}')" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition font-semibold flex items-center">
-                        <i class="fas fa-prescription mr-2"></i>
-                        Generate Treatment Prescription
-                    </button>
-                    <button onclick="window.location.href='/prescriptions'" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition font-semibold flex items-center">
-                        <i class="fas fa-list mr-2"></i>
-                        View All Prescriptions
-                    </button>
-                </div>
                 ${result.description && result.description.trim() ? `
                 <div class="mt-4 p-4 bg-white rounded-lg border-l-4 border-blue-500">
                     <h5 class="font-bold text-sm text-gray-700 mb-2 flex items-center">
@@ -717,6 +711,25 @@ function displayResults(result) {
                     <p class="text-gray-700 text-sm leading-relaxed">${escapeHtml(result.description)}</p>
                 </div>
                 ` : ''}
+            </div>
+
+            <!-- Prescription Actions -->
+            <div class="bg-white border-2 border-blue-500 rounded-lg p-6 mb-6">
+                <h5 class="font-bold text-lg mb-4 flex items-center text-blue-700">
+                    <i class="fas fa-prescription-bottle-medical text-blue-500 mr-2"></i>
+                    Treatment Prescription
+                </h5>
+                <p class="text-gray-600 mb-4">Generate a comprehensive treatment plan with product recommendations and step-by-step instructions.</p>
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="generatePrescription('${result.id}')" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition font-semibold flex items-center shadow-md">
+                        <i class="fas fa-prescription mr-2"></i>
+                        Generate Treatment Prescription
+                    </button>
+                    <button onclick="window.location.href='/prescriptions'" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition font-semibold flex items-center shadow-md">
+                        <i class="fas fa-list mr-2"></i>
+                        View All Prescriptions
+                    </button>
+                </div>
             </div>
 
             <div class="grid md:grid-cols-3 gap-6">
