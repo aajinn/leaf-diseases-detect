@@ -1,5 +1,9 @@
-"""Services module for external API integrations"""
+"""
+Services Package
+================
+Business logic and service layer for the application
+"""
 
-from .perplexity_service import PerplexityService, get_perplexity_service
+from src.services.analytics_service import AnalyticsService
 
-__all__ = ["PerplexityService", "get_perplexity_service"]
+__all__ = ["AnalyticsService"]

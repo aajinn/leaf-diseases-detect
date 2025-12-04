@@ -19,7 +19,7 @@ from src.database.admin_models import (APIConfig, APIUsageRecord, UsageStats,
 from src.database.connection import (ANALYSIS_COLLECTION, USERS_COLLECTION,
                                      MongoDB)
 from src.database.models import UserInDB
-from services.analytics_service import AnalyticsService
+from src.services.analytics_service import AnalyticsService
 
 load_dotenv()
 
