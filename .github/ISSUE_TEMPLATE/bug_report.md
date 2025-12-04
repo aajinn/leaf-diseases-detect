@@ -25,7 +25,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Environment:**
  - OS: [e.g. Windows, Linux, macOS]
- - Python Version: [e.g. 3.9]
+ - Python Version: [e.g. 3.11, 3.12]
  - Browser [e.g. chrome, safari]
 
 **Additional context**
