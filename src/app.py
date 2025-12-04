@@ -10,6 +10,7 @@ from src.database.connection import MongoDB
 from src.image_utils import convert_image_to_base64_and_test
 from src.routes.admin import router as admin_router
 from src.routes.disease_detection import router as detection_router
+from routes.prescription_routes import router as prescription_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -96,11 +97,17 @@ if os.path.exists("frontend"):
         """Serve the diseases database page"""
         return FileResponse("frontend/diseases.html")
 
+    @app.get("/prescriptions", response_class=FileResponse)
+    async def serve_prescriptions():
+        """Serve the prescriptions page"""
+        return FileResponse("frontend/prescriptions.html")
+
 
 # Include routers
 app.include_router(auth_router)
 app.include_router(detection_router)
 app.include_router(admin_router)
+app.include_router(prescription_router)
 
 
 @app.post("/disease-detection-file")

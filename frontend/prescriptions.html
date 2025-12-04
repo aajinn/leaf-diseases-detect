@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treatment Prescriptions - Leaf Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .prescription-card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .prescription-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .priority-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .priority-urgent { background: #ef4444; color: white; }
+        .priority-high { background: #f97316; color: white; }
+        .priority-moderate { background: #f59e0b; color: white; }
+        .priority-low { background: #10b981; color: white; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 900px;
+            margin: 2rem auto;
+            border-radius: 0.5rem;
+            position: relative;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .step-card {
+            background: #f9fafb;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #10b981;
+            border-radius: 0.375rem;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.375rem;
+        }
+
+        .safety-list, .tips-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .safety-list li, .tips-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.75rem;
+            position: relative;
+        }
+
+        .safety-list li:before {
+            content: "⚠️";
+            position: absolute;
+            left: 0;
+        }
+
+        .tips-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #10b981;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .modal-content, .modal-content * {
+                visibility: visible;
+            }
+            .modal-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                box-shadow: none;
+            }
+            nav, .modal-header button, .print-btn {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-leaf text-primary text-3xl mr-3"></i>
+                    <span class="text-2xl font-bold text-gray-800">Leaf Disease Detection</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard" class="text-gray-600 hover:text-primary">
+                        <i class="fas fa-home mr-1"></i>Dashboard
+                    </a>
+                    <a href="/history" class="text-gray-600 hover:text-primary">
+                        <i class="fas fa-history mr-1"></i>History
+                    </a>
+                    <a href="/diseases" class="text-gray-600 hover:text-primary">
+                        <i class="fas fa-book-medical mr-1"></i>Diseases
+                    </a>
+                    <a href="/prescriptions" class="text-primary font-semibold">
+                        <i class="fas fa-prescription mr-1"></i>Prescriptions
+                    </a>
+                    <span id="userInfo" class="text-gray-600"></span>
+                    <button onclick="logout()" class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Treatment Prescriptions</h1>
+            <p class="text-gray-600">View and print your treatment plans</p>
+        </div>
+
+        <div id="prescriptionsContent">
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                <p>Loading prescriptions...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prescription Detail Modal -->
+    <div id="prescriptionModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-800">Prescription Details</h2>
+                <div class="flex items-center space-x-2">
+                    <button onclick="printPrescription()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                        <i class="fas fa-print mr-2"></i>Print
+                    </button>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
+                </div>
+            </div>
+            <div class="p-6 max-h-[70vh] overflow-y-auto" id="modalBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        let currentPrescriptions = [];
+
+        async function loadPrescriptions() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const response = await fetch('/api/prescriptions/my-prescriptions', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.prescriptions.length > 0) {
+                    currentPrescriptions = data.prescriptions;
+                    displayPrescriptions(data.prescriptions);
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error loading prescriptions:', error);
+                document.getElementById('prescriptionsContent').innerHTML = 
+                    '<div class="empty-state">Failed to load prescriptions</div>';
+            }
+        }
+
+        function displayPrescriptions(prescriptions) {
+            const container = document.getElementById('prescriptionsContent');
+            container.innerHTML = prescriptions.map(prescription => `
+                <div class="prescription-card" onclick="viewPrescription('${prescription.prescription_id}')">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-lg font-bold text-gray-800">${prescription.prescription_id}</div>
+                        <span class="priority-badge priority-${prescription.treatment_priority}">
+                            ${prescription.treatment_priority.toUpperCase()}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">Disease</div>
+                            <div class="font-medium text-gray-800">${prescription.disease_name}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">Severity</div>
+                            <div class="font-medium text-gray-800">${prescription.severity}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">Duration</div>
+                            <div class="font-medium text-gray-800">${prescription.treatment_duration}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500 mb-1">Date Issued</div>
+                            <div class="font-medium text-gray-800">${new Date(prescription.created_at).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showEmptyState() {
+            document.getElementById('prescriptionsContent').innerHTML = `
+                <div class="text-center py-16">
+                    <div class="text-6xl mb-4">📋</div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">No Prescriptions Yet</h3>
+                    <p class="text-gray-600 mb-6">Treatment prescriptions will appear here after disease detection</p>
+                    <a href="/dashboard" class="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition font-semibold">
+                        <i class="fas fa-leaf mr-2"></i>Start Detection
+                    </a>
+                </div>
+            `;
+        }
+
+        async function viewPrescription(prescriptionId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/prescriptions/${prescriptionId}/print`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayPrescriptionDetail(data.printable_prescription);
+                    document.getElementById('prescriptionModal').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading prescription:', error);
+                alert('Failed to load prescription details');
+            }
+        }
+
+        function displayPrescriptionDetail(prescription) {
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="prescription-detail">
+                    <!-- Header -->
+                    <div class="text-center mb-8 pb-6 border-b-2 border-primary">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Treatment Prescription</h2>
+                        <div class="space-y-1 text-gray-600">
+                            <p><strong>Prescription ID:</strong> ${prescription.header.prescription_id}</p>
+                            <p><strong>Patient:</strong> ${prescription.header.patient_name}</p>
+                            <p><strong>Date Issued:</strong> ${prescription.header.date_issued}</p>
+                            <p><strong>Expires:</strong> ${prescription.header.expires}</p>
+                        </div>
+                    </div>
+
+                    <!-- Diagnosis -->
+                    <div class="section-title">Diagnosis</div>
+                    <div class="product-card">
+                        <div class="grid grid-cols-2 gap-4">
+                            <p><strong>Disease:</strong> ${prescription.diagnosis.disease}</p>
+                            <p><strong>Type:</strong> ${prescription.diagnosis.type}</p>
+                            <p><strong>Severity:</strong> ${prescription.diagnosis.severity}</p>
+                            <p><strong>Confidence:</strong> ${prescription.diagnosis.confidence}</p>
+                        </div>
+                    </div>
+
+                    <!-- Treatment Plan -->
+                    <div class="section-title">Treatment Plan</div>
+                    <div class="mb-4 space-y-2">
+                        <p><strong>Priority:</strong> <span class="priority-badge priority-${prescription.treatment_plan.priority.toLowerCase()}">${prescription.treatment_plan.priority}</span></p>
+                        <p><strong>Duration:</strong> ${prescription.treatment_plan.duration}</p>
+                    </div>
+                    
+                    <div class="my-6">
+                        ${prescription.treatment_plan.steps.map(step => `
+                            <div class="step-card">
+                                <h4><span class="step-number">${step.number}</span>${step.title}</h4>
+                                <p>${step.description}</p>
+                                <p><strong>Timing:</strong> ${step.timing}</p>
+                                <p><strong>Products Needed:</strong> ${step.products.join(', ')}</p>
+                                <p><strong>Duration:</strong> ${step.duration}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Products -->
+                    <div class="section-title">Product Recommendations</div>
+                    ${prescription.products.map(product => `
+                        <div class="product-card">
+                            <div class="text-lg font-bold text-gray-800 mb-3">${product.name}</div>
+                            <div class="grid grid-cols-2 gap-3 text-sm mb-3">
+                                <div><strong>Type:</strong> ${product.type}</div>
+                                <div><strong>Cost:</strong> ${product.cost || 'N/A'}</div>
+                                <div><strong>Active Ingredient:</strong> ${product.ingredient || 'N/A'}</div>
+                                <div><strong>Dosage:</strong> ${product.dosage}</div>
+                                <div><strong>Method:</strong> ${product.method}</div>
+                                <div><strong>Frequency:</strong> ${product.frequency}</div>
+                            </div>
+                            ${product.safety.length > 0 ? `
+                                <div class="mt-3">
+                                    <strong class="text-sm">Safety Precautions:</strong>
+                                    <ul class="safety-list mt-2">
+                                        ${product.safety.map(s => `<li class="text-sm">${s}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+
+                    <!-- Prevention Tips -->
+                    <div class="section-title">Prevention Tips</div>
+                    <ul class="tips-list">
+                        ${prescription.guidance.prevention.map(tip => `<li>${tip}</li>`).join('')}
+                    </ul>
+
+                    <!-- Monitoring Schedule -->
+                    <div class="section-title">Monitoring Schedule</div>
+                    <ul class="tips-list">
+                        ${prescription.guidance.monitoring.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+
+                    <!-- Warning Signs -->
+                    <div class="section-title">Warning Signs</div>
+                    <ul class="safety-list">
+                        ${prescription.guidance.warning_signs.map(sign => `<li>${sign}</li>`).join('')}
+                    </ul>
+
+                    <!-- Success Indicators -->
+                    <div class="section-title">Success Indicators</div>
+                    <ul class="tips-list">
+                        ${prescription.guidance.success_indicators.map(indicator => `<li>${indicator}</li>`).join('')}
+                    </ul>
+
+                    <!-- Footer -->
+                    <div class="mt-8 pt-6 border-t border-gray-200 text-sm text-gray-600 space-y-2">
+                        <p><strong>Disclaimer:</strong> ${prescription.footer.disclaimer}</p>
+                        <p><strong>Status:</strong> <span class="font-semibold text-primary">${prescription.footer.status}</span></p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeModal() {
+            document.getElementById('prescriptionModal').style.display = 'none';
+        }
+
+        function printPrescription() {
+            window.print();
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('prescriptionModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Load prescriptions on page load
+        document.addEventListener('DOMContentLoaded', loadPrescriptions);
+    </script>
+</body>
+</html>

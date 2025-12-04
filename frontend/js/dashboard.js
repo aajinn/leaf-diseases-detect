@@ -698,6 +698,16 @@ function displayResults(result) {
                         <div class="text-sm text-red-500">Confidence</div>
                     </div>
                 </div>
+                <div class="mt-4 flex space-x-3">
+                    <button onclick="generatePrescription('${result.id}')" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition font-semibold flex items-center">
+                        <i class="fas fa-prescription mr-2"></i>
+                        Generate Treatment Prescription
+                    </button>
+                    <button onclick="window.location.href='/prescriptions'" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition font-semibold flex items-center">
+                        <i class="fas fa-list mr-2"></i>
+                        View All Prescriptions
+                    </button>
+                </div>
                 ${result.description && result.description.trim() ? `
                 <div class="mt-4 p-4 bg-white rounded-lg border-l-4 border-blue-500">
                     <h5 class="font-bold text-sm text-gray-700 mb-2 flex items-center">
@@ -823,4 +833,59 @@ function displayYouTubeVideos(videos, isHealthy = false) {
             </div>
         </div>
     `;
+}
+
+
+// Generate prescription for analysis
+async function generatePrescription(analysisId) {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showNotification('Please login to generate prescription', 'error');
+            return;
+        }
+
+        // Show loading notification
+        showNotification('Generating prescription...', 'info');
+
+        // Get the analysis result
+        const result = lastAnalysisResult;
+        if (!result || result.id !== analysisId) {
+            showNotification('Analysis data not found', 'error');
+            return;
+        }
+
+        // Generate prescription
+        const response = await fetch('/api/prescriptions/generate', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                analysis_id: analysisId,
+                disease_name: result.disease_name,
+                disease_type: result.disease_type,
+                severity: result.severity,
+                confidence: result.confidence / 100
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification('Prescription generated successfully!', 'success');
+            
+            // Show option to view prescription
+            const viewPrescription = confirm('Prescription created! Would you like to view it now?');
+            if (viewPrescription) {
+                window.location.href = '/prescriptions';
+            }
+        } else {
+            showNotification('Failed to generate prescription: ' + (data.message || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error generating prescription:', error);
+        showNotification('Error generating prescription. Please try again.', 'error');
+    }
 }

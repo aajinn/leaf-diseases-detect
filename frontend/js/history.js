@@ -206,6 +206,16 @@ function showDetailModal(record) {
                     <p class="text-gray-700 text-sm leading-relaxed">${escapeHtml(record.description)}</p>
                 </div>
                 ` : ''}
+                <div class="mt-4 flex space-x-3">
+                    <button onclick="generatePrescriptionFromHistory('${record.id}')" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition font-semibold flex items-center text-sm">
+                        <i class="fas fa-prescription mr-2"></i>
+                        Generate Prescription
+                    </button>
+                    <button onclick="window.location.href='/prescriptions'" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition font-semibold flex items-center text-sm">
+                        <i class="fas fa-list mr-2"></i>
+                        View Prescriptions
+                    </button>
+                </div>
             </div>
 
             <div>
@@ -373,3 +383,78 @@ document.getElementById('detailModal')?.addEventListener('click', (e) => {
         closeModal();
     }
 });
+
+
+// Generate prescription from history record
+async function generatePrescriptionFromHistory(recordId) {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login to generate prescription');
+            return;
+        }
+
+        // Get the record details
+        const response = await fetch(`/api/analyses/${recordId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const record = await response.json();
+
+        if (!record.disease_detected) {
+            alert('Cannot generate prescription for healthy plants');
+            return;
+        }
+
+        // Show loading
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+        button.disabled = true;
+
+        // Generate prescription
+        const prescriptionResponse = await fetch('/api/prescriptions/generate', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                analysis_id: recordId,
+                disease_name: record.disease_name,
+                disease_type: record.disease_type,
+                severity: record.severity,
+                confidence: record.confidence / 100
+            })
+        });
+
+        const data = await prescriptionResponse.json();
+
+        if (data.success) {
+            alert('Prescription generated successfully!');
+            
+            // Ask if user wants to view it
+            const viewPrescription = confirm('Would you like to view the prescription now?');
+            if (viewPrescription) {
+                window.location.href = '/prescriptions';
+            } else {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        } else {
+            alert('Failed to generate prescription: ' + (data.message || 'Unknown error'));
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error generating prescription:', error);
+        alert('Error generating prescription. Please try again.');
+        if (event.target) {
+            const button = event.target.closest('button');
+            button.innerHTML = '<i class="fas fa-prescription mr-2"></i>Generate Prescription';
+            button.disabled = false;
+        }
+    }
+}

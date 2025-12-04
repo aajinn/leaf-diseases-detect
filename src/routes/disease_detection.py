@@ -17,6 +17,7 @@ from src.database.models import (AnalysisRecord, AnalysisResponse, UserInDB,
                                  YouTubeVideo)
 from src.image_utils import test_with_base64_data
 from src.services.perplexity_service import get_perplexity_service
+from src.services.prescription_service import PrescriptionService
 from src.storage.image_storage import save_image
 from src.utils.usage_tracker import track_groq_usage, track_perplexity_usage
 
@@ -191,6 +192,25 @@ async def detect_disease(
         )
 
         logger.info(f"Analysis record saved with ID: {insert_result.inserted_id}")
+
+        # Generate prescription if disease detected
+        prescription_id = None
+        if analysis_record.disease_detected and analysis_record.disease_name:
+            try:
+                prescription = await PrescriptionService.generate_prescription(
+                    user_id=str(current_user.id),
+                    username=current_user.username,
+                    analysis_id=str(insert_result.inserted_id),
+                    disease_name=analysis_record.disease_name,
+                    disease_type=analysis_record.disease_type,
+                    severity=analysis_record.severity,
+                    confidence=analysis_record.confidence,
+                )
+                prescription_id = prescription.prescription_id
+                logger.info(f"Generated prescription: {prescription_id}")
+            except Exception as e:
+                logger.error(f"Failed to generate prescription: {str(e)}")
+                # Continue without prescription - not critical
 
         # Return response
         return AnalysisResponse(
