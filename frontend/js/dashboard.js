@@ -868,6 +868,14 @@ async function generatePrescription(analysisId) {
             return;
         }
 
+        console.log('Generating prescription for:', {
+            analysis_id: analysisId,
+            disease_name: result.disease_name,
+            disease_type: result.disease_type,
+            severity: result.severity,
+            confidence: result.confidence / 100
+        });
+
         // Generate prescription
         const response = await fetch('/api/prescriptions/generate', {
             method: 'POST',
@@ -883,6 +891,13 @@ async function generatePrescription(analysisId) {
                 confidence: result.confidence / 100
             })
         });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Server error:', errorData);
+            showNotification('Failed to generate prescription: ' + (errorData.detail || 'Server error'), 'error');
+            return;
+        }
 
         const data = await response.json();
 

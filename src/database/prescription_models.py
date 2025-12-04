@@ -63,7 +63,7 @@ class Prescription(BaseModel):
     success_indicators: List[str] = []
     
     # Metadata
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
     expires_at: Optional[datetime] = None
     status: str = "active"  # "active", "completed", "expired"
     notes: Optional[str] = None

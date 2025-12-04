@@ -89,8 +89,11 @@ async def generate_prescription(
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"Failed to generate prescription: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Full traceback: {error_details}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
 @router.get("/my-prescriptions")
