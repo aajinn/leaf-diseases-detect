@@ -25,20 +25,43 @@
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
+    <nav class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <i class="fas fa-leaf text-primary text-3xl mr-3"></i>
-                    <span class="text-2xl font-bold text-gray-800">Admin Panel</span>
+            <div class="flex justify-between items-center h-14">
+                <!-- Left: Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-leaf text-primary text-2xl"></i>
+                    <div class="flex flex-col">
+                        <span class="text-lg font-bold text-gray-800 leading-tight">Admin Panel</span>
+                        <span id="userInfo" class="text-xs text-gray-500 leading-tight"></span>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span id="userInfo" class="text-gray-600"></span>
-                    <a href="/dashboard" class="text-gray-600 hover:text-primary">
-                        <i class="fas fa-home mr-2"></i>Dashboard
+                
+                <!-- Right: Actions -->
+                <div class="flex items-center space-x-2">
+                    <!-- Refresh Button -->
+                    <button 
+                        onclick="refreshCurrentTab()" 
+                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                        title="Refresh data (bypass cache)">
+                        <i class="fas fa-sync-alt text-xs mr-1.5"></i>
+                        <span class="hidden sm:inline">Refresh</span>
+                    </button>
+                    
+                    <!-- Dashboard Link -->
+                    <a 
+                        href="/dashboard" 
+                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
+                        <i class="fas fa-home text-xs mr-1.5"></i>
+                        <span class="hidden sm:inline">Dashboard</span>
                     </a>
-                    <button onclick="logout()" class="text-red-600 hover:text-red-800">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    
+                    <!-- Logout Button -->
+                    <button 
+                        onclick="logout()" 
+                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                        <i class="fas fa-sign-out-alt text-xs mr-1.5"></i>
+                        <span class="hidden sm:inline">Logout</span>
                     </button>
                 </div>
             </div>
@@ -346,12 +369,13 @@
         </div>
     </div>
 
+    <script src="js/config.js"></script>
+    <script src="js/cache-manager.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/admin-loading.js"></script>
     <script src="js/admin.js"></script>
-    <script src="js/admin-pagination-fix.js"></script>
-    <script src="js/admin-analytics-fix.js"></script>
+    <script src="js/admin-pagination.js"></script>
     <script>
         // Override functions with enhanced versions
         if (typeof loadOverviewStatsEnhanced !== 'undefined') {

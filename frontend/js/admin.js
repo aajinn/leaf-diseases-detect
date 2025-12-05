@@ -36,15 +36,14 @@ async function checkAdminAccess() {
 async function loadUserInfo() {
     const profile = await getUserProfile();
     if (profile) {
-        document.getElementById('userInfo').textContent = `Admin: ${profile.full_name || profile.username}`;
+        document.getElementById('userInfo').textContent = profile.full_name || profile.username;
     }
 }
 
 async function loadOverviewStats() {
     try {
-        const response = await authenticatedFetch(`${API_URL}/admin/stats/overview`);
-        if (response.ok) {
-            const data = await response.json();
+        const data = await cachedFetch(`${API_URL}/admin/stats/overview`, {}, 'overview-stats');
+        if (data) {
             
             // Update stats cards
             document.getElementById('totalUsers').textContent = data.users.total;
@@ -67,10 +66,13 @@ async function loadAnalyticsTrends() {
     try {
         const days = document.getElementById('trendsDaysFilter')?.value || 30;
         
-        // Load main trends
-        const trendsResponse = await authenticatedFetch(`${API_URL}/admin/analytics/trends?days=${days}`);
-        if (trendsResponse.ok) {
-            const trends = await trendsResponse.json();
+        // Load main trends with caching
+        const trends = await cachedFetch(
+            `${API_URL}/admin/analytics/trends?days=${days}`, 
+            { params: { days } }, 
+            'analytics-trends'
+        );
+        if (trends) {
             
             // Check if there's any data
             if (!trends.summary.has_data) {
@@ -99,10 +101,13 @@ async function loadAnalyticsTrends() {
             renderDiseaseChart(trends.daily_trends);
         }
         
-        // Load user activity
-        const activityResponse = await authenticatedFetch(`${API_URL}/admin/analytics/user-activity?days=${days}`);
-        if (activityResponse.ok) {
-            const activity = await activityResponse.json();
+        // Load user activity with caching
+        const activity = await cachedFetch(
+            `${API_URL}/admin/analytics/user-activity?days=${days}`,
+            { params: { days } },
+            'user-activity'
+        );
+        if (activity) {
             renderUserActivityChart(activity.daily_active_users);
         }
         
@@ -384,9 +389,8 @@ function renderUserActivityChart(dailyActiveUsers) {
 
 async function loadUsers() {
     try {
-        const response = await authenticatedFetch(`${API_URL}/admin/users`);
-        if (response.ok) {
-            const data = await response.json();
+        const data = await cachedFetch(`${API_URL}/admin/users`, {}, 'admin-users');
+        if (data) {
             displayUsers(data.users);
         }
     } catch (error) {
@@ -463,6 +467,8 @@ async function toggleUserStatus(username) {
         
         if (response.ok) {
             showNotification('User status updated successfully', 'success');
+            // Invalidate users cache
+            apiCache.invalidate('users');
             await loadUsers();
         } else {
             showNotification('Failed to update user status', 'error');
@@ -483,9 +489,12 @@ async function loadAPIUsage(page = 1) {
             url += `&api_type=${apiType}`;
         }
         
-        const response = await authenticatedFetch(url);
-        if (response.ok) {
-            const data = await response.json();
+        const data = await cachedFetch(
+            url,
+            { params: { days, page, page_size: apiUsagePageSize, api_type: apiType } },
+            'api-usage'
+        );
+        if (data) {
             currentAPIUsagePage = page;
             displayAPIUsage(data);
         }
@@ -563,9 +572,8 @@ function displayAPIUsage(data) {
 
 async function loadAPIConfig() {
     try {
-        const response = await authenticatedFetch(`${API_URL}/admin/api-config`);
-        if (response.ok) {
-            const data = await response.json();
+        const data = await cachedFetch(`${API_URL}/admin/api-config`, {}, 'api-config');
+        if (data) {
             
             // Update Groq config
             document.getElementById('groqModel').value = data.groq.model;
@@ -607,6 +615,8 @@ async function updateAPIKey(apiType) {
         if (response.ok) {
             showNotification(`${apiType.charAt(0).toUpperCase() + apiType.slice(1)} API key updated successfully`, 'success');
             document.getElementById(`${apiType}ApiKey`).value = '';
+            // Invalidate API config cache
+            apiCache.clearPattern('api-config');
             await loadAPIConfig();
         } else {
             const error = await response.json();
@@ -642,6 +652,34 @@ function switchTab(tabName) {
         loadAPIConfig();
     } else if (tabName === 'prescriptions') {
         loadPrescriptionAnalytics();
+    }
+}
+
+// Refresh current tab with cache bypass
+function refreshCurrentTab() {
+    // Clear all cache
+    apiCache.clear();
+    
+    // Show notification
+    showNotification('Refreshing data...', 'info');
+    
+    // Reload current tab data
+    const activeTab = document.querySelector('.tab-button.active');
+    if (activeTab) {
+        const tabName = activeTab.id.replace('tab-', '');
+        
+        if (tabName === 'overview') {
+            loadOverviewStats();
+            loadAnalyticsTrends();
+        } else if (tabName === 'users') {
+            loadUsers();
+        } else if (tabName === 'api-usage') {
+            loadAPIUsage();
+        } else if (tabName === 'api-config') {
+            loadAPIConfig();
+        } else if (tabName === 'prescriptions') {
+            loadPrescriptionAnalytics();
+        }
     }
 }
 
