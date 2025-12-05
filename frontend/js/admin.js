@@ -5,6 +5,10 @@ let apiBreakdownChart = null;
 let diseaseChart = null;
 let userActivityChart = null;
 
+// Pagination state
+let currentAPIUsagePage = 1;
+const apiUsagePageSize = 20;
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAdminAccess();
@@ -468,10 +472,6 @@ async function toggleUserStatus(username) {
         showNotification('Error updating user status', 'error');
     }
 }
-
-// Pagination state
-let currentAPIUsagePage = 1;
-const apiUsagePageSize = 20;
 
 async function loadAPIUsage(page = 1) {
     try {
