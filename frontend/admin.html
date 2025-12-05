@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/animated-background.css">
+    <link rel="stylesheet" href="css/admin-loading.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
@@ -347,7 +348,27 @@
 
     <script src="js/notifications.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/admin-loading.js"></script>
     <script src="js/admin.js"></script>
+    <script src="js/admin-pagination.js"></script>
     <script src="js/admin-analytics-fix.js"></script>
+    <script>
+        // Override functions with enhanced versions
+        if (typeof loadOverviewStatsEnhanced !== 'undefined') {
+            loadOverviewStats = loadOverviewStatsEnhanced;
+        }
+        if (typeof loadAnalyticsTrendsEnhanced !== 'undefined') {
+            loadAnalyticsTrends = loadAnalyticsTrendsEnhanced;
+        }
+        if (typeof loadPrescriptionAnalyticsEnhanced !== 'undefined') {
+            loadPrescriptionAnalytics = loadPrescriptionAnalyticsEnhanced;
+        }
+        if (typeof loadUsersEnhanced !== 'undefined') {
+            loadUsers = loadUsersEnhanced;
+        }
+        if (typeof loadAPIUsageEnhanced !== 'undefined') {
+            loadAPIUsage = loadAPIUsageEnhanced;
+        }
+    </script>
 </body>
 </html>

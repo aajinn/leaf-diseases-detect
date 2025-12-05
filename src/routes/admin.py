@@ -209,9 +209,11 @@ async def get_all_users(
 async def get_api_usage(
     days: int = 7,
     api_type: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 20,
     current_admin: UserInDB = Depends(get_current_admin_user),
 ):
-    """Get API usage records"""
+    """Get API usage records with pagination"""
     try:
         usage_collection = MongoDB.get_collection(API_USAGE_COLLECTION)
 
@@ -224,19 +226,28 @@ async def get_api_usage(
         if api_type:
             query["api_type"] = api_type
 
-        # Get records
+        # Get total count for pagination
+        total_count = await usage_collection.count_documents(query)
+        
+        # Calculate pagination
+        skip = (page - 1) * page_size
+        total_pages = (total_count + page_size - 1) // page_size  # Ceiling division
+
+        # Get paginated records
         records = (
             await usage_collection.find(query)
             .sort("timestamp", -1)
-            .limit(100)
-            .to_list(length=100)
+            .skip(skip)
+            .limit(page_size)
+            .to_list(length=page_size)
         )
 
-        # Calculate stats
-        total_cost = sum(record.get("estimated_cost", 0.0) for record in records)
-        total_tokens = sum(record.get("tokens_used", 0) for record in records)
-        successful = sum(1 for record in records if record.get("success", False))
-        failed = len(records) - successful
+        # Calculate stats for ALL records (not just current page)
+        all_records = await usage_collection.find(query).to_list(length=None)
+        total_cost = sum(record.get("estimated_cost", 0.0) for record in all_records)
+        total_tokens = sum(record.get("tokens_used", 0) for record in all_records)
+        successful = sum(1 for record in all_records if record.get("success", False))
+        failed = len(all_records) - successful
 
         return {
             "records": [
@@ -254,11 +265,19 @@ async def get_api_usage(
                 for record in records
             ],
             "stats": {
-                "total_requests": len(records),
+                "total_requests": total_count,
                 "successful": successful,
                 "failed": failed,
                 "total_tokens": total_tokens,
                 "total_cost": round(total_cost, 4),
+            },
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total_pages": total_pages,
+                "total_records": total_count,
+                "has_next": page < total_pages,
+                "has_prev": page > 1,
             },
         }
     except Exception as e:

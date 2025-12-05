@@ -9,6 +9,11 @@ let userActivityChart = null;
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAdminAccess();
     await loadUserInfo();
+    
+    // Show loading states
+    showOverviewLoading();
+    
+    // Load data with smooth animations
     await loadOverviewStats();
     await loadAnalyticsTrends();
     await loadPrescriptionAnalytics();
@@ -464,12 +469,16 @@ async function toggleUserStatus(username) {
     }
 }
 
-async function loadAPIUsage() {
+// Pagination state
+let currentAPIUsagePage = 1;
+const apiUsagePageSize = 20;
+
+async function loadAPIUsage(page = 1) {
     try {
         const apiType = document.getElementById('apiTypeFilter').value;
         const days = document.getElementById('daysFilter').value;
         
-        let url = `${API_URL}/admin/api-usage?days=${days}`;
+        let url = `${API_URL}/admin/api-usage?days=${days}&page=${page}&page_size=${apiUsagePageSize}`;
         if (apiType) {
             url += `&api_type=${apiType}`;
         }
@@ -477,11 +486,18 @@ async function loadAPIUsage() {
         const response = await authenticatedFetch(url);
         if (response.ok) {
             const data = await response.json();
+            currentAPIUsagePage = page;
             displayAPIUsage(data);
         }
     } catch (error) {
         console.error('Error loading API usage:', error);
     }
+}
+
+function changeAPIUsagePage(page) {
+    loadAPIUsage(page);
+    // Scroll to top of table
+    document.getElementById('apiUsageTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function displayAPIUsage(data) {
