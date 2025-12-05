@@ -180,9 +180,8 @@ async function loadOverviewStatsEnhanced() {
     showOverviewLoading();
     
     try {
-        const response = await authenticatedFetch(`${API_URL}/admin/stats/overview`);
-        if (response.ok) {
-            const data = await response.json();
+        const data = await cachedFetch(`${API_URL}/admin/stats/overview`, {}, 'overview-stats');
+        if (data) {
             
             // Animate number changes
             animateValue('totalUsers', 0, data.users.total, 800);
@@ -217,10 +216,13 @@ async function loadAnalyticsTrendsEnhanced() {
     try {
         const days = document.getElementById('trendsDaysFilter')?.value || 30;
         
-        // Load main trends
-        const trendsResponse = await authenticatedFetch(`${API_URL}/admin/analytics/trends?days=${days}`);
-        if (trendsResponse.ok) {
-            const trends = await trendsResponse.json();
+        // Load main trends with caching
+        const trends = await cachedFetch(
+            `${API_URL}/admin/analytics/trends?days=${days}`,
+            { params: { days } },
+            'analytics-trends'
+        );
+        if (trends) {
             
             if (!trends.summary.has_data) {
                 hideAnalyticsLoading();
@@ -245,10 +247,13 @@ async function loadAnalyticsTrendsEnhanced() {
             setTimeout(() => renderDiseaseChart(trends.daily_trends), 700);
         }
         
-        // Load user activity
-        const activityResponse = await authenticatedFetch(`${API_URL}/admin/analytics/user-activity?days=${days}`);
-        if (activityResponse.ok) {
-            const activity = await activityResponse.json();
+        // Load user activity with caching
+        const activity = await cachedFetch(
+            `${API_URL}/admin/analytics/user-activity?days=${days}`,
+            { params: { days } },
+            'user-activity'
+        );
+        if (activity) {
             setTimeout(() => renderUserActivityChart(activity.daily_active_users), 900);
         }
         
@@ -324,21 +329,27 @@ async function loadUsersEnhanced() {
 }
 
 // Enhanced loadAPIUsage with loading state
-async function loadAPIUsageEnhanced() {
+async function loadAPIUsageEnhanced(page = 1) {
     showAPIUsageLoading();
     
     try {
         const apiType = document.getElementById('apiTypeFilter').value;
         const days = document.getElementById('daysFilter').value;
+        const pageSize = 20;
         
-        let url = `${API_URL}/admin/api-usage?days=${days}`;
+        let url = `${API_URL}/admin/api-usage?days=${days}&page=${page}&page_size=${pageSize}`;
         if (apiType) {
             url += `&api_type=${apiType}`;
         }
         
+        console.log('🌐 Fetching API Usage:', url);
+        
         const response = await authenticatedFetch(url);
         if (response.ok) {
             const data = await response.json();
+            
+            console.log('📦 API Response:', data);
+            console.log('📄 Has pagination?', !!data.pagination);
             
             // Small delay for smooth transition
             setTimeout(() => {
@@ -348,6 +359,8 @@ async function loadAPIUsageEnhanced() {
                 const container = document.getElementById('apiUsageTable');
                 container.classList.add('fade-in');
             }, 300);
+        } else {
+            console.error('❌ API Error:', response.status, response.statusText);
         }
     } catch (error) {
         console.error('Error loading API usage:', error);
