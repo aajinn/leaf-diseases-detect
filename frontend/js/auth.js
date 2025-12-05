@@ -1,5 +1,5 @@
-// API Configuration
-const API_URL =  "https://leaf-diseases-detect-c1se.onrender.com";
+// API Configuration is now in config.js
+// This file expects API_URL to be defined globally by config.js
 
 // Session Management
 class SessionManager {
