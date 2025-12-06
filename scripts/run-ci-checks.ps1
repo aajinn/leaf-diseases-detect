@@ -73,12 +73,10 @@ Write-Host ""
 
 # 6. Import Check
 Write-Host "6. Checking FastAPI app imports..." -ForegroundColor Yellow
-# Try python3 first, then python
-$pythonCmd = if (Get-Command python3 -ErrorAction SilentlyContinue) { "python3" } else { "python" }
-& $pythonCmd -c "import sys; sys.path.insert(0, 'src'); from app import app; print('✓ FastAPI app imports successfully')" 2>$null
+py -c "import sys; sys.path.insert(0, 'src'); from app import app; print('✓ FastAPI app imports successfully')" 2>$null
 if ($LASTEXITCODE -ne 0) {
     Write-Host "❌ Import check failed!" -ForegroundColor Red
-    Write-Host "   Make sure Python is installed and in PATH" -ForegroundColor Yellow
+    Write-Host "   Make sure Python is installed (use 'py' command)" -ForegroundColor Yellow
     $failed = $true
 } else {
     Write-Host "✅ Import check passed!" -ForegroundColor Green

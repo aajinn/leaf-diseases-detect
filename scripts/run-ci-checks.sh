@@ -65,10 +65,20 @@ echo ""
 
 # 6. Import Check
 echo "6. Checking FastAPI app imports..."
-if python -c "import sys; sys.path.insert(0, 'src'); from app import app; print('✓ FastAPI app imports successfully')"; then
+# Try py first (Windows), then python3, then python
+if command -v py &> /dev/null; then
+    PYTHON_CMD="py"
+elif command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+else
+    PYTHON_CMD="python"
+fi
+
+if $PYTHON_CMD -c "import sys; sys.path.insert(0, 'src'); from app import app; print('✓ FastAPI app imports successfully')"; then
     echo "✅ Import check passed!"
 else
     echo "❌ Import check failed!"
+    echo "   Make sure Python is installed"
     failed=1
 fi
 echo ""
