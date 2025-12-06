@@ -23,6 +23,7 @@ class CacheManager {
             'prescriptions': 2 * 60 * 1000,      // 2 minutes
             'history': 2 * 60 * 1000,            // 2 minutes
             'analysis-detail': 5 * 60 * 1000,    // 5 minutes
+            'dashboard-stats': 2 * 60 * 1000,    // 2 minutes
             
             // Real-time data - very short cache
             'user-activity': 1 * 60 * 1000,      // 1 minute

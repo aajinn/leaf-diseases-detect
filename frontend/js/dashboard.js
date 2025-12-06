@@ -287,23 +287,26 @@ async function loadUserInfo() {
 
 async function loadStats() {
     try {
-        const response = await authenticatedFetch(`${API_URL}/api/my-analyses`);
+        // Use cached fetch with 2 minute TTL for dashboard stats
+        const data = await cachedFetch(
+            `${API_URL}/api/my-analyses`,
+            {},
+            'dashboard-stats',
+            false
+        );
 
-        if (response.ok) {
-            const data = await response.json();
-            const records = data.records || [];
-            
-            document.getElementById('totalAnalyses').textContent = records.length;
-            
-            const diseased = records.filter(r => r.disease_detected).length;
-            const healthy = records.length - diseased;
-            
-            document.getElementById('diseasesFound').textContent = diseased;
-            document.getElementById('healthyPlants').textContent = healthy;
-            
-            // Show recent activity
-            displayRecentActivity(records.slice(0, 5));
-        }
+        const records = data.records || [];
+        
+        document.getElementById('totalAnalyses').textContent = records.length;
+        
+        const diseased = records.filter(r => r.disease_detected).length;
+        const healthy = records.length - diseased;
+        
+        document.getElementById('diseasesFound').textContent = diseased;
+        document.getElementById('healthyPlants').textContent = healthy;
+        
+        // Show recent activity
+        displayRecentActivity(records.slice(0, 5));
     } catch (error) {
         console.error('Error loading stats:', error);
         if (error.message === 'Session expired') {
@@ -558,6 +561,12 @@ async function analyzeImage() {
             // Speak the results
             if (typeof tts !== 'undefined') {
                 tts.speakAnalysisResult(result);
+            }
+            
+            // Invalidate cache after new analysis
+            if (typeof apiCache !== 'undefined') {
+                apiCache.invalidate('history');
+                apiCache.clearPattern(/dashboard-stats/);
             }
             
             await loadStats(); // Refresh stats
@@ -907,6 +916,11 @@ async function generatePrescription(analysisId) {
                 : 'Prescription generated successfully!';
             
             showNotification(message, 'success');
+            
+            // Invalidate prescriptions cache
+            if (typeof apiCache !== 'undefined') {
+                apiCache.invalidate('prescriptions');
+            }
             
             // Show beautiful confirmation modal
             const viewPrescription = await showPrescriptionConfirm(isExisting);

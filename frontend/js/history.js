@@ -506,6 +506,11 @@ async function generatePrescriptionFromHistory(recordId, buttonElement) {
             
             showNotification(message, 'success');
             
+            // Invalidate prescriptions cache
+            if (typeof apiCache !== 'undefined') {
+                apiCache.invalidate('prescriptions');
+            }
+            
             // Show beautiful confirmation modal
             const viewPrescription = await showPrescriptionConfirm(isExisting);
             if (viewPrescription) {

@@ -229,12 +229,13 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/cache-manager.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let currentPrescriptions = [];
         let currentViewedPrescription = null; // Store the prescription being viewed in modal
 
-        async function loadPrescriptions() {
+        async function loadPrescriptions(forceRefresh = false) {
             try {
                 const token = localStorage.getItem('token');
                 if (!token) {
@@ -242,13 +243,13 @@
                     return;
                 }
 
-                const response = await fetch('/api/prescriptions/my-prescriptions', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
+                // Use cached fetch with 2 minute TTL for prescriptions
+                const data = await cachedFetch(
+                    '/api/prescriptions/my-prescriptions',
+                    {},
+                    'prescriptions',
+                    forceRefresh
+                );
 
                 if (data.success && data.prescriptions.length > 0) {
                     currentPrescriptions = data.prescriptions;
