@@ -3,27 +3,27 @@ Admin Routes for System Management
 ==================================
 """
 
+import hashlib
+import json
+import logging
 import os
 from datetime import datetime, timedelta
+from functools import lru_cache
 from typing import Dict, List, Optional
 
 from dotenv import load_dotenv, set_key
 from fastapi import APIRouter, Depends, HTTPException, status
-from functools import lru_cache
-import hashlib
-import json
 
 from src.auth.security import get_current_admin_user
-from src.database.admin_models import (APIConfig, APIUsageRecord, UsageStats,
-                                       UserStats)
-from src.database.connection import (ANALYSIS_COLLECTION, USERS_COLLECTION,
-                                     MongoDB)
+from src.database.admin_models import APIConfig, APIUsageRecord, UsageStats, UserStats
+from src.database.connection import ANALYSIS_COLLECTION, USERS_COLLECTION, MongoDB
 from src.database.models import UserInDB
 from src.services.analytics_service import AnalyticsService
 
 load_dotenv()
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+logger = logging.getLogger(__name__)
 
 # Simple in-memory cache with TTL
 _cache: Dict[str, tuple[datetime, any]] = {}
@@ -33,22 +33,23 @@ CACHE_TTL_SECONDS = 60  # Cache for 1 minute
 def get_cached_or_compute(cache_key: str, compute_func, ttl_seconds: int = CACHE_TTL_SECONDS):
     """Get cached result or compute new one"""
     now = datetime.utcnow()
-    
+
     if cache_key in _cache:
         cached_time, cached_value = _cache[cache_key]
         if (now - cached_time).total_seconds() < ttl_seconds:
             return cached_value
-    
+
     # Compute new value
     result = compute_func()
     _cache[cache_key] = (now, result)
-    
+
     # Clean old cache entries (simple cleanup)
     if len(_cache) > 100:
         cutoff = now - timedelta(seconds=ttl_seconds * 2)
         _cache.clear()  # Simple approach: clear all if too many
-    
+
     return result
+
 
 # Collection names
 API_USAGE_COLLECTION = "api_usage"
@@ -70,12 +71,8 @@ async def get_overview_stats(current_admin: UserInDB = Depends(get_current_admin
 
         # Analysis stats
         total_analyses = await analysis_collection.count_documents({})
-        diseases_detected = await analysis_collection.count_documents(
-            {"disease_detected": True}
-        )
-        healthy_plants = await analysis_collection.count_documents(
-            {"disease_detected": False}
-        )
+        diseases_detected = await analysis_collection.count_documents({"disease_detected": True})
+        healthy_plants = await analysis_collection.count_documents({"disease_detected": False})
 
         # API usage stats
         total_api_calls = await usage_collection.count_documents({})
@@ -142,21 +139,14 @@ async def get_all_users(
         analysis_collection = MongoDB.get_collection(ANALYSIS_COLLECTION)
         usage_collection = MongoDB.get_collection(API_USAGE_COLLECTION)
 
-        users = (
-            await users_collection.find({})
-            .skip(skip)
-            .limit(limit)
-            .to_list(length=limit)
-        )
+        users = await users_collection.find({}).skip(skip).limit(limit).to_list(length=limit)
 
         user_stats = []
         for user in users:
             user_id = str(user["_id"])
 
             # Get analysis stats
-            total_analyses = await analysis_collection.count_documents(
-                {"user_id": user_id}
-            )
+            total_analyses = await analysis_collection.count_documents({"user_id": user_id})
             diseases = await analysis_collection.count_documents(
                 {"user_id": user_id, "disease_detected": True}
             )
@@ -170,9 +160,7 @@ async def get_all_users(
             )
 
             # Get API cost
-            user_usage = await usage_collection.find({"user_id": user_id}).to_list(
-                length=None
-            )
+            user_usage = await usage_collection.find({"user_id": user_id}).to_list(length=None)
             total_cost = sum(record.get("estimated_cost", 0.0) for record in user_usage)
 
             user_stats.append(
@@ -228,7 +216,7 @@ async def get_api_usage(
 
         # Get total count for pagination
         total_count = await usage_collection.count_documents(query)
-        
+
         # Calculate pagination
         skip = (page - 1) * page_size
         total_pages = (total_count + page_size - 1) // page_size  # Ceiling division
@@ -298,9 +286,7 @@ async def get_api_config(current_admin: UserInDB = Depends(get_current_admin_use
                     if os.getenv("GROQ_API_KEY")
                     else "Not set"
                 ),
-                "model": os.getenv(
-                    "MODEL_NAME", "meta-llama/llama-4-scout-17b-16e-instruct"
-                ),
+                "model": os.getenv("MODEL_NAME", "meta-llama/llama-4-scout-17b-16e-instruct"),
                 "is_active": bool(os.getenv("GROQ_API_KEY")),
             },
             "perplexity": {
@@ -365,9 +351,7 @@ async def toggle_user_active(
 
         user = await users_collection.find_one({"username": username})
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         new_status = not user["is_active"]
         await users_collection.update_one(
@@ -417,9 +401,7 @@ async def get_usage_chart_data(
                 {"timestamp": {"$gte": day_start, "$lt": day_end}}
             ).to_list(length=None)
 
-            daily_cost = sum(
-                record.get("estimated_cost", 0.0) for record in usage_records
-            )
+            daily_cost = sum(record.get("estimated_cost", 0.0) for record in usage_records)
 
             daily_data.append(
                 {
@@ -444,28 +426,28 @@ async def get_analytics_trends(
 ):
     """
     Get comprehensive analytics trends (CACHED for 1 minute)
-    
+
     Returns detailed trend data including:
     - Daily API calls, analyses, costs
     - Growth rates and averages
     - API breakdown (Groq vs Perplexity)
-    
+
     Performance: Uses MongoDB aggregation pipelines and in-memory caching
     """
     try:
         cache_key = f"analytics_trends_{days}"
-        
+
         # Check cache first
         now = datetime.utcnow()
         if cache_key in _cache:
             cached_time, cached_value = _cache[cache_key]
             if (now - cached_time).total_seconds() < CACHE_TTL_SECONDS:
                 return cached_value
-        
+
         # Compute new value
         trends = await AnalyticsService.get_trends(days)
         _cache[cache_key] = (now, trends)
-        
+
         return trends
     except Exception as e:
         raise HTTPException(
@@ -481,18 +463,18 @@ async def get_user_activity_trends(
     """Get user activity trends over time (CACHED for 1 minute)"""
     try:
         cache_key = f"user_activity_{days}"
-        
+
         # Check cache
         now = datetime.utcnow()
         if cache_key in _cache:
             cached_time, cached_value = _cache[cache_key]
             if (now - cached_time).total_seconds() < CACHE_TTL_SECONDS:
                 return cached_value
-        
+
         # Compute new value
         activity = await AnalyticsService.get_user_activity_trends(days)
         _cache[cache_key] = (now, activity)
-        
+
         return activity
     except Exception as e:
         raise HTTPException(
@@ -508,18 +490,18 @@ async def get_cost_breakdown(
     """Get detailed cost breakdown by API and model (CACHED for 1 minute)"""
     try:
         cache_key = f"cost_breakdown_{days}"
-        
+
         # Check cache
         now = datetime.utcnow()
         if cache_key in _cache:
             cached_time, cached_value = _cache[cache_key]
             if (now - cached_time).total_seconds() < CACHE_TTL_SECONDS:
                 return cached_value
-        
+
         # Compute new value
         breakdown = await AnalyticsService.get_cost_breakdown(days)
         _cache[cache_key] = (now, breakdown)
-        
+
         return breakdown
     except Exception as e:
         raise HTTPException(
@@ -528,19 +510,17 @@ async def get_cost_breakdown(
         )
 
 
-
 @router.get("/analytics/prescriptions")
 async def get_prescription_analytics(
-    days: int = 30,
-    current_admin: UserInDB = Depends(get_current_admin_user)
+    days: int = 30, current_admin: UserInDB = Depends(get_current_admin_user)
 ):
     """
     Get prescription analytics and statistics
-    
+
     Args:
         days: Number of days to analyze (default: 30)
         current_admin: Authenticated admin user
-        
+
     Returns:
         Prescription statistics including:
         - Total prescriptions generated
@@ -552,16 +532,12 @@ async def get_prescription_analytics(
     """
     try:
         stats = await AnalyticsService.get_prescription_stats(days)
-        
-        return {
-            "success": True,
-            "period_days": days,
-            "stats": stats
-        }
-        
+
+        return {"success": True, "period_days": days, "stats": stats}
+
     except Exception as e:
         logger.error(f"Failed to get prescription analytics: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch prescription analytics: {str(e)}"
+            detail=f"Failed to fetch prescription analytics: {str(e)}",
         )

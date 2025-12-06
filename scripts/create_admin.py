@@ -19,9 +19,7 @@ from src.database.connection import USERS_COLLECTION, MongoDB
 from src.database.models import UserInDB
 
 
-async def create_admin_user(
-    username: str, email: str, password: str, full_name: str = None
-):
+async def create_admin_user(username: str, email: str, password: str, full_name: str = None):
     """Create an admin user"""
     try:
         # Connect to database

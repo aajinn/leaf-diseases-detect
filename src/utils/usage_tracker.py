@@ -27,7 +27,7 @@ async def track_groq_usage(
 ):
     """
     Track Groq API usage with cost calculation
-    
+
     Args:
         user_id: User identifier
         username: Username
@@ -43,7 +43,7 @@ async def track_groq_usage(
         pricing = GROQ_PRICING.get(
             model, {"input": 0.05, "output": 0.08}
         )  # Default to llama-4-scout pricing
-        
+
         # Calculate cost based on input/output tokens if available
         if input_tokens is not None and output_tokens is not None:
             input_cost = (input_tokens / 1_000_000) * pricing["input"]

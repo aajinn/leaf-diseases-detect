@@ -10,9 +10,7 @@ from dotenv import load_dotenv
 from groq import Groq
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -218,9 +216,7 @@ class LeafDiseaseDetector:
                             {"type": "text", "text": self.create_analysis_prompt()},
                             {
                                 "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{base64_image}"
-                                },
+                                "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
                             },
                         ],
                     }
@@ -293,9 +289,7 @@ class LeafDiseaseDetector:
             )
 
         except json.JSONDecodeError:
-            logger.warning(
-                "Failed to parse as JSON, attempting to extract JSON from response"
-            )
+            logger.warning("Failed to parse as JSON, attempting to extract JSON from response")
 
             # Try to find JSON in the response using regex
             import re
@@ -307,9 +301,7 @@ class LeafDiseaseDetector:
                     logger.info("JSON extracted and parsed successfully")
 
                     return DiseaseAnalysisResult(
-                        disease_detected=bool(
-                            disease_data.get("disease_detected", False)
-                        ),
+                        disease_detected=bool(disease_data.get("disease_detected", False)),
                         disease_name=disease_data.get("disease_name"),
                         disease_type=disease_data.get("disease_type", "unknown"),
                         severity=disease_data.get("severity", "unknown"),
@@ -322,12 +314,8 @@ class LeafDiseaseDetector:
                     pass
 
             # If all parsing attempts fail, log the raw response and raise error
-            logger.error(
-                f"Could not parse response as JSON. Raw response: {response_content}"
-            )
-            raise ValueError(
-                f"Unable to parse API response as JSON: {response_content[:200]}..."
-            )
+            logger.error(f"Could not parse response as JSON. Raw response: {response_content}")
+            raise ValueError(f"Unable to parse API response as JSON: {response_content[:200]}...")
 
 
 def main():

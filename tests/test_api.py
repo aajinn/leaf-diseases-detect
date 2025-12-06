@@ -30,9 +30,7 @@ def test_api_endpoint(api_url: str = "http://localhost:8000"):
             print("\nResponse:")
             print(json.dumps(result, indent=2))
         else:
-            print(
-                f"✗ File upload API request failed with status {response.status_code}"
-            )
+            print(f"✗ File upload API request failed with status {response.status_code}")
             print(f"Response: {response.text}")
     except Exception as e:
         print(f"Error (file upload endpoint): {str(e)}")

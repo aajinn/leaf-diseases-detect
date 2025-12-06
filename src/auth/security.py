@@ -34,9 +34,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         # Ensure password is bytes and truncate if necessary
         password_bytes = plain_password.encode("utf-8")[:72]
         hashed_bytes = (
-            hashed_password.encode("utf-8")
-            if isinstance(hashed_password, str)
-            else hashed_password
+            hashed_password.encode("utf-8") if isinstance(hashed_password, str) else hashed_password
         )
         return bcrypt.checkpw(password_bytes, hashed_bytes)
     except Exception as e:
@@ -101,9 +99,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = TokenData(
-            username=username, is_admin=payload.get("is_admin", False)
-        )
+        token_data = TokenData(username=username, is_admin=payload.get("is_admin", False))
     except JWTError:
         raise credentials_exception
 
@@ -127,7 +123,5 @@ async def get_current_admin_user(
 ) -> UserInDB:
     """Get current admin user"""
     if not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
     return current_user

@@ -28,13 +28,13 @@ class AnalyticsService:
     async def get_trends(days: int = 30) -> Dict:
         """
         Get trend data for analytics dashboard (OPTIMIZED)
-        
+
         Uses MongoDB aggregation pipelines to minimize database queries
         and reduce memory usage.
-        
+
         Args:
             days: Number of days to analyze (default: 30)
-            
+
         Returns:
             Dictionary containing trend data
         """
@@ -66,9 +66,9 @@ class AnalyticsService:
                 {"$sort": {"_id.date": 1}},
             ]
 
-            api_usage_results = await usage_collection.aggregate(
-                api_usage_pipeline
-            ).to_list(length=None)
+            api_usage_results = await usage_collection.aggregate(api_usage_pipeline).to_list(
+                length=None
+            )
 
             # OPTIMIZATION 2: Use aggregation pipeline for analyses (single query)
             analysis_pipeline = [
@@ -90,25 +90,25 @@ class AnalyticsService:
                 {"$sort": {"_id.date": 1}},
             ]
 
-            analysis_results = await analysis_collection.aggregate(
-                analysis_pipeline
-            ).to_list(length=None)
+            analysis_results = await analysis_collection.aggregate(analysis_pipeline).to_list(
+                length=None
+            )
 
             # OPTIMIZATION 3: Build daily trends from aggregated data (in-memory)
             daily_trends = []
-            
+
             # Create lookup dictionaries for O(1) access
             api_usage_by_date = {}
             for result in api_usage_results:
                 date = result["_id"]["date"]
                 api_type = result["_id"]["api_type"]
-                
+
                 if date not in api_usage_by_date:
                     api_usage_by_date[date] = {
                         "groq": {"count": 0, "cost": 0, "tokens": 0},
                         "perplexity": {"count": 0, "cost": 0, "tokens": 0},
                     }
-                
+
                 api_usage_by_date[date][api_type] = {
                     "count": result["count"],
                     "cost": result["total_cost"],
@@ -119,10 +119,10 @@ class AnalyticsService:
             for result in analysis_results:
                 date = result["_id"]["date"]
                 disease_detected = result["_id"]["disease_detected"]
-                
+
                 if date not in analysis_by_date:
                     analysis_by_date[date] = {"diseased": 0, "healthy": 0}
-                
+
                 if disease_detected:
                     analysis_by_date[date]["diseased"] = result["count"]
                 else:
@@ -132,7 +132,7 @@ class AnalyticsService:
             for i in range(days):
                 day_start = start_date + timedelta(days=i)
                 date_str = day_start.strftime("%Y-%m-%d")
-                
+
                 # Get API usage data
                 api_data = api_usage_by_date.get(
                     date_str,
@@ -141,13 +141,13 @@ class AnalyticsService:
                         "perplexity": {"count": 0, "cost": 0, "tokens": 0},
                     },
                 )
-                
+
                 groq_calls = api_data["groq"]["count"]
                 perplexity_calls = api_data["perplexity"]["count"]
                 groq_cost = api_data["groq"]["cost"]
                 perplexity_cost = api_data["perplexity"]["cost"]
                 total_tokens = api_data["groq"]["tokens"] + api_data["perplexity"]["tokens"]
-                
+
                 # Get analysis data
                 analysis_data = analysis_by_date.get(date_str, {"diseased": 0, "healthy": 0})
                 diseases_detected = analysis_data["diseased"]
@@ -183,20 +183,22 @@ class AnalyticsService:
             # Calculate growth rates (comparing first half vs second half)
             mid_point = max(1, days // 2)  # Ensure at least 1
             first_half_calls = sum(day["api_calls"] for day in daily_trends[:mid_point])
-            second_half_calls = sum(
-                day["api_calls"] for day in daily_trends[mid_point:]
-            )
+            second_half_calls = sum(day["api_calls"] for day in daily_trends[mid_point:])
             growth_rate = (
                 ((second_half_calls - first_half_calls) / first_half_calls * 100)
                 if first_half_calls > 0
                 else 0
             )
-            
+
             # Add data availability flag
             has_data = total_api_calls > 0 or total_analyses > 0
 
             return {
-                "period": {"start": start_date.isoformat(), "end": datetime.utcnow().isoformat(), "days": days},
+                "period": {
+                    "start": start_date.isoformat(),
+                    "end": datetime.utcnow().isoformat(),
+                    "days": days,
+                },
                 "daily_trends": daily_trends,
                 "summary": {
                     "total_api_calls": total_api_calls,
@@ -261,11 +263,10 @@ class AnalyticsService:
             for i in range(days):
                 day_start = start_date + timedelta(days=i)
                 date_str = day_start.strftime("%Y-%m-%d")
-                
-                daily_active_users.append({
-                    "date": date_str,
-                    "active_users": activity_by_date.get(date_str, 0)
-                })
+
+                daily_active_users.append(
+                    {"date": date_str, "active_users": activity_by_date.get(date_str, 0)}
+                )
 
             # Get total registered users (cached query)
             total_users = await users_collection.count_documents({})
@@ -353,24 +354,23 @@ class AnalyticsService:
             logger.error(f"Failed to get cost breakdown: {str(e)}")
             raise
 
-
     @staticmethod
     async def get_prescription_stats(days: int = 30) -> Dict:
         """
         Get prescription statistics
-        
+
         Args:
             days: Number of days to analyze
-            
+
         Returns:
             Dictionary containing prescription statistics
         """
         try:
             from src.services.prescription_service import PRESCRIPTION_COLLECTION
-            
+
             prescription_collection = MongoDB.get_collection(PRESCRIPTION_COLLECTION)
             start_date = datetime.utcnow() - timedelta(days=days)
-            
+
             # Aggregation pipeline for prescription stats
             pipeline = [
                 {"$match": {"created_at": {"$gte": start_date}}},
@@ -378,34 +378,19 @@ class AnalyticsService:
                     "$facet": {
                         # Total prescriptions
                         "total": [{"$count": "count"}],
-                        
                         # By priority
                         "by_priority": [
-                            {"$group": {
-                                "_id": "$treatment_priority",
-                                "count": {"$sum": 1}
-                            }},
-                            {"$sort": {"count": -1}}
+                            {"$group": {"_id": "$treatment_priority", "count": {"$sum": 1}}},
+                            {"$sort": {"count": -1}},
                         ],
-                        
                         # By disease
                         "by_disease": [
-                            {"$group": {
-                                "_id": "$disease_name",
-                                "count": {"$sum": 1}
-                            }},
+                            {"$group": {"_id": "$disease_name", "count": {"$sum": 1}}},
                             {"$sort": {"count": -1}},
-                            {"$limit": 10}
+                            {"$limit": 10},
                         ],
-                        
                         # By status
-                        "by_status": [
-                            {"$group": {
-                                "_id": "$status",
-                                "count": {"$sum": 1}
-                            }}
-                        ],
-                        
+                        "by_status": [{"$group": {"_id": "$status", "count": {"$sum": 1}}}],
                         # Daily trend
                         "daily_trend": [
                             {
@@ -413,30 +398,26 @@ class AnalyticsService:
                                     "_id": {
                                         "$dateToString": {
                                             "format": "%Y-%m-%d",
-                                            "date": "$created_at"
+                                            "date": "$created_at",
                                         }
                                     },
-                                    "count": {"$sum": 1}
+                                    "count": {"$sum": 1},
                                 }
                             },
-                            {"$sort": {"_id": 1}}
+                            {"$sort": {"_id": 1}},
                         ],
-                        
                         # Top users
                         "top_users": [
-                            {"$group": {
-                                "_id": "$username",
-                                "count": {"$sum": 1}
-                            }},
+                            {"$group": {"_id": "$username", "count": {"$sum": 1}}},
                             {"$sort": {"count": -1}},
-                            {"$limit": 5}
-                        ]
+                            {"$limit": 5},
+                        ],
                     }
-                }
+                },
             ]
-            
+
             result = await prescription_collection.aggregate(pipeline).to_list(length=1)
-            
+
             if not result:
                 return {
                     "total_prescriptions": 0,
@@ -444,20 +425,20 @@ class AnalyticsService:
                     "by_disease": [],
                     "by_status": [],
                     "daily_trend": [],
-                    "top_users": []
+                    "top_users": [],
                 }
-            
+
             data = result[0]
-            
+
             return {
                 "total_prescriptions": data["total"][0]["count"] if data["total"] else 0,
                 "by_priority": data["by_priority"],
                 "by_disease": data["by_disease"],
                 "by_status": data["by_status"],
                 "daily_trend": data["daily_trend"],
-                "top_users": data["top_users"]
+                "top_users": data["top_users"],
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to get prescription stats: {str(e)}")
             return {
@@ -466,5 +447,5 @@ class AnalyticsService:
                 "by_disease": [],
                 "by_status": [],
                 "daily_trend": [],
-                "top_users": []
+                "top_users": [],
             }

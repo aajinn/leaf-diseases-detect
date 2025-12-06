@@ -25,9 +25,7 @@ def generate_unique_filename(original_filename: str) -> str:
     return f"{timestamp}_{unique_id}{extension}"
 
 
-def save_image(
-    file_content: bytes, original_filename: str, username: str
-) -> tuple[str, str]:
+def save_image(file_content: bytes, original_filename: str, username: str) -> tuple[str, str]:
     """
     Save image to local storage
 

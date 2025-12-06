@@ -36,17 +36,13 @@ class PerplexityService:
     def __init__(self, api_key: Optional[str] = None):
         """Initialize Perplexity service"""
         if not PERPLEXITY_AVAILABLE:
-            logger.error(
-                "Perplexity package not available - video recommendations disabled"
-            )
+            logger.error("Perplexity package not available - video recommendations disabled")
             self.enabled = False
             return
 
         self.api_key = api_key or os.environ.get("PERPLEXITY_API_KEY")
         if not self.api_key:
-            logger.warning(
-                "PERPLEXITY_API_KEY not found - video recommendations disabled"
-            )
+            logger.warning("PERPLEXITY_API_KEY not found - video recommendations disabled")
             self.enabled = False
         else:
             try:
@@ -124,9 +120,7 @@ class PerplexityService:
             List of YouTubeVideo objects
         """
         if not self.enabled:
-            logger.warning(
-                "Perplexity service not enabled - returning empty video list"
-            )
+            logger.warning("Perplexity service not enabled - returning empty video list")
             return []
 
         try:

@@ -42,9 +42,7 @@ async def make_admin():
         return
 
     # Update user to admin
-    result = await users_collection.update_one(
-        {"username": username}, {"$set": {"is_admin": True}}
-    )
+    result = await users_collection.update_one({"username": username}, {"$set": {"is_admin": True}})
 
     if result.modified_count > 0:
         print(f"\n✓ User '{username}' is now an admin!")

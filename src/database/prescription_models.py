@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 class PurchaseLink(BaseModel):
     """Purchase link for a product"""
+
     platform: str  # "Amazon", "Flipkart", "BigBasket", etc.
     url: str
     price: Optional[str] = None
@@ -52,25 +53,25 @@ class Prescription(BaseModel):
     user_id: str
     username: str
     analysis_id: str  # Reference to original analysis
-    
+
     # Disease information
     disease_name: str
     disease_type: str
     severity: str
     confidence: float
-    
+
     # Treatment plan
     treatment_priority: str  # "urgent", "high", "moderate", "low"
     treatment_duration: str  # "1-2 weeks", "2-4 weeks", etc.
     treatment_steps: List[TreatmentStep]
     product_recommendations: List[ProductRecommendation]
-    
+
     # Additional guidance
     prevention_tips: List[str] = []
     monitoring_schedule: List[str] = []
     warning_signs: List[str] = []
     success_indicators: List[str] = []
-    
+
     # Metadata
     created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
     expires_at: Optional[datetime] = None

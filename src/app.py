@@ -5,12 +5,12 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from routes.prescription_routes import router as prescription_router
 from src.auth.routes import router as auth_router
 from src.database.connection import MongoDB
 from src.image_utils import convert_image_to_base64_and_test
 from src.routes.admin import router as admin_router
 from src.routes.disease_detection import router as detection_router
-from routes.prescription_routes import router as prescription_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -149,9 +149,7 @@ async def api_info():
             "Analysis history tracking",
         ],
         "endpoints": {
-            "public": {
-                "disease_detection_file": "/disease-detection-file (POST, no auth)"
-            },
+            "public": {"disease_detection_file": "/disease-detection-file (POST, no auth)"},
             "auth": {
                 "register": "/auth/register (POST)",
                 "login": "/auth/login (POST)",

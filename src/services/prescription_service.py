@@ -224,7 +224,10 @@ class PrescriptionService:
                     "application_method": "Soil application",
                     "frequency": "Monthly",
                     "duration": "Growing season",
-                    "safety_precautions": ["Follow package instructions", "Water after application"],
+                    "safety_precautions": [
+                        "Follow package instructions",
+                        "Water after application",
+                    ],
                     "estimated_cost": "$10-15",
                     "estimated_cost_inr": "₹800-1,200",
                 },
@@ -264,7 +267,7 @@ class PrescriptionService:
     ) -> Prescription:
         """
         Generate a comprehensive treatment prescription
-        
+
         Args:
             user_id: User identifier
             username: Username
@@ -273,40 +276,37 @@ class PrescriptionService:
             disease_type: Type of disease
             severity: Severity level
             confidence: Detection confidence
-            
+
         Returns:
             Generated prescription
         """
         try:
             # Generate unique prescription ID
             prescription_id = f"RX-{datetime.now().strftime('%Y%m%d')}-{str(ObjectId())[:8]}"
-            
+
             # Get treatment protocol (fallback to generic if not found)
             protocol_key = disease_name.lower().replace(" ", "_")
-            protocol = cls.TREATMENT_PROTOCOLS.get(
-                protocol_key, cls.TREATMENT_PROTOCOLS["healthy"]
-            )
-            
+            protocol = cls.TREATMENT_PROTOCOLS.get(protocol_key, cls.TREATMENT_PROTOCOLS["healthy"])
+
             # Adjust treatment based on severity
             adjusted_protocol = cls._adjust_for_severity(protocol, severity)
-            
+
             # Create product recommendations with purchase links
             products = []
             for product_data in adjusted_protocol["products"]:
                 # Fetch purchase links for each product
                 purchase_links = await cls.get_purchase_links(
-                    product_data["name"],
-                    product_data["type"]
+                    product_data["name"], product_data["type"]
                 )
                 product_data["purchase_links"] = [link.dict() for link in purchase_links]
                 products.append(ProductRecommendation(**product_data))
-            
+
             # Create treatment steps
             steps = [TreatmentStep(**step) for step in adjusted_protocol["steps"]]
-            
+
             # Calculate expiration (prescriptions valid for 90 days)
             expires_at = datetime.utcnow() + timedelta(days=90)
-            
+
             # Create prescription
             prescription = Prescription(
                 prescription_id=prescription_id,
@@ -327,7 +327,7 @@ class PrescriptionService:
                 success_indicators=adjusted_protocol["success_indicators"],
                 expires_at=expires_at,
             )
-            
+
             # Save to database
             collection = MongoDB.get_collection(PRESCRIPTION_COLLECTION)
             # Exclude id field when inserting (MongoDB will generate _id)
@@ -336,29 +336,30 @@ class PrescriptionService:
             prescription_dict.pop("_id", None)
             result = await collection.insert_one(prescription_dict)
             prescription.id = str(result.inserted_id)
-            
+
             logger.info(f"Generated prescription {prescription_id} for user {username}")
             return prescription
-            
+
         except Exception as e:
             logger.error(f"Failed to generate prescription: {str(e)}")
             raise
-    
+
     @classmethod
     def _adjust_for_severity(cls, protocol: Dict, severity: str) -> Dict:
         """
         Adjust treatment protocol based on disease severity
-        
+
         Args:
             protocol: Base treatment protocol
             severity: Disease severity level
-            
+
         Returns:
             Adjusted protocol
         """
         import copy
+
         adjusted = copy.deepcopy(protocol)
-        
+
         if severity.lower() in ["severe", "critical"]:
             # Increase treatment frequency for severe cases
             adjusted["priority"] = "urgent"
@@ -367,7 +368,7 @@ class PrescriptionService:
                     product["frequency"] = "Every 7-10 days"
                 elif "Every 7-10 days" in product["frequency"]:
                     product["frequency"] = "Every 5-7 days"
-                    
+
         elif severity.lower() in ["mild", "low"]:
             # Reduce treatment intensity for mild cases
             adjusted["priority"] = "low"
@@ -376,105 +377,100 @@ class PrescriptionService:
                     product["frequency"] = "Every 7-10 days"
                 elif "Every 7-10 days" in product["frequency"]:
                     product["frequency"] = "Every 10-14 days"
-        
+
         return adjusted
-    
+
     @classmethod
     async def get_user_prescriptions(
         cls, user_id: str, limit: int = 10, skip: int = 0
     ) -> List[Prescription]:
         """
         Get prescriptions for a user
-        
+
         Args:
             user_id: User identifier
             limit: Maximum number of prescriptions to return
             skip: Number of prescriptions to skip
-            
+
         Returns:
             List of prescriptions
         """
         try:
             collection = MongoDB.get_collection(PRESCRIPTION_COLLECTION)
             cursor = (
-                collection.find({"user_id": user_id})
-                .sort("created_at", -1)
-                .skip(skip)
-                .limit(limit)
+                collection.find({"user_id": user_id}).sort("created_at", -1).skip(skip).limit(limit)
             )
-            
+
             prescriptions = []
             async for doc in cursor:
                 doc["_id"] = str(doc["_id"])
                 prescriptions.append(Prescription(**doc))
-            
+
             return prescriptions
-            
+
         except Exception as e:
             logger.error(f"Failed to get user prescriptions: {str(e)}")
             return []
-    
+
     @classmethod
     async def get_prescription_by_id(cls, prescription_id: str) -> Optional[Prescription]:
         """
         Get prescription by ID
-        
+
         Args:
             prescription_id: Prescription identifier
-            
+
         Returns:
             Prescription if found, None otherwise
         """
         try:
             collection = MongoDB.get_collection(PRESCRIPTION_COLLECTION)
             doc = await collection.find_one({"prescription_id": prescription_id})
-            
+
             if doc:
                 doc["_id"] = str(doc["_id"])
                 return Prescription(**doc)
-            
-            return None
-            
-        except Exception as e:
-            logger.error(f"Failed to get prescription: {str(e)}\"")
+
             return None
 
-    
+        except Exception as e:
+            logger.error(f'Failed to get prescription: {str(e)}"')
+            return None
+
     @classmethod
     async def get_prescription_by_analysis_id(cls, analysis_id: str) -> Optional[Prescription]:
         """
         Get prescription by analysis ID
-        
+
         Args:
             analysis_id: Analysis identifier
-            
+
         Returns:
             Prescription if found, None otherwise
         """
         try:
             collection = MongoDB.get_collection(PRESCRIPTION_COLLECTION)
             doc = await collection.find_one({"analysis_id": analysis_id})
-            
+
             if doc:
                 doc["_id"] = str(doc["_id"])
                 return Prescription(**doc)
-            
+
             return None
-            
+
         except Exception as e:
             logger.error(f"Failed to get prescription by analysis ID: {str(e)}")
             return None
 
-    
     @classmethod
     async def get_purchase_links(cls, product_name: str, product_type: str) -> List[PurchaseLink]:
         """
         Get purchase links for a product using Perplexity API
-        
+
         Args:
             product_name: Name of the product
             product_type: Type of product (fungicide, pesticide, etc.)
-            
+
         Returns:
             List of purchase links
         """
@@ -483,64 +479,69 @@ class PrescriptionService:
             if not perplexity.enabled:
                 logger.warning("Perplexity service not enabled, returning empty purchase links")
                 return []
-            
+
             # Create search query for Indian e-commerce platforms
             query = f"Where can I buy {product_name} {product_type} in India? Provide links to Amazon India, Flipkart, and other agricultural product stores with current prices in INR."
-            
+
             # Use Perplexity to search
             response = perplexity.client.chat.completions.create(
                 model="sonar",
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a helpful assistant that finds product purchase links on Indian e-commerce platforms. Provide direct product links and prices in INR format."
+                        "content": "You are a helpful assistant that finds product purchase links on Indian e-commerce platforms. Provide direct product links and prices in INR format.",
                     },
-                    {
-                        "role": "user",
-                        "content": query
-                    }
-                ]
+                    {"role": "user", "content": query},
+                ],
             )
-            
+
             content = response.choices[0].message.content
             logger.info(f"Perplexity response for {product_name}: {content}")
-            
+
             # Parse the response to extract links
             # This is a simplified parser - you might want to make it more robust
             purchase_links = []
-            
+
             # Look for common patterns in the response
             if "amazon" in content.lower():
-                purchase_links.append(PurchaseLink(
-                    platform="Amazon India",
-                    url=f"https://www.amazon.in/s?k={product_name.replace(' ', '+')}",
-                    price=None
-                ))
-            
+                purchase_links.append(
+                    PurchaseLink(
+                        platform="Amazon India",
+                        url=f"https://www.amazon.in/s?k={product_name.replace(' ', '+')}",
+                        price=None,
+                    )
+                )
+
             if "flipkart" in content.lower():
-                purchase_links.append(PurchaseLink(
-                    platform="Flipkart",
-                    url=f"https://www.flipkart.com/search?q={product_name.replace(' ', '%20')}",
-                    price=None
-                ))
-            
+                purchase_links.append(
+                    PurchaseLink(
+                        platform="Flipkart",
+                        url=f"https://www.flipkart.com/search?q={product_name.replace(' ', '%20')}",
+                        price=None,
+                    )
+                )
+
             # Add BigBasket for organic products
             if product_type.lower() in ["organic", "fertilizer"]:
-                purchase_links.append(PurchaseLink(
-                    platform="BigBasket",
-                    url=f"https://www.bigbasket.com/ps/?q={product_name.replace(' ', '%20')}",
-                    price=None
-                ))
-            
+                purchase_links.append(
+                    PurchaseLink(
+                        platform="BigBasket",
+                        url=f"https://www.bigbasket.com/ps/?q={product_name.replace(' ', '%20')}",
+                        price=None,
+                    )
+                )
+
             # Add AgroStar for agricultural products
-            purchase_links.append(PurchaseLink(
-                platform="AgroStar",
-                url=f"https://www.agrostar.in/search?q={product_name.replace(' ', '+')}",
-                price=None
-            ))
-            
+            purchase_links.append(
+                PurchaseLink(
+                    platform="AgroStar",
+                    url=f"https://www.agrostar.in/search?q={product_name.replace(' ', '+')}",
+                    price=None,
+                )
+            )
+
             return purchase_links
-            
+
         except Exception as e:
             logger.error(f"Failed to get purchase links: {str(e)}")
             # Return default search links even if Perplexity fails
@@ -548,16 +549,16 @@ class PrescriptionService:
                 PurchaseLink(
                     platform="Amazon India",
                     url=f"https://www.amazon.in/s?k={product_name.replace(' ', '+')}",
-                    price=None
+                    price=None,
                 ),
                 PurchaseLink(
                     platform="Flipkart",
                     url=f"https://www.flipkart.com/search?q={product_name.replace(' ', '%20')}",
-                    price=None
+                    price=None,
                 ),
                 PurchaseLink(
                     platform="AgroStar",
                     url=f"https://www.agrostar.in/search?q={product_name.replace(' ', '+')}",
-                    price=None
-                )
+                    price=None,
+                ),
             ]

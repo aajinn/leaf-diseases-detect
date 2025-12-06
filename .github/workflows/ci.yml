@@ -28,23 +28,23 @@ jobs:
       
       - name: Check code formatting with Black
         run: |
-          black --check --diff . --exclude '/(\.git|\.venv|venv|__pycache__|node_modules|build|dist|Leaf Disease)/'
+          black --check --diff . --exclude '/(\.git|\.venv|venv|__pycache__|node_modules|build|dist)/' --extend-exclude 'Leaf Disease'
         continue-on-error: false
       
       - name: Check import sorting with isort
         run: |
-          isort --check-only --diff . --skip-gitignore
+          isort --check-only --diff . --skip-gitignore --extend-skip 'Leaf Disease'
         continue-on-error: false
       
       - name: Lint with flake8 (Critical Errors)
         run: |
           # Stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=.git,.venv,venv,__pycache__,node_modules,build,dist,'Leaf Disease'
       
       - name: Lint with flake8 (Style Warnings)
         run: |
           # Exit-zero treats all errors as warnings
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 . --count --exit-zero --max-complexity=15 --max-line-length=127 --statistics --exclude=.git,.venv,venv,__pycache__,node_modules,build,dist,'Leaf Disease'
         continue-on-error: true
 
   test:

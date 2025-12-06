@@ -10,9 +10,14 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from src.auth.security import (ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user,
-                               create_access_token, get_current_active_user,
-                               get_current_admin_user, get_password_hash)
+from src.auth.security import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    authenticate_user,
+    create_access_token,
+    get_current_active_user,
+    get_current_admin_user,
+    get_password_hash,
+)
 from src.database.connection import USERS_COLLECTION, MongoDB
 from src.database.models import Token, User, UserCreate, UserInDB
 
@@ -111,9 +116,7 @@ async def list_users(
 
 
 @router.delete("/users/{username}")
-async def delete_user(
-    username: str, current_user: UserInDB = Depends(get_current_admin_user)
-):
+async def delete_user(username: str, current_user: UserInDB = Depends(get_current_admin_user)):
     """Delete a user (admin only)"""
     users_collection = MongoDB.get_collection(USERS_COLLECTION)
 
@@ -126,8 +129,6 @@ async def delete_user(
 
     result = await users_collection.delete_one({"username": username})
     if result.deleted_count == 0:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return {"message": f"User {username} deleted successfully"}

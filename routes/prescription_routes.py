@@ -23,6 +23,7 @@ router = APIRouter(prefix="/api/prescriptions", tags=["prescriptions"])
 
 class GeneratePrescriptionRequest(BaseModel):
     """Request to generate a prescription"""
+
     analysis_id: str
     disease_name: str
     disease_type: str
@@ -32,6 +33,7 @@ class GeneratePrescriptionRequest(BaseModel):
 
 class PrescriptionResponse(BaseModel):
     """Response containing prescription data"""
+
     success: bool
     message: str
     prescription: Optional[dict] = None
@@ -39,16 +41,15 @@ class PrescriptionResponse(BaseModel):
 
 @router.post("/generate", response_model=PrescriptionResponse)
 async def generate_prescription(
-    request: GeneratePrescriptionRequest,
-    current_user: UserInDB = Depends(get_current_active_user)
+    request: GeneratePrescriptionRequest, current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Generate a treatment prescription based on disease analysis
-    
+
     Args:
         request: Prescription generation request
         current_user: Authenticated user
-        
+
     Returns:
         Generated prescription (or existing one if already created)
     """
@@ -57,18 +58,18 @@ async def generate_prescription(
         existing_prescription = await PrescriptionService.get_prescription_by_analysis_id(
             request.analysis_id
         )
-        
+
         if existing_prescription:
             # Verify user owns this prescription
             if existing_prescription.user_id != str(current_user.id):
                 raise HTTPException(status_code=403, detail="Access denied")
-            
+
             return PrescriptionResponse(
                 success=True,
                 message="Prescription already exists for this analysis",
-                prescription=existing_prescription.dict(by_alias=True)
+                prescription=existing_prescription.dict(by_alias=True),
             )
-        
+
         # Generate new prescription
         prescription = await PrescriptionService.generate_prescription(
             user_id=str(current_user.id),
@@ -79,17 +80,18 @@ async def generate_prescription(
             severity=request.severity,
             confidence=request.confidence,
         )
-        
+
         return PrescriptionResponse(
             success=True,
             message="Prescription generated successfully",
-            prescription=prescription.dict(by_alias=True)
+            prescription=prescription.dict(by_alias=True),
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
         import traceback
+
         error_details = traceback.format_exc()
         logger.error(f"Failed to generate prescription: {str(e)}")
         logger.error(f"Full traceback: {error_details}")
@@ -100,32 +102,30 @@ async def generate_prescription(
 async def get_my_prescriptions(
     limit: int = Query(10, ge=1, le=50),
     skip: int = Query(0, ge=0),
-    current_user: UserInDB = Depends(get_current_active_user)
+    current_user: UserInDB = Depends(get_current_active_user),
 ):
     """
     Get prescriptions for the authenticated user
-    
+
     Args:
         limit: Maximum number of prescriptions to return
         skip: Number of prescriptions to skip
         current_user: Authenticated user
-        
+
     Returns:
         List of prescriptions
     """
     try:
         prescriptions = await PrescriptionService.get_user_prescriptions(
-            user_id=str(current_user.id),
-            limit=limit,
-            skip=skip
+            user_id=str(current_user.id), limit=limit, skip=skip
         )
-        
+
         return {
             "success": True,
             "count": len(prescriptions),
-            "prescriptions": [p.dict(by_alias=True) for p in prescriptions]
+            "prescriptions": [p.dict(by_alias=True) for p in prescriptions],
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get prescriptions: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -133,34 +133,30 @@ async def get_my_prescriptions(
 
 @router.get("/{prescription_id}")
 async def get_prescription(
-    prescription_id: str,
-    current_user: UserInDB = Depends(get_current_active_user)
+    prescription_id: str, current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Get a specific prescription by ID
-    
+
     Args:
         prescription_id: Prescription identifier
         current_user: Authenticated user
-        
+
     Returns:
         Prescription details
     """
     try:
         prescription = await PrescriptionService.get_prescription_by_id(prescription_id)
-        
+
         if not prescription:
             raise HTTPException(status_code=404, detail="Prescription not found")
-        
+
         # Verify user owns this prescription
         if prescription.user_id != str(current_user.id):
             raise HTTPException(status_code=403, detail="Access denied")
-        
-        return {
-            "success": True,
-            "prescription": prescription.dict(by_alias=True)
-        }
-        
+
+        return {"success": True, "prescription": prescription.dict(by_alias=True)}
+
     except HTTPException:
         raise
     except Exception as e:
@@ -170,36 +166,39 @@ async def get_prescription(
 
 @router.get("/{prescription_id}/print")
 async def get_printable_prescription(
-    prescription_id: str,
-    current_user: UserInDB = Depends(get_current_active_user)
+    prescription_id: str, current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Get prescription in printable format
-    
+
     Args:
         prescription_id: Prescription identifier
         current_user: Authenticated user
-        
+
     Returns:
         Formatted prescription for printing
     """
     try:
         prescription = await PrescriptionService.get_prescription_by_id(prescription_id)
-        
+
         if not prescription:
             raise HTTPException(status_code=404, detail="Prescription not found")
-        
+
         # Verify user owns this prescription
         if prescription.user_id != str(current_user.id):
             raise HTTPException(status_code=403, detail="Access denied")
-        
+
         # Format for printing
         printable = {
             "header": {
                 "prescription_id": prescription.prescription_id,
                 "patient_name": prescription.username,
                 "date_issued": prescription.created_at.strftime("%B %d, %Y"),
-                "expires": prescription.expires_at.strftime("%B %d, %Y") if prescription.expires_at else "N/A",
+                "expires": (
+                    prescription.expires_at.strftime("%B %d, %Y")
+                    if prescription.expires_at
+                    else "N/A"
+                ),
             },
             "diagnosis": {
                 "disease": prescription.disease_name,
@@ -230,14 +229,14 @@ async def get_printable_prescription(
                     "dosage": prod.dosage,
                     "cost": prod.estimated_cost,
                     "cost_inr": prod.estimated_cost_inr,
-                    "purchase_links": [
-                        {
-                            "platform": link.platform,
-                            "url": link.url,
-                            "price": link.price
-                        }
-                        for link in prod.purchase_links
-                    ] if prod.purchase_links else [],
+                    "purchase_links": (
+                        [
+                            {"platform": link.platform, "url": link.url, "price": link.price}
+                            for link in prod.purchase_links
+                        ]
+                        if prod.purchase_links
+                        else []
+                    ),
                     "method": prod.application_method,
                     "frequency": prod.frequency,
                     "duration": prod.duration,
@@ -254,16 +253,13 @@ async def get_printable_prescription(
             },
             "footer": {
                 "disclaimer": "This prescription is generated based on automated disease detection. "
-                             "For severe cases or if symptoms persist, consult a professional agronomist.",
+                "For severe cases or if symptoms persist, consult a professional agronomist.",
                 "status": prescription.status,
-            }
+            },
         }
-        
-        return {
-            "success": True,
-            "printable_prescription": printable
-        }
-        
+
+        return {"success": True, "printable_prescription": printable}
+
     except HTTPException:
         raise
     except Exception as e:

@@ -114,9 +114,7 @@ with col2:
 
                         # Check if it's an invalid image
                         if result.get("disease_type") == "invalid_image":
-                            st.markdown(
-                                "<div class='result-card'>", unsafe_allow_html=True
-                            )
+                            st.markdown("<div class='result-card'>", unsafe_allow_html=True)
                             st.markdown(
                                 "<div class='disease-title'>⚠️ Invalid Image</div>",
                                 unsafe_allow_html=True,
@@ -132,13 +130,9 @@ with col2:
                                     "<div class='section-title'>Issue</div>",
                                     unsafe_allow_html=True,
                                 )
-                                st.markdown(
-                                    "<ul class='symptom-list'>", unsafe_allow_html=True
-                                )
+                                st.markdown("<ul class='symptom-list'>", unsafe_allow_html=True)
                                 for symptom in result.get("symptoms", []):
-                                    st.markdown(
-                                        f"<li>{symptom}</li>", unsafe_allow_html=True
-                                    )
+                                    st.markdown(f"<li>{symptom}</li>", unsafe_allow_html=True)
                                 st.markdown("</ul>", unsafe_allow_html=True)
 
                             # Show treatment recommendations
@@ -152,17 +146,13 @@ with col2:
                                     unsafe_allow_html=True,
                                 )
                                 for treat in result.get("treatment", []):
-                                    st.markdown(
-                                        f"<li>{treat}</li>", unsafe_allow_html=True
-                                    )
+                                    st.markdown(f"<li>{treat}</li>", unsafe_allow_html=True)
                                 st.markdown("</ul>", unsafe_allow_html=True)
 
                             st.markdown("</div>", unsafe_allow_html=True)
 
                         elif result.get("disease_detected"):
-                            st.markdown(
-                                "<div class='result-card'>", unsafe_allow_html=True
-                            )
+                            st.markdown("<div class='result-card'>", unsafe_allow_html=True)
                             st.markdown(
                                 f"<div class='disease-title'>🦠 {result.get('disease_name', 'N/A')}</div>",
                                 unsafe_allow_html=True,
@@ -183,21 +173,15 @@ with col2:
                                 "<div class='section-title'>Symptoms</div>",
                                 unsafe_allow_html=True,
                             )
-                            st.markdown(
-                                "<ul class='symptom-list'>", unsafe_allow_html=True
-                            )
+                            st.markdown("<ul class='symptom-list'>", unsafe_allow_html=True)
                             for symptom in result.get("symptoms", []):
-                                st.markdown(
-                                    f"<li>{symptom}</li>", unsafe_allow_html=True
-                                )
+                                st.markdown(f"<li>{symptom}</li>", unsafe_allow_html=True)
                             st.markdown("</ul>", unsafe_allow_html=True)
                             st.markdown(
                                 "<div class='section-title'>Possible Causes</div>",
                                 unsafe_allow_html=True,
                             )
-                            st.markdown(
-                                "<ul class='cause-list'>", unsafe_allow_html=True
-                            )
+                            st.markdown("<ul class='cause-list'>", unsafe_allow_html=True)
                             for cause in result.get("possible_causes", []):
                                 st.markdown(f"<li>{cause}</li>", unsafe_allow_html=True)
                             st.markdown("</ul>", unsafe_allow_html=True)
@@ -205,9 +189,7 @@ with col2:
                                 "<div class='section-title'>Treatment</div>",
                                 unsafe_allow_html=True,
                             )
-                            st.markdown(
-                                "<ul class='treatment-list'>", unsafe_allow_html=True
-                            )
+                            st.markdown("<ul class='treatment-list'>", unsafe_allow_html=True)
                             for treat in result.get("treatment", []):
                                 st.markdown(f"<li>{treat}</li>", unsafe_allow_html=True)
                             st.markdown("</ul>", unsafe_allow_html=True)
@@ -218,9 +200,7 @@ with col2:
                             st.markdown("</div>", unsafe_allow_html=True)
                         else:
                             # Healthy leaf case
-                            st.markdown(
-                                "<div class='result-card'>", unsafe_allow_html=True
-                            )
+                            st.markdown("<div class='result-card'>", unsafe_allow_html=True)
                             st.markdown(
                                 "<div class='disease-title'>✅ Healthy Leaf</div>",
                                 unsafe_allow_html=True,

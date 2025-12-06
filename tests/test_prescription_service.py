@@ -2,8 +2,10 @@
 Tests for Prescription Service
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
+
 from src.services.prescription_service import PrescriptionService
 
 
@@ -17,7 +19,7 @@ def test_treatment_protocols_exist():
 def test_protocol_structure():
     """Test that protocols have required fields"""
     protocol = PrescriptionService.TREATMENT_PROTOCOLS["bacterial_blight"]
-    
+
     assert "priority" in protocol
     assert "duration" in protocol
     assert "products" in protocol
@@ -32,7 +34,7 @@ def test_product_structure():
     """Test that products have required fields"""
     protocol = PrescriptionService.TREATMENT_PROTOCOLS["bacterial_blight"]
     product = protocol["products"][0]
-    
+
     assert "name" in product
     assert "type" in product
     assert "dosage" in product
@@ -46,7 +48,7 @@ def test_step_structure():
     """Test that treatment steps have required fields"""
     protocol = PrescriptionService.TREATMENT_PROTOCOLS["bacterial_blight"]
     step = protocol["steps"][0]
-    
+
     assert "step_number" in step
     assert "title" in step
     assert "description" in step
@@ -59,7 +61,7 @@ def test_severity_adjustment_severe():
     """Test severity adjustment for severe cases"""
     protocol = PrescriptionService.TREATMENT_PROTOCOLS["fungal_leaf_spot"]
     adjusted = PrescriptionService._adjust_for_severity(protocol, "severe")
-    
+
     assert adjusted["priority"] == "urgent"
     # Check that frequency was increased
     for product in adjusted["products"]:
@@ -70,7 +72,7 @@ def test_severity_adjustment_mild():
     """Test severity adjustment for mild cases"""
     protocol = PrescriptionService.TREATMENT_PROTOCOLS["bacterial_blight"]
     adjusted = PrescriptionService._adjust_for_severity(protocol, "mild")
-    
+
     assert adjusted["priority"] == "low"
 
 
@@ -78,7 +80,7 @@ def test_severity_adjustment_moderate():
     """Test that moderate severity doesn't change priority"""
     protocol = PrescriptionService.TREATMENT_PROTOCOLS["fungal_leaf_spot"]
     adjusted = PrescriptionService._adjust_for_severity(protocol, "moderate")
-    
+
     # Should maintain original priority
     assert adjusted["priority"] == protocol["priority"]
 
@@ -89,9 +91,9 @@ async def test_prescription_id_format():
     # This would need a mock database
     # Just test the format generation
     from bson import ObjectId
-    
+
     prescription_id = f"RX-{datetime.now().strftime('%Y%m%d')}-{str(ObjectId())[:8]}"
-    
+
     assert prescription_id.startswith("RX-")
     assert len(prescription_id.split("-")) == 3
     parts = prescription_id.split("-")
