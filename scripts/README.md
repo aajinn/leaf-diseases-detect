@@ -1,4 +1,49 @@
-# Prescription Data Scripts
+# Scripts Directory
+
+Utility scripts for development, testing, and data management.
+
+---
+
+## 🚀 CI/CD Pre-Push Checks
+
+**Run all CI checks locally before pushing to catch issues early!**
+
+### Windows (PowerShell)
+```powershell
+.\scripts\run-ci-checks.ps1
+```
+
+### Linux/Mac (Bash)
+```bash
+chmod +x scripts/run-ci-checks.sh
+./scripts/run-ci-checks.sh
+```
+
+### What It Checks
+1. ✅ Black code formatting
+2. ✅ isort import sorting
+3. ✅ Flake8 critical errors
+4. ✅ Flake8 style warnings
+5. ✅ Pytest test suite
+6. ✅ FastAPI import verification
+
+If all checks pass, you're safe to push! 🚀
+
+### Quick Fixes
+
+If checks fail, run these commands to auto-fix:
+
+```bash
+# Format code with Black
+black . --exclude '/(\.git|\.venv|venv|__pycache__|node_modules|build|dist)/' --extend-exclude 'Leaf Disease'
+
+# Sort imports with isort
+isort . --skip-gitignore --extend-skip 'Leaf Disease'
+```
+
+---
+
+## 📋 Prescription Data Scripts
 
 Scripts for managing prescription sample data for testing and development.
 
