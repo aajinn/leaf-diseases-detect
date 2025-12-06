@@ -8,8 +8,8 @@ const CONFIG = {
                    window.location.hostname.includes('192.168.'),
     
     // API URLs
-    API_URL_DEV: 'http://localhost:8000',  // Local has no /api prefix
-    API_URL_PROD: 'https://leaf-diseases-detect-c1se.onrender.com/api',  // Production has /api prefix
+    API_URL_DEV: 'http://localhost:8000',  // Local development server
+    API_URL_PROD: 'https://leaf-diseases-detect-c1se.onrender.com',  // Production server
     
     // Get current API URL based on environment
     get API_URL() {
