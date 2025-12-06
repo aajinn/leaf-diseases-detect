@@ -61,7 +61,7 @@
                     <i class="fas fa-history text-primary mr-3"></i>
                     Analysis History
                 </h1>
-                <button onclick="loadHistory()" class="text-primary hover:text-secondary">
+                <button id="refreshBtn" onclick="refreshHistory()" class="text-primary hover:text-secondary transition-colors">
                     <i class="fas fa-sync-alt mr-2"></i>Refresh
                 </button>
             </div>
@@ -102,6 +102,7 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/cache-manager.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/session-indicator.js"></script>

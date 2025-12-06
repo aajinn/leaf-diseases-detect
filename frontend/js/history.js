@@ -12,6 +12,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadHistory();
 });
 
+// Refresh history with visual feedback
+async function refreshHistory() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const icon = refreshBtn.querySelector('i');
+    
+    // Add spinning animation
+    icon.classList.add('fa-spin');
+    refreshBtn.disabled = true;
+    
+    try {
+        // Force refresh by clearing cache and reloading
+        await loadHistory(true);
+        showNotification('History refreshed successfully', 'success');
+    } catch (error) {
+        showNotification('Failed to refresh history', 'error');
+    } finally {
+        // Remove spinning animation
+        icon.classList.remove('fa-spin');
+        refreshBtn.disabled = false;
+    }
+}
+
 async function loadUserInfo() {
     const profile = await getUserProfile();
     if (profile) {
@@ -22,7 +44,7 @@ async function loadUserInfo() {
     }
 }
 
-async function loadHistory() {
+async function loadHistory(forceRefresh = false) {
     const loading = document.getElementById('loading');
     const historyList = document.getElementById('historyList');
     const emptyState = document.getElementById('emptyState');
@@ -32,22 +54,23 @@ async function loadHistory() {
     emptyState.classList.add('hidden');
 
     try {
-        const response = await authenticatedFetch(`${API_URL}/api/my-analyses`);
+        // Use cached fetch with 2 minute TTL for history data
+        const data = await cachedFetch(
+            `${API_URL}/api/my-analyses`,
+            {},
+            'history',
+            forceRefresh
+        );
 
-        if (response.ok) {
-            const data = await response.json();
-            const records = data.records || [];
+        const records = data.records || [];
 
-            loading.classList.add('hidden');
+        loading.classList.add('hidden');
 
-            if (records.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                displayHistory(records);
-                historyList.classList.remove('hidden');
-            }
+        if (records.length === 0) {
+            emptyState.classList.remove('hidden');
         } else {
-            throw new Error('Failed to load history');
+            displayHistory(records);
+            historyList.classList.remove('hidden');
         }
     } catch (error) {
         console.error('Error loading history:', error);
@@ -129,14 +152,15 @@ function displayHistory(records) {
 
 async function viewDetails(recordId) {
     try {
-        const response = await authenticatedFetch(`${API_URL}/api/analyses/${recordId}`);
+        // Use cached fetch for individual record details
+        const record = await cachedFetch(
+            `${API_URL}/api/analyses/${recordId}`,
+            {},
+            'analysis-detail',
+            false
+        );
 
-        if (response.ok) {
-            const record = await response.json();
-            showDetailModal(record);
-        } else {
-            showNotification('Failed to load details', 'error');
-        }
+        showDetailModal(record);
     } catch (error) {
         console.error('Error loading details:', error);
         if (error.message !== 'Session expired') {
@@ -343,7 +367,12 @@ async function deleteRecord(recordId) {
 
         if (response.ok) {
             showNotification('Record deleted successfully', 'success');
-            await loadHistory();
+            
+            // Invalidate cache for history and analysis details
+            apiCache.clearPattern(/my-analyses|analyses\//);
+            
+            // Force refresh to get updated list
+            await loadHistory(true);
         } else {
             showNotification('Failed to delete record', 'error');
         }

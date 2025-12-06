@@ -21,6 +21,8 @@ class CacheManager {
             'analytics-trends': 3 * 60 * 1000,   // 3 minutes
             'api-usage': 2 * 60 * 1000,          // 2 minutes
             'prescriptions': 2 * 60 * 1000,      // 2 minutes
+            'history': 2 * 60 * 1000,            // 2 minutes
+            'analysis-detail': 5 * 60 * 1000,    // 5 minutes
             
             // Real-time data - very short cache
             'user-activity': 1 * 60 * 1000,      // 1 minute
@@ -130,6 +132,7 @@ class CacheManager {
             'users': /users/,
             'api-usage': /api-usage/,
             'prescriptions': /prescriptions/,
+            'history': /my-analyses|analyses\//,
         };
         
         if (patterns[cacheType]) {
