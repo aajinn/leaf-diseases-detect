@@ -70,54 +70,59 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Overview Stats -->
-        <div class="grid md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
+            <!-- Users -->
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm">Total Users</p>
-                        <p id="totalUsers" class="text-3xl font-bold text-primary">0</p>
+                        <p class="text-gray-600 text-xs sm:text-sm">Total Users</p>
+                        <p id="totalUsers" class="text-2xl sm:text-3xl font-bold text-primary">0</p>
                     </div>
-                    <i class="fas fa-users text-primary text-4xl opacity-20"></i>
+                    <i class="fas fa-users text-primary text-3xl sm:text-4xl opacity-20"></i>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
+            <!-- Analyses -->
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm">Total Analyses</p>
-                        <p id="totalAnalyses" class="text-3xl font-bold text-blue-600">0</p>
+                        <p class="text-gray-600 text-xs sm:text-sm">Analyses</p>
+                        <p id="totalAnalyses" class="text-2xl sm:text-3xl font-bold text-blue-600">0</p>
                     </div>
-                    <i class="fas fa-microscope text-blue-600 text-4xl opacity-20"></i>
+                    <i class="fas fa-microscope text-blue-600 text-3xl sm:text-4xl opacity-20"></i>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
+            <!-- Prescriptions -->
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm">API Calls</p>
-                        <p id="totalAPICalls" class="text-3xl font-bold text-purple-600">0</p>
+                        <p class="text-gray-600 text-xs sm:text-sm">Prescriptions</p>
+                        <p id="totalPrescriptions" class="text-2xl sm:text-3xl font-bold text-green-600">0</p>
                     </div>
-                    <i class="fas fa-server text-purple-600 text-4xl opacity-20"></i>
+                    <i class="fas fa-prescription text-green-600 text-3xl sm:text-4xl opacity-20"></i>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
+            <!-- API Calls -->
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm">Total Cost</p>
-                        <p id="totalCost" class="text-3xl font-bold text-orange-600">$0.00</p>
+                        <p class="text-gray-600 text-xs sm:text-sm">API Calls</p>
+                        <p id="totalAPICalls" class="text-2xl sm:text-3xl font-bold text-purple-600">0</p>
                     </div>
-                    <i class="fas fa-dollar-sign text-orange-600 text-4xl opacity-20"></i>
+                    <i class="fas fa-server text-purple-600 text-3xl sm:text-4xl opacity-20"></i>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
+            <!-- Total Cost -->
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow col-span-2 md:col-span-1">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm">Prescriptions</p>
-                        <p id="totalPrescriptions" class="text-3xl font-bold text-green-600">0</p>
+                        <p class="text-gray-600 text-xs sm:text-sm">Total Cost</p>
+                        <p id="totalCost" class="text-2xl sm:text-3xl font-bold text-orange-600">$0.00</p>
                     </div>
-                    <i class="fas fa-prescription text-green-600 text-4xl opacity-20"></i>
+                    <i class="fas fa-dollar-sign text-orange-600 text-3xl sm:text-4xl opacity-20"></i>
                 </div>
             </div>
         </div>
@@ -125,21 +130,30 @@
         <!-- Tabs -->
         <div class="bg-white rounded-xl shadow-lg mb-8">
             <div class="border-b border-gray-200">
-                <nav class="flex space-x-8 px-6" aria-label="Tabs">
-                    <button onclick="switchTab('overview')" id="tab-overview" class="tab-button active py-4 px-1 border-b-2 border-primary font-medium text-sm">
-                        <i class="fas fa-chart-line mr-2"></i>Overview
+                <nav class="flex flex-wrap space-x-4 sm:space-x-8 px-4 sm:px-6" aria-label="Tabs">
+                    <!-- Dashboard & Analytics -->
+                    <button onclick="switchTab('overview')" id="tab-overview" class="tab-button active py-4 px-2 border-b-2 border-primary font-medium text-sm whitespace-nowrap">
+                        <i class="fas fa-chart-line mr-1 sm:mr-2"></i><span class="hidden sm:inline">Dashboard</span><span class="sm:hidden">Stats</span>
                     </button>
-                    <button onclick="switchTab('users')" id="tab-users" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                        <i class="fas fa-users mr-2"></i>Users
+                    
+                    <!-- User Management -->
+                    <button onclick="switchTab('users')" id="tab-users" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+                        <i class="fas fa-users mr-1 sm:mr-2"></i>Users
                     </button>
-                    <button onclick="switchTab('api-usage')" id="tab-api-usage" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                        <i class="fas fa-server mr-2"></i>API Usage
+                    
+                    <!-- Prescriptions -->
+                    <button onclick="switchTab('prescriptions')" id="tab-prescriptions" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+                        <i class="fas fa-prescription mr-1 sm:mr-2"></i>Prescriptions
                     </button>
-                    <button onclick="switchTab('api-config')" id="tab-api-config" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                        <i class="fas fa-cog mr-2"></i>API Config
+                    
+                    <!-- API Usage & Monitoring -->
+                    <button onclick="switchTab('api-usage')" id="tab-api-usage" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+                        <i class="fas fa-server mr-1 sm:mr-2"></i><span class="hidden sm:inline">API Usage</span><span class="sm:hidden">API</span>
                     </button>
-                    <button onclick="switchTab('prescriptions')" id="tab-prescriptions" class="tab-button py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                        <i class="fas fa-prescription mr-2"></i>Prescriptions
+                    
+                    <!-- Settings & Configuration -->
+                    <button onclick="switchTab('api-config')" id="tab-api-config" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+                        <i class="fas fa-cog mr-1 sm:mr-2"></i>Settings
                     </button>
                 </nav>
             </div>
