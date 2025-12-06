@@ -50,9 +50,7 @@ def test_login():
 def test_get_profile(token):
     """Test getting user profile"""
     print("\n3. Testing Get Profile...")
-    response = requests.get(
-        f"{BASE_URL}/auth/me", headers={"Authorization": f"Bearer {token}"}
-    )
+    response = requests.get(f"{BASE_URL}/auth/me", headers={"Authorization": f"Bearer {token}"})
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
     return response.status_code == 200
