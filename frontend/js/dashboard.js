@@ -822,36 +822,58 @@ function displayYouTubeVideos(videos, isHealthy = false) {
     const title = isHealthy ? 'Plant Care & Maintenance Tips' : 'Recommended Treatment Videos';
     const icon = isHealthy ? 'fa-seedling' : 'fa-prescription-bottle-medical';
     const iconColor = isHealthy ? 'text-green-600' : 'text-red-600';
+    const bgColor = isHealthy ? 'bg-green-50' : 'bg-red-50';
+    const borderColor = isHealthy ? 'border-green-200' : 'border-red-200';
 
     console.log(`Displaying ${videos.length} YouTube videos`);
     return `
-        <div class="mt-8 bg-white border border-gray-200 rounded-lg p-6">
-            <h5 class="font-bold text-xl mb-4 flex items-center">
-                <i class="fas ${icon} ${iconColor} mr-3 text-2xl"></i>
-                ${title}
-            </h5>
-            <div class="grid md:grid-cols-${videos.length > 2 ? '3' : videos.length} gap-6">
+        <div class="mt-8 ${bgColor} border-2 ${borderColor} rounded-xl p-6 shadow-lg">
+            <div class="flex items-center justify-between mb-6">
+                <h5 class="font-bold text-2xl flex items-center">
+                    <i class="fas ${icon} ${iconColor} mr-3 text-3xl"></i>
+                    ${title}
+                </h5>
+                <span class="text-sm text-gray-600 bg-white px-3 py-1 rounded-full">
+                    ${videos.length} video${videos.length > 1 ? 's' : ''}
+                </span>
+            </div>
+            <div class="grid ${videos.length === 1 ? 'grid-cols-1 max-w-1 mx-auto' : videos.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-1'} gap-6">
                 ${videos.map(video => `
-                    <div class="bg-gray-50 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                        <div class="relative pb-[56.25%]">
+                    <div class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div class="relative pb-[56.25%] bg-gray-900">
                             <iframe 
                                 class="absolute top-0 left-0 w-full h-full"
-                                src="https://www.youtube.com/embed/${video.video_id}" 
+                                src="https://www.youtube.com/embed/${video.video_id}?rel=0&modestbranding=1" 
                                 title="${video.title}"
                                 frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                allowfullscreen>
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowfullscreen
+                                loading="lazy">
                             </iframe>
                         </div>
-                        <div class="p-4">
-                            <h6 class="font-semibold text-sm text-gray-800 mb-2">${video.title}</h6>
-                            <a href="${video.url}" target="_blank" class="text-primary hover:text-primary-dark text-sm flex items-center">
-                                <i class="fas fa-external-link-alt mr-2"></i>
-                                Watch on YouTube
-                            </a>
+                        <div class="p-5">
+                            <h6 class="font-bold text-base text-gray-900 mb-3 line-clamp-2 min-h-[3rem]">${video.title}</h6>
+                            <div class="flex items-center justify-between">
+                                <a href="${video.url}" target="_blank" rel="noopener noreferrer" 
+                                   class="inline-flex items-center text-primary hover:text-secondary font-semibold text-sm transition-colors">
+                                    <i class="fas fa-external-link-alt mr-2"></i>
+                                    Watch on YouTube
+                                </a>
+                                <button onclick="window.open('${video.url}', '_blank')" 
+                                        class="text-gray-400 hover:text-primary transition-colors"
+                                        title="Open in new tab">
+                                    <i class="fas fa-expand text-lg"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `).join('')}
+            </div>
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Click on any video to watch, or open in YouTube for full experience
+                </p>
             </div>
         </div>
     `;
