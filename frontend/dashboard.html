@@ -120,6 +120,41 @@
                         <p class="text-sm text-gray-500 mt-4">Supported: JPG, PNG, WebP (Max 10MB)</p>
                     </div>
 
+                    <!-- Feature Toggles -->
+                    <div class="mt-6 grid md:grid-cols-2 gap-4">
+                        <!-- Auto-Crop Toggle -->
+                        <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <div class="flex items-center">
+                                    <i class="fas fa-crop-alt text-green-600 mr-2"></i>
+                                    <div>
+                                        <span class="font-bold text-sm text-green-800">Auto-Crop</span>
+                                        <p class="text-xs text-green-700">Detect leaf region</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="autoCropToggleMain" checked 
+                                    onchange="toggleAutoCrop(this.checked); document.getElementById('autoCropToggle').checked = this.checked;"
+                                    class="w-5 h-5 text-green-600 rounded focus:ring-green-500">
+                            </label>
+                        </div>
+
+                        <!-- Color Theme Toggle -->
+                        <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-lg">
+                            <label class="flex items-center justify-between cursor-pointer">
+                                <div class="flex items-center">
+                                    <i class="fas fa-palette text-purple-600 mr-2"></i>
+                                    <div>
+                                        <span class="font-bold text-sm text-purple-800">Color Theme</span>
+                                        <p class="text-xs text-purple-700">Match leaf colors</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="colorThemeToggleMain" checked 
+                                    onchange="toggleColorTheme(this.checked); document.getElementById('colorThemeToggle').checked = this.checked;"
+                                    class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Image Preview -->
                     <div id="imagePreview" class="mt-6 hidden">
                         <h3 class="font-bold mb-3">Image Preview:</h3>
@@ -279,6 +314,22 @@
                         </label>
                     </div>
 
+                    <!-- Color Theme Toggle -->
+                    <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                        <label class="flex items-center justify-between cursor-pointer">
+                            <div class="flex items-center">
+                                <i class="fas fa-palette text-purple-600 mr-3"></i>
+                                <div>
+                                    <span class="font-bold text-sm text-purple-800">Adaptive Color Theme</span>
+                                    <p class="text-xs text-purple-700">Match page colors to leaf image</p>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="colorThemeToggle" checked 
+                                onchange="toggleColorTheme(this.checked)"
+                                class="w-6 h-6 text-purple-600 rounded focus:ring-purple-500">
+                        </label>
+                    </div>
+
                     <!-- Info -->
                     <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
                         <h4 class="font-bold text-sm text-blue-800 mb-2">
@@ -299,6 +350,7 @@
 
     <script src="js/config.js"></script>
     <script src="js/cache-manager.js"></script>
+    <script src="js/color-theme.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/validation.js"></script>

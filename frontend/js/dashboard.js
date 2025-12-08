@@ -14,10 +14,49 @@ function toggleAutoCrop(enabled) {
 
 // Initialize auto-crop toggle
 function initializeAutoCropToggle() {
+    const enabled = localStorage.getItem('autoCropEnabled') !== 'false';
+    
     const toggle = document.getElementById('autoCropToggle');
     if (toggle) {
-        const enabled = localStorage.getItem('autoCropEnabled') !== 'false';
         toggle.checked = enabled;
+    }
+    
+    const toggleMain = document.getElementById('autoCropToggleMain');
+    if (toggleMain) {
+        toggleMain.checked = enabled;
+    }
+}
+
+// Toggle color theme feature
+function toggleColorTheme(enabled) {
+    localStorage.setItem('colorThemeEnabled', enabled ? 'true' : 'false');
+    if (enabled) {
+        showNotification('🎨 Adaptive color theme enabled - Page will match leaf colors', 'success');
+        // Apply theme to current image if available
+        if (selectedFile && typeof colorThemeManager !== 'undefined') {
+            colorThemeManager.processImageAndApplyTheme(selectedFile);
+        }
+    } else {
+        showNotification('🎨 Adaptive color theme disabled', 'info');
+        // Reset theme
+        if (typeof colorThemeManager !== 'undefined') {
+            colorThemeManager.resetTheme();
+        }
+    }
+}
+
+// Initialize color theme toggle
+function initializeColorThemeToggle() {
+    const enabled = localStorage.getItem('colorThemeEnabled') !== 'false';
+    
+    const toggle = document.getElementById('colorThemeToggle');
+    if (toggle) {
+        toggle.checked = enabled;
+    }
+    
+    const toggleMain = document.getElementById('colorThemeToggleMain');
+    if (toggleMain) {
+        toggleMain.checked = enabled;
     }
 }
 
@@ -214,6 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupFileUpload();
     initializeTTS();
     initializeAutoCropToggle();
+    initializeColorThemeToggle();
     checkPendingAnalysis();
     updateCacheCount();
     
@@ -401,6 +441,12 @@ async function handleFile(file) {
         document.getElementById('results').classList.add('hidden');
     };
     reader.readAsDataURL(file);
+    
+    // Apply color theme if enabled
+    const colorThemeEnabled = localStorage.getItem('colorThemeEnabled') !== 'false';
+    if (colorThemeEnabled && typeof colorThemeManager !== 'undefined') {
+        await colorThemeManager.processImageAndApplyTheme(file);
+    }
 }
 
 async function analyzeImage() {
