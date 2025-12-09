@@ -178,8 +178,22 @@ function showCacheInfo() {
 }
 
 // Clear cache with confirmation
-function clearCacheConfirm() {
-    if (confirm('Are you sure you want to clear the cache? This will remove all saved analysis results.')) {
+async function clearCacheConfirm() {
+    let confirmed = false;
+    try {
+        if (typeof showConfirm === 'function') {
+            confirmed = await showConfirm('Are you sure you want to clear the cache? This will remove all saved analysis results.', 'Confirm Action');
+        } else {
+            // Fallback to native confirm
+            confirmed = confirm('Are you sure you want to clear the cache? This will remove all saved analysis results.');
+        }
+    } catch (e) {
+        console.error('Confirmation dialog error:', e);
+        // If confirmation dialog fails, do not proceed
+        confirmed = false;
+    }
+
+    if (confirmed) {
         if (typeof duplicateDetector !== 'undefined') {
             duplicateDetector.clearCache();
             updateCacheCount();
