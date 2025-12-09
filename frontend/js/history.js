@@ -76,7 +76,7 @@ async function loadHistory(forceRefresh = false) {
         console.error('Error loading history:', error);
         loading.classList.add('hidden');
         if (error.message !== 'Session expired') {
-            alert('Failed to load history. Please try again.');
+            showNotification('Failed to load history. Please try again.', 'error');
         }
     }
 }
