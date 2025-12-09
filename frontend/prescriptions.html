@@ -327,7 +327,7 @@
                 }
             } catch (error) {
                 console.error('Error loading prescription:', error);
-                alert('Failed to load prescription details');
+                await showAlert('Failed to load prescription details', 'Error', 'error');
             }
         }
 
@@ -467,7 +467,7 @@
 
         async function exportPrescriptionPDF() {
             if (!currentViewedPrescription) {
-                alert('No prescription data available');
+                await showAlert('No prescription data available', 'Notice', 'warning');
                 return;
             }
 
@@ -553,7 +553,7 @@
                 
             } catch (error) {
                 console.error('Error generating PDF:', error);
-                alert('Failed to generate PDF: ' + error.message);
+                await showAlert('Failed to generate PDF: ' + error.message, 'Error', 'error');
                 
                 // Reset everything
                 const modal = document.getElementById('prescriptionModal');
