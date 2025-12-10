@@ -66,6 +66,9 @@ async def register_user(user: UserCreate):
     result = await users_collection.insert_one(user_in_db.dict(by_alias=True))
 
     created_user = await users_collection.find_one({"_id": result.inserted_id})
+    # Convert MongoDB ObjectId to string for pydantic model validation
+    if created_user and "_id" in created_user:
+        created_user["_id"] = str(created_user["_id"])
     return User(**created_user)
 
 
@@ -112,6 +115,10 @@ async def list_users(
     users_collection = MongoDB.get_collection(USERS_COLLECTION)
     users_cursor = users_collection.find().skip(skip).limit(limit)
     users = await users_cursor.to_list(length=limit)
+    # Ensure ObjectId values are converted to strings for pydantic
+    for u in users:
+        if u and "_id" in u:
+            u["_id"] = str(u["_id"])
     return [User(**user) for user in users]
 
 
