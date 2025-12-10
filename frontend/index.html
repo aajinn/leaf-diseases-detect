@@ -329,7 +329,7 @@
                 </div>
             </div>
         </div>
-
+        
         <!-- Call to Action -->
         <div class="mt-20 bg-gradient-to-r from-primary to-secondary rounded-xl p-12 text-white text-center shadow-2xl">
             <h2 class="text-3xl font-bold mb-4">Join the Fight Against Plant Diseases</h2>
@@ -348,15 +348,79 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white mt-20 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p>&copy; <span id="currentYear"></span> Leaf Disease Detection System. All rights reserved.</p>
+    <footer class="bg-gray-800 text-white mt-20 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Our Services -->
+                <div class="mb-8 md:mb-0">
+                    <h3 class="text-xl font-bold mb-4 text-primary">Our Services</h3>
+                    <ul class="space-y-2">
+                        <li><a href="/live-detection" class="hover:text-primary transition">Live Disease Detection</a></li>
+                        <li><a href="/diseases" class="hover:text-primary transition">Disease Database</a></li>
+                        <li><a href="/prescriptions" class="hover:text-primary transition">Treatment Recommendations</a></li>
+                        <li><a href="/dashboard" class="hover:text-primary transition">Health History Dashboard</a></li>
+                        <li><a href="#" class="hover:text-primary transition">Expert Consultation</a></li>
+                    </ul>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="mb-8 md:mb-0">
+                    <h3 class="text-xl font-bold mb-4 text-primary">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="/" class="hover:text-primary transition">Home</a></li>
+                        <li><a href="/about" class="hover:text-primary transition">About Us</a></li>
+                        <li><a href="/diseases" class="hover:text-primary transition">Diseases</a></li>
+                        <li><a href="/blog" class="hover:text-primary transition">Blog</a></li>
+                        <li><a href="/faq" class="hover:text-primary transition">FAQ</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Us -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4 text-primary">Contact Us</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fas fa-envelope mt-1 mr-3 text-primary"></i>
+                            <span>support@leafdetect.com</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-phone mt-1 mr-3 text-primary"></i>
+                            <span>+1 (555) 123-4567</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt mt-1 mr-3 text-primary"></i>
+                            <span>123 AgriTech Park, Green Valley, CA 94025, USA</span>
+                        </li>
+                        <li class="flex items-center mt-4 space-x-4">
+                            <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-instagram"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="border-t border-gray-700 mt-12 pt-8 text-center">
+                <p>&copy; 2023 Leaf Disease Detection. All rights reserved.</p>
+                <div class="mt-4 flex flex-wrap justify-center space-x-4 text-sm">
+                    <a href="/privacy" class="hover:text-primary transition">Privacy Policy</a>
+                    <span>•</span>
+                    <a href="/terms" class="hover:text-primary transition">Terms of Service</a>
+                    <span>•</span>
+                    <a href="/cookies" class="hover:text-primary transition">Cookie Policy</a>
+                </div>
+            </div>
         </div>
     </footer>
 
     <script>
-        // Set current year dynamically
-        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        // Set current year dynamically if element exists
+        const yearElement = document.getElementById('currentYear');
+        if (yearElement) {
+            yearElement.textContent = new Date().getFullYear();
+        }
     </script>
 </body>
 </html>
