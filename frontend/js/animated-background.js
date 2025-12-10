@@ -408,6 +408,16 @@ window.setAnalyzingState = (isAnalyzing) => {
     } else {
         console.warn('animatedBg not initialized yet');
     }
+    // Trigger preview animation if available
+    try {
+        if (isAnalyzing && typeof window.startPreviewAnimation === 'function') {
+            window.startPreviewAnimation();
+        } else if (!isAnalyzing && typeof window.stopPreviewAnimation === 'function') {
+            window.stopPreviewAnimation();
+        }
+    } catch (e) {
+        console.error('Error triggering preview animation:', e);
+    }
 };
 
 // Set disease status

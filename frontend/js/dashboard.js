@@ -2,6 +2,221 @@
 let selectedFile = null;
 let lastAnalysisResult = null;
 
+// Preview image split/rejoin animation during analysis
+window._previewAnimation = window._previewAnimation || { running: false, pieces: [] };
+
+function startPreviewAnimation(rows = 3, cols = 3) {
+    try {
+        const img = document.getElementById('previewImg');
+        if (!img || !img.src || window._previewAnimation.running) return;
+
+        const rect = img.getBoundingClientRect();
+        const imgWidth = rect.width;
+        const imgHeight = rect.height;
+
+        // Create an offscreen image to draw at displayed size
+        const offImg = new Image();
+        offImg.crossOrigin = 'anonymous';
+        offImg.src = img.src;
+        offImg.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = imgWidth;
+            canvas.height = imgHeight;
+            const ctx = canvas.getContext('2d');
+            // Draw the image scaled to the displayed size
+            ctx.drawImage(offImg, 0, 0, imgWidth, imgHeight);
+
+            const pieceW = Math.ceil(imgWidth / cols);
+            const pieceH = Math.ceil(imgHeight / rows);
+
+            // Create overlay container
+            const container = document.createElement('div');
+            container.id = 'preview-animation-container';
+            container.style.position = 'fixed';
+            container.style.left = rect.left + 'px';
+            container.style.top = rect.top + 'px';
+            container.style.width = imgWidth + 'px';
+            container.style.height = imgHeight + 'px';
+            container.style.pointerEvents = 'none';
+            container.style.zIndex = 9999;
+            document.body.appendChild(container);
+
+            window._previewAnimation.pieces = [];
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const sx = c * pieceW;
+                    const sy = r * pieceH;
+                    const sw = Math.min(pieceW, imgWidth - sx);
+                    const sh = Math.min(pieceH, imgHeight - sy);
+
+                    const pieceCanvas = document.createElement('canvas');
+                    pieceCanvas.width = sw;
+                    pieceCanvas.height = sh;
+                    const pctx = pieceCanvas.getContext('2d');
+                    pctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+                    const dataUrl = pieceCanvas.toDataURL();
+                    const piece = document.createElement('img');
+                    piece.src = dataUrl;
+                    piece.style.position = 'absolute';
+                    piece.style.left = sx + 'px';
+                    piece.style.top = sy + 'px';
+                    piece.style.width = sw + 'px';
+                    piece.style.height = sh + 'px';
+                    piece.style.transition = 'transform 700ms cubic-bezier(.2,.9,.3,1), opacity 700ms ease';
+                    piece.style.willChange = 'transform, opacity';
+
+                    container.appendChild(piece);
+                    window._previewAnimation.pieces.push({ el: piece, x: sx, y: sy });
+                }
+            }
+
+            // Hide original image briefly for effect
+            img.style.visibility = 'hidden';
+            window._previewAnimation.running = true;
+            window._previewAnimation.loop = true;
+
+            // Create lighting overlay for glow/highlight effect
+            const light = document.createElement('div');
+            light.id = 'preview-animation-light';
+            light.style.position = 'absolute';
+            light.style.left = '0';
+            light.style.top = '0';
+            light.style.width = '100%';
+            light.style.height = '100%';
+            light.style.pointerEvents = 'none';
+            light.style.mixBlendMode = 'screen';
+            light.style.opacity = '0';
+            light.style.transition = 'opacity 300ms ease, transform 500ms ease';
+            light.style.background = 'radial-gradient(circle at 30% 20%, rgba(217, 255, 0, 1), rgba(255,255,255,0.0) 35%), radial-gradient(circle at 70% 80%, rgba(255,255,255,0.6), rgba(255,255,255,0.0) 30%)';
+            container.appendChild(light);
+            window._previewAnimation.light = light;
+
+            // Define one animation cycle
+            const doCycle = () => {
+                if (!window._previewAnimation.loop) return finishAndCleanup();
+
+                // Scatter pieces
+                window._previewAnimation.pieces.forEach((p, i) => {
+                    const dx = (Math.random() - 0.5) * imgWidth * 0.8;
+                    const dy = (Math.random() - 0.5) * imgHeight * 0.8;
+                    const rot = (Math.random() - 0.5) * 40; // degrees
+                    const delay = Math.random() * 200;
+                    p.el.style.transitionDelay = delay + 'ms';
+                    p.el.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg) scale(1.02)`;
+                    p.el.style.opacity = '0.95';
+                });
+
+                // After scatter, slowly rejoin pieces randomly
+                setTimeout(() => {
+                    // show a quick light flash during rejoin
+                    try { light.style.opacity = '0.7'; light.style.transform = 'scale(1.02)'; } catch (e) {}
+
+                    const shuffled = window._previewAnimation.pieces.slice().sort(() => Math.random() - 0.5);
+                    shuffled.forEach((p, i) => {
+                        const delay = 300 + i * 60;
+                        p.el.style.transitionDelay = delay + 'ms';
+                        p.el.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
+                        p.el.style.opacity = '1';
+                    });
+
+                    // After rejoin, pause and then play a split-across-screen effect
+                    setTimeout(() => {
+                        try { light.style.opacity = '0.3'; light.style.transform = 'scale(1)'; } catch (e) {}
+
+                        window._previewAnimation.pieces.forEach((p, i) => {
+                            const dx = (i % cols - Math.floor(cols/2)) * imgWidth * 0.6;
+                            const dy = (Math.floor(i/cols) - Math.floor(rows/2)) * imgHeight * 0.6;
+                            p.el.style.transitionDelay = i * 20 + 'ms';
+                            p.el.style.transform = `translate(${dx}px, ${dy}px) rotate(${(i%2?1:-1)*15}deg) scale(0.95)`;
+                            p.el.style.opacity = '0.9';
+                        });
+
+                        // Rejoin finally
+                        setTimeout(() => {
+                            window._previewAnimation.pieces.forEach((p, i) => {
+                                p.el.style.transitionDelay = (i * 25) + 'ms';
+                                p.el.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
+                                p.el.style.opacity = '1';
+                            });
+
+                            // light pulse on final join
+                            setTimeout(() => {
+                                try { light.style.opacity = '0.85'; } catch (e) {}
+                            }, 100);
+
+                            // After final join, decide to loop or finish
+                            setTimeout(() => {
+                                try { light.style.opacity = '0'; } catch (e) {}
+                                if (window._previewAnimation.loop) {
+                                    // small delay before next cycle
+                                    setTimeout(() => doCycle(), 400);
+                                } else {
+                                    finishAndCleanup();
+                                }
+                            }, 800 + cols * rows * 25);
+
+                        }, 900);
+                    }, 600);
+                }, 250);
+            };
+
+            const finishAndCleanup = () => {
+                // Animate pieces back to original then remove
+                window._previewAnimation.pieces.forEach((p, i) => {
+                    p.el.style.transitionDelay = (i * 12) + 'ms';
+                    p.el.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
+                    p.el.style.opacity = '1';
+                });
+
+                setTimeout(() => {
+                    try { if (container) container.remove(); } catch (e) {}
+                    if (img) img.style.visibility = '';
+                    window._previewAnimation.pieces = [];
+                    window._previewAnimation.running = false;
+                    window._previewAnimation.light = null;
+                }, 500 + window._previewAnimation.pieces.length * 12);
+            };
+
+            // Start first cycle
+            setTimeout(() => doCycle(), 25);
+        };
+    } catch (e) {
+        console.error('startPreviewAnimation error:', e);
+    }
+}
+
+function stopPreviewAnimation(force = false) {
+    try {
+        const img = document.getElementById('previewImg');
+        const container = document.getElementById('preview-animation-container');
+        if (!container) {
+            if (img) img.style.visibility = '';
+            window._previewAnimation.running = false;
+            return;
+        }
+
+        // Animate pieces back to original positions then remove
+        window._previewAnimation.pieces.forEach((p, i) => {
+            p.el.style.transitionDelay = (i * 12) + 'ms';
+            p.el.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
+            p.el.style.opacity = '1';
+        });
+
+        setTimeout(() => {
+            try {
+                container.remove();
+            } catch (e) {}
+            if (img) img.style.visibility = '';
+            window._previewAnimation.pieces = [];
+            window._previewAnimation.running = false;
+        }, 500 + window._previewAnimation.pieces.length * 12);
+    } catch (e) {
+        console.error('stopPreviewAnimation error:', e);
+    }
+}
+
 // Toggle auto-crop feature
 function toggleAutoCrop(enabled) {
     localStorage.setItem('autoCropEnabled', enabled ? 'true' : 'false');
