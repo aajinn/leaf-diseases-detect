@@ -5,213 +5,145 @@ let lastAnalysisResult = null;
 // Preview image split/rejoin animation during analysis
 window._previewAnimation = window._previewAnimation || { running: false, pieces: [] };
 
-function startPreviewAnimation(rows = 3, cols = 3) {
+function startPreviewAnimation() {
     try {
         const img = document.getElementById('previewImg');
         if (!img || !img.src || window._previewAnimation.running) return;
 
         const rect = img.getBoundingClientRect();
-        const imgWidth = rect.width;
-        const imgHeight = rect.height;
+        const container = document.createElement('div');
+        container.id = 'preview-animation-container';
+        container.style.cssText = `
+            position: fixed;
+            left: ${rect.left}px;
+            top: ${rect.top}px;
+            width: ${rect.width}px;
+            height: ${rect.height}px;
+            pointer-events: none;
+            z-index: 9999;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.8);
+        `;
+        document.body.appendChild(container);
 
-        // Create an offscreen image to draw at displayed size
-        const offImg = new Image();
-        offImg.crossOrigin = 'anonymous';
-        offImg.src = img.src;
-        offImg.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = imgWidth;
-            canvas.height = imgHeight;
-            const ctx = canvas.getContext('2d');
-            // Draw the image scaled to the displayed size
-            ctx.drawImage(offImg, 0, 0, imgWidth, imgHeight);
+        // Morphing blob effect
+        const blob = document.createElement('div');
+        blob.style.cssText = `
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: morphBlob 3s ease-in-out infinite;
+            filter: blur(1px);
+        `;
+        container.appendChild(blob);
 
-            const pieceW = Math.ceil(imgWidth / cols);
-            const pieceH = Math.ceil(imgHeight / rows);
+        // Orbiting elements
+        for (let i = 0; i < 6; i++) {
+            const orbit = document.createElement('div');
+            orbit.style.cssText = `
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                background: hsl(${i * 60}, 70%, 60%);
+                border-radius: 50%;
+                top: 50%;
+                left: 50%;
+                transform-origin: 0 0;
+                animation: orbit${i} 2s linear infinite;
+                box-shadow: 0 0 15px currentColor;
+            `;
+            container.appendChild(orbit);
+        }
 
-            // Create overlay container
-            const container = document.createElement('div');
-            container.id = 'preview-animation-container';
-            container.style.position = 'fixed';
-            container.style.left = rect.left + 'px';
-            container.style.top = rect.top + 'px';
-            container.style.width = imgWidth + 'px';
-            container.style.height = imgHeight + 'px';
-            container.style.pointerEvents = 'none';
-            container.style.zIndex = 9999;
-            document.body.appendChild(container);
+        // Ripple waves
+        for (let i = 0; i < 4; i++) {
+            const wave = document.createElement('div');
+            wave.style.cssText = `
+                position: absolute;
+                border: 2px solid rgba(255,255,255,0.3);
+                border-radius: 50%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                animation: ripple 2s ease-out infinite;
+                animation-delay: ${i * 0.5}s;
+            `;
+            container.appendChild(wave);
+        }
 
-            window._previewAnimation.pieces = [];
-
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    const sx = c * pieceW;
-                    const sy = r * pieceH;
-                    const sw = Math.min(pieceW, imgWidth - sx);
-                    const sh = Math.min(pieceH, imgHeight - sy);
-
-                    const pieceCanvas = document.createElement('canvas');
-                    pieceCanvas.width = sw;
-                    pieceCanvas.height = sh;
-                    const pctx = pieceCanvas.getContext('2d');
-                    pctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
-
-                    const dataUrl = pieceCanvas.toDataURL();
-                    const piece = document.createElement('img');
-                    piece.src = dataUrl;
-                    piece.style.position = 'absolute';
-                    piece.style.left = sx + 'px';
-                    piece.style.top = sy + 'px';
-                    piece.style.width = sw + 'px';
-                    piece.style.height = sh + 'px';
-                    piece.style.transition = 'transform 700ms cubic-bezier(.2,.9,.3,1), opacity 700ms ease';
-                    piece.style.willChange = 'transform, opacity';
-
-                    container.appendChild(piece);
-                    window._previewAnimation.pieces.push({ el: piece, x: sx, y: sy });
+        // Dynamic styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes morphBlob {
+                0%, 100% { 
+                    border-radius: 50%;
+                    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                }
+                25% { 
+                    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+                    transform: translate(-50%, -50%) scale(1.2) rotate(90deg);
+                }
+                50% { 
+                    border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+                    transform: translate(-50%, -50%) scale(0.8) rotate(180deg);
+                }
+                75% { 
+                    border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%;
+                    transform: translate(-50%, -50%) scale(1.1) rotate(270deg);
                 }
             }
+            @keyframes orbit0 { 0% { transform: rotate(0deg) translateX(40px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(40px) rotate(-360deg); } }
+            @keyframes orbit1 { 0% { transform: rotate(60deg) translateX(35px) rotate(-60deg); } 100% { transform: rotate(420deg) translateX(35px) rotate(-420deg); } }
+            @keyframes orbit2 { 0% { transform: rotate(120deg) translateX(45px) rotate(-120deg); } 100% { transform: rotate(480deg) translateX(45px) rotate(-480deg); } }
+            @keyframes orbit3 { 0% { transform: rotate(180deg) translateX(38px) rotate(-180deg); } 100% { transform: rotate(540deg) translateX(38px) rotate(-540deg); } }
+            @keyframes orbit4 { 0% { transform: rotate(240deg) translateX(42px) rotate(-240deg); } 100% { transform: rotate(600deg) translateX(42px) rotate(-600deg); } }
+            @keyframes orbit5 { 0% { transform: rotate(300deg) translateX(36px) rotate(-300deg); } 100% { transform: rotate(660deg) translateX(36px) rotate(-660deg); } }
+            @keyframes ripple {
+                0% { width: 0; height: 0; opacity: 1; }
+                100% { width: 200px; height: 200px; opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
 
-            // Hide original image briefly for effect
-            img.style.visibility = 'hidden';
-            window._previewAnimation.running = true;
-            window._previewAnimation.loop = true;
+        img.style.visibility = 'hidden';
+        window._previewAnimation.running = true;
+        window._previewAnimation.container = container;
+        window._previewAnimation.style = style;
 
-            // Create lighting overlay for glow/highlight effect
-            const light = document.createElement('div');
-            light.id = 'preview-animation-light';
-            light.style.position = 'absolute';
-            light.style.left = '0';
-            light.style.top = '0';
-            light.style.width = '100%';
-            light.style.height = '100%';
-            light.style.pointerEvents = 'none';
-            light.style.mixBlendMode = 'screen';
-            light.style.opacity = '0';
-            light.style.transition = 'opacity 300ms ease, transform 500ms ease';
-            light.style.background = 'radial-gradient(circle at 30% 20%, rgba(217, 255, 0, 1), rgba(255,255,255,0.0) 35%), radial-gradient(circle at 70% 80%, rgba(255,255,255,0.6), rgba(255,255,255,0.0) 30%)';
-            container.appendChild(light);
-            window._previewAnimation.light = light;
-
-            // Define one animation cycle
-            const doCycle = () => {
-                if (!window._previewAnimation.loop) return finishAndCleanup();
-
-                // Scatter pieces
-                window._previewAnimation.pieces.forEach((p, i) => {
-                    const dx = (Math.random() - 0.5) * imgWidth * 0.8;
-                    const dy = (Math.random() - 0.5) * imgHeight * 0.8;
-                    const rot = (Math.random() - 0.5) * 40; // degrees
-                    const delay = Math.random() * 200;
-                    p.el.style.transitionDelay = delay + 'ms';
-                    p.el.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg) scale(1.02)`;
-                    p.el.style.opacity = '0.95';
-                });
-
-                // After scatter, slowly rejoin pieces randomly
-                setTimeout(() => {
-                    // show a quick light flash during rejoin
-                    try { light.style.opacity = '0.7'; light.style.transform = 'scale(1.02)'; } catch (e) {}
-
-                    const shuffled = window._previewAnimation.pieces.slice().sort(() => Math.random() - 0.5);
-                    shuffled.forEach((p, i) => {
-                        const delay = 300 + i * 60;
-                        p.el.style.transitionDelay = delay + 'ms';
-                        p.el.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
-                        p.el.style.opacity = '1';
-                    });
-
-                    // After rejoin, pause and then play a split-across-screen effect
-                    setTimeout(() => {
-                        try { light.style.opacity = '0.3'; light.style.transform = 'scale(1)'; } catch (e) {}
-
-                        window._previewAnimation.pieces.forEach((p, i) => {
-                            const dx = (i % cols - Math.floor(cols/2)) * imgWidth * 0.6;
-                            const dy = (Math.floor(i/cols) - Math.floor(rows/2)) * imgHeight * 0.6;
-                            p.el.style.transitionDelay = i * 20 + 'ms';
-                            p.el.style.transform = `translate(${dx}px, ${dy}px) rotate(${(i%2?1:-1)*15}deg) scale(0.95)`;
-                            p.el.style.opacity = '0.9';
-                        });
-
-                        // Rejoin finally
-                        setTimeout(() => {
-                            window._previewAnimation.pieces.forEach((p, i) => {
-                                p.el.style.transitionDelay = (i * 25) + 'ms';
-                                p.el.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
-                                p.el.style.opacity = '1';
-                            });
-
-                            // light pulse on final join
-                            setTimeout(() => {
-                                try { light.style.opacity = '0.85'; } catch (e) {}
-                            }, 100);
-
-                            // After final join, decide to loop or finish
-                            setTimeout(() => {
-                                try { light.style.opacity = '0'; } catch (e) {}
-                                if (window._previewAnimation.loop) {
-                                    // small delay before next cycle
-                                    setTimeout(() => doCycle(), 400);
-                                } else {
-                                    finishAndCleanup();
-                                }
-                            }, 800 + cols * rows * 25);
-
-                        }, 900);
-                    }, 600);
-                }, 250);
-            };
-
-            const finishAndCleanup = () => {
-                // Animate pieces back to original then remove
-                window._previewAnimation.pieces.forEach((p, i) => {
-                    p.el.style.transitionDelay = (i * 12) + 'ms';
-                    p.el.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
-                    p.el.style.opacity = '1';
-                });
-
-                setTimeout(() => {
-                    try { if (container) container.remove(); } catch (e) {}
-                    if (img) img.style.visibility = '';
-                    window._previewAnimation.pieces = [];
-                    window._previewAnimation.running = false;
-                    window._previewAnimation.light = null;
-                }, 500 + window._previewAnimation.pieces.length * 12);
-            };
-
-            // Start first cycle
-            setTimeout(() => doCycle(), 25);
-        };
     } catch (e) {
         console.error('startPreviewAnimation error:', e);
     }
 }
 
-function stopPreviewAnimation(force = false) {
+function stopPreviewAnimation() {
     try {
         const img = document.getElementById('previewImg');
         const container = document.getElementById('preview-animation-container');
-        if (!container) {
-            if (img) img.style.visibility = '';
-            window._previewAnimation.running = false;
-            return;
+        
+        if (container) {
+            container.style.transition = 'transform 600ms ease, opacity 600ms ease';
+            container.style.transform = 'scale(0.8)';
+            container.style.opacity = '0';
+            
+            setTimeout(() => {
+                try {
+                    container.remove();
+                    if (window._previewAnimation.style) {
+                        window._previewAnimation.style.remove();
+                    }
+                } catch (e) {}
+            }, 600);
         }
-
-        // Animate pieces back to original positions then remove
-        window._previewAnimation.pieces.forEach((p, i) => {
-            p.el.style.transitionDelay = (i * 12) + 'ms';
-            p.el.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
-            p.el.style.opacity = '1';
-        });
-
-        setTimeout(() => {
-            try {
-                container.remove();
-            } catch (e) {}
-            if (img) img.style.visibility = '';
-            window._previewAnimation.pieces = [];
-            window._previewAnimation.running = false;
-        }, 500 + window._previewAnimation.pieces.length * 12);
+        
+        if (img) img.style.visibility = '';
+        window._previewAnimation.running = false;
+        
     } catch (e) {
         console.error('stopPreviewAnimation error:', e);
     }
@@ -743,6 +675,9 @@ async function analyzeImage() {
 
     analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
 
+    // Start preview animation
+    startPreviewAnimation();
+
     // Set analyzing state for background animation
     if (typeof window.setAnalyzingState === 'function') {
         window.setAnalyzingState(true);
@@ -809,6 +744,9 @@ async function analyzeImage() {
             
             displayResults(result);
             
+            // Stop preview animation
+            stopPreviewAnimation();
+
             // Reset analyzing state first, then set disease status after a brief delay
             if (typeof window.setAnalyzingState === 'function') {
                 window.setAnalyzingState(false);
@@ -890,11 +828,14 @@ async function analyzeImage() {
             showErrorMessage(errorMsg);
         }
     } finally {
-        // Only reset analyzing state if analysis failed
-        if (!analysisSuccessful && typeof window.setAnalyzingState === 'function') {
-            window.setAnalyzingState(false);
-            // Also clear any previous disease status
-            window.diseaseStatus = null;
+        // Stop animation and reset analyzing state if analysis failed
+        if (!analysisSuccessful) {
+            stopPreviewAnimation();
+            if (typeof window.setAnalyzingState === 'function') {
+                window.setAnalyzingState(false);
+                // Also clear any previous disease status
+                window.diseaseStatus = null;
+            }
         }
         
         analyzeBtn.disabled = false;
