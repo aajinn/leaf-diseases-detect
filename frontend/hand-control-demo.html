@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Gesture Control Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .demo-button {
+            padding: 15px 25px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        
+        .demo-button.secondary {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+        }
+        
+        .demo-button.danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+        }
+        
+        .input-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .input-group input, .input-group select, .input-group textarea {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        
+        .nav-menu {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .nav-item {
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item:hover {
+            background: #555;
+            transform: scale(1.05);
+        }
+        
+        .gesture-instructions {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .status-display {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-menu {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤚 Hand Gesture Control Demo</h1>
+        
+        <div class="gesture-instructions">
+            <h3>📋 Gesture Instructions:</h3>
+            <ul>
+                <li><strong>👉 Point (Index finger):</strong> Hover over elements</li>
+                <li><strong>✊ Fist:</strong> Click/Select elements</li>
+                <li><strong>🖐️ Open Hand:</strong> Scroll page up/down</li>
+                <li><strong>✌️ Peace Sign:</strong> Special actions</li>
+            </ul>
+            <p><em>Use the control panel in the top-right corner to start/stop hand tracking.</em></p>
+        </div>
+        
+        <nav class="nav-menu">
+            <a href="#" class="nav-item" onclick="showSection('buttons')">Buttons</a>
+            <a href="#" class="nav-item" onclick="showSection('forms')">Forms</a>
+            <a href="#" class="nav-item" onclick="showSection('cards')">Cards</a>
+            <a href="#" class="nav-item" onclick="showSection('interactive')">Interactive</a>
+        </nav>
+        
+        <div id="buttons-section" class="demo-section">
+            <h2>🔘 Button Controls</h2>
+            <div class="button-grid">
+                <button class="demo-button" onclick="handleAction('Primary Action')">
+                    Primary Action
+                </button>
+                <button class="demo-button secondary" onclick="handleAction('Secondary Action')">
+                    Secondary Action
+                </button>
+                <button class="demo-button danger" onclick="handleAction('Delete Action')">
+                    Delete Action
+                </button>
+                <button class="demo-button" onclick="handleAction('Save Changes')">
+                    Save Changes
+                </button>
+                <button class="demo-button secondary" onclick="handleAction('Cancel')">
+                    Cancel
+                </button>
+                <button class="demo-button" onclick="handleAction('Submit Form')">
+                    Submit Form
+                </button>
+            </div>
+        </div>
+        
+        <div id="forms-section" class="demo-section">
+            <h2>📝 Form Controls</h2>
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="name">Full Name:</label>
+                    <input type="text" id="name" placeholder="Enter your name" data-gesture="input">
+                </div>
+                <div class="input-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" placeholder="Enter your email" data-gesture="input">
+                </div>
+                <div class="input-group">
+                    <label for="country">Country:</label>
+                    <select id="country" data-gesture="select">
+                        <option value="">Select Country</option>
+                        <option value="us">United States</option>
+                        <option value="uk">United Kingdom</option>
+                        <option value="ca">Canada</option>
+                        <option value="au">Australia</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="message">Message:</label>
+                    <textarea id="message" rows="4" placeholder="Enter your message" data-gesture="textarea"></textarea>
+                </div>
+            </div>
+            <button class="demo-button" onclick="handleFormSubmit()">Submit Form</button>
+        </div>
+        
+        <div id="cards-section" class="demo-section">
+            <h2>🃏 Interactive Cards</h2>
+            <div class="card" onclick="handleCardClick('Product Card')">
+                <h3>🌱 Plant Disease Detection</h3>
+                <p>AI-powered leaf disease identification system with real-time analysis and treatment recommendations.</p>
+                <small>Click to learn more</small>
+            </div>
+            <div class="card" onclick="handleCardClick('Feature Card')">
+                <h3>🤖 AI Integration</h3>
+                <p>Advanced machine learning models for accurate disease classification and severity assessment.</p>
+                <small>Click to explore features</small>
+            </div>
+            <div class="card" onclick="handleCardClick('Demo Card')">
+                <h3>🎮 Hand Gesture Control</h3>
+                <p>Revolutionary interface control using computer vision and hand tracking technology.</p>
+                <small>Click to try demo</small>
+            </div>
+        </div>
+        
+        <div id="interactive-section" class="demo-section">
+            <h2>🎯 Interactive Elements</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="clickable" onclick="handleAction('Toggle Theme')" style="padding: 20px; background: #f0f0f0; border-radius: 8px; text-align: center; cursor: pointer;">
+                    🎨 Toggle Theme
+                </div>
+                <div class="clickable" onclick="handleAction('Play Sound')" style="padding: 20px; background: #e8f5e8; border-radius: 8px; text-align: center; cursor: pointer;">
+                    🔊 Play Sound
+                </div>
+                <div class="clickable" onclick="handleAction('Show Alert')" style="padding: 20px; background: #fff3cd; border-radius: 8px; text-align: center; cursor: pointer;">
+                    ⚠️ Show Alert
+                </div>
+                <div class="clickable" onclick="handleAction('Random Color')" style="padding: 20px; background: #f8d7da; border-radius: 8px; text-align: center; cursor: pointer;">
+                    🎨 Random Color
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="status-display" class="status-display">
+        Ready for hand gestures...
+    </div>
+    
+    <script src="js/hand-control.js"></script>
+    <script>
+        // Demo functionality
+        function handleAction(action) {
+            console.log('Action triggered:', action);
+            updateStatus(`Action: ${action}`);
+            
+            // Visual feedback
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(76, 175, 80, 0.9); color: white; padding: 15px 25px;
+                border-radius: 8px; z-index: 10001; font-size: 16px; font-weight: bold;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            notification.textContent = `✅ ${action}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        }
+        
+        function handleCardClick(cardName) {
+            handleAction(`Opened ${cardName}`);
+        }
+        
+        function handleFormSubmit() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            
+            if (name && email) {
+                handleAction(`Form submitted for ${name}`);
+            } else {
+                handleAction('Please fill required fields');
+            }
+        }
+        
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.demo-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(`${sectionName}-section`);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+                handleAction(`Navigated to ${sectionName}`);
+            }
+        }
+        
+        function updateStatus(message) {
+            const statusDisplay = document.getElementById('status-display');
+            statusDisplay.textContent = message;
+            
+            setTimeout(() => {
+                statusDisplay.textContent = 'Ready for hand gestures...';
+            }, 3000);
+        }
+        
+        // Initialize - show all sections by default
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Hand Gesture Control Demo loaded');
+            updateStatus('Hand Gesture Control Demo Ready!');
+        });
+        
+        // Add some interactive behaviors
+        document.querySelectorAll('.demo-button').forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                button.style.transform = 'translateY(-2px) scale(1.02)';
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                button.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+        
+        // Keyboard shortcuts for testing
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case '1':
+                        showSection('buttons');
+                        break;
+                    case '2':
+                        showSection('forms');
+                        break;
+                    case '3':
+                        showSection('cards');
+                        break;
+                    case '4':
+                        showSection('interactive');
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
