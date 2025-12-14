@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Leaf Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/animated-background.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-emerald-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-leaf text-primary text-3xl mr-3"></i>
+                    <span class="text-2xl font-bold text-gray-800">Leaf Disease Detection</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-primary">Home</a>
+                    <a href="/about" class="text-primary font-semibold">About</a>
+                    <a href="/diseases" class="text-gray-600 hover:text-primary">Diseases</a>
+                    <a href="/login" class="text-gray-600 hover:text-primary">Login</a>
+                    <a href="/register" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-bold text-gray-900 mb-6">About Our Mission</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                We're revolutionizing agriculture through AI-powered plant disease detection, 
+                helping farmers protect their crops and ensure global food security.
+            </p>
+        </div>
+
+        <!-- Mission & Vision -->
+        <div class="grid md:grid-cols-2 gap-12 mb-20">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-primary text-5xl mb-6">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-4">Our Mission</h2>
+                <p class="text-gray-600 text-lg leading-relaxed">
+                    To democratize access to advanced plant disease detection technology, 
+                    empowering farmers worldwide with AI-driven insights to protect their crops, 
+                    increase yields, and contribute to global food security.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-primary text-5xl mb-6">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-4">Our Vision</h2>
+                <p class="text-gray-600 text-lg leading-relaxed">
+                    A world where every farmer, regardless of location or resources, 
+                    has access to cutting-edge technology that helps them make informed decisions 
+                    about plant health and crop management.
+                </p>
+            </div>
+        </div>
+
+        <!-- Our Story -->
+        <div class="bg-white rounded-xl shadow-lg p-12 mb-20">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold mb-4">Our Story</h2>
+                <p class="text-gray-600 text-lg max-w-4xl mx-auto">
+                    Founded by a team of agricultural scientists and AI researchers, our company emerged from 
+                    witnessing firsthand the devastating impact of plant diseases on farming communities worldwide.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                        2020
+                    </div>
+                    <h4 class="font-bold mb-2">Research Begins</h4>
+                    <p class="text-gray-600 text-sm">Started developing AI models for plant disease detection</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                        2022
+                    </div>
+                    <h4 class="font-bold mb-2">First Prototype</h4>
+                    <p class="text-gray-600 text-sm">Launched beta version with 100+ disease detection</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                        2023
+                    </div>
+                    <h4 class="font-bold mb-2">Global Launch</h4>
+                    <p class="text-gray-600 text-sm">Released platform with 500+ diseases and 95% accuracy</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team -->
+        <div class="mb-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-4">Meet Our Team</h2>
+                <p class="text-gray-600 text-lg">
+                    Passionate experts dedicated to revolutionizing agriculture through technology
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                    <div class="w-24 h-24 bg-gradient-to-br from-primary to-secondary rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-user text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Dr. Sarah Chen</h3>
+                    <p class="text-primary font-semibold mb-2">Chief Technology Officer</p>
+                    <p class="text-gray-600 text-sm">PhD in Computer Vision, 15+ years in AI research</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                    <div class="w-24 h-24 bg-gradient-to-br from-primary to-secondary rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-user text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Prof. Michael Rodriguez</h3>
+                    <p class="text-primary font-semibold mb-2">Head of Agriculture</p>
+                    <p class="text-gray-600 text-sm">Plant Pathologist, 20+ years in crop disease research</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                    <div class="w-24 h-24 bg-gradient-to-br from-primary to-secondary rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-user text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Emily Johnson</h3>
+                    <p class="text-primary font-semibold mb-2">Product Manager</p>
+                    <p class="text-gray-600 text-sm">Agricultural Technology Expert, Former Farm Advisor</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technology -->
+        <div class="bg-gradient-to-r from-primary to-secondary rounded-xl p-12 text-white mb-20">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold mb-4">Our Technology</h2>
+                <p class="text-green-100 text-lg">
+                    Powered by cutting-edge AI and machine learning technologies
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <i class="fas fa-brain text-4xl mb-4"></i>
+                    <h3 class="text-xl font-bold mb-3">Meta Llama Vision AI</h3>
+                    <p class="text-green-100">
+                        Advanced computer vision models trained on millions of plant images 
+                        for accurate disease identification.
+                    </p>
+                </div>
+
+                <div class="bg-white bg-opacity-10 rounded-lg p-6">
+                    <i class="fas fa-cloud text-4xl mb-4"></i>
+                    <h3 class="text-xl font-bold mb-3">Cloud Infrastructure</h3>
+                    <p class="text-green-100">
+                        Scalable cloud platform ensuring fast, reliable analysis 
+                        accessible from anywhere in the world.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Impact -->
+        <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+            <h2 class="text-3xl font-bold mb-8">Our Impact</h2>
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="text-4xl font-bold text-primary mb-2">10K+</div>
+                    <div class="text-gray-600">Farmers Helped</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-primary mb-2">500+</div>
+                    <div class="text-gray-600">Diseases Detected</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-primary mb-2">95%</div>
+                    <div class="text-gray-600">Accuracy Rate</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-primary mb-2">50+</div>
+                    <div class="text-gray-600">Countries Served</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold mb-3 text-primary">Our Services</h3>
+                    <ul class="space-y-1 text-sm">
+                        <li><a href="/live-detection" class="hover:text-primary transition">Live Disease Detection</a></li>
+                        <li><a href="/diseases" class="hover:text-primary transition">Disease Database</a></li>
+                        <li><a href="/dashboard" class="hover:text-primary transition">Health Dashboard</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-3 text-primary">Quick Links</h3>
+                    <ul class="space-y-1 text-sm">
+                        <li><a href="/" class="hover:text-primary transition">Home</a></li>
+                        <li><a href="/diseases" class="hover:text-primary transition">Diseases</a></li>
+                        <li><a href="/login" class="hover:text-primary transition">Login</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-3 text-primary">Contact</h3>
+                    <p class="text-sm text-gray-300">support@leafdetect.com</p>
+                    <div class="flex space-x-3 mt-2">
+                        <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-6 pt-4 text-center text-sm">
+                <p>&copy; 2023 Leaf Disease Detection. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

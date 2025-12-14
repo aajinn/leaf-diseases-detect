@@ -10,6 +10,7 @@ from src.database.connection import MongoDB
 from src.image_utils import convert_image_to_base64_and_test
 from src.routes.admin import router as admin_router
 from src.routes.disease_detection import router as detection_router
+from src.routes.feedback_routes import router as feedback_router
 from src.routes.prescription_routes import router as prescription_router
 
 # Configure logging
@@ -101,12 +102,19 @@ if os.path.exists("frontend"):
     async def serve_prescriptions():
         """Serve the prescriptions page"""
         return FileResponse("frontend/prescriptions.html")
+    @app.get("/about", response_class=FileResponse)
+    async def serve_about():
+        return FileResponse("frontend/about.html")
+    @app.get("/faq", response_class=FileResponse)
+    async def serve_faq():
+        return FileResponse("frontend/faq.html")
 
 
 # Include routers
 app.include_router(auth_router)
 app.include_router(detection_router)
 app.include_router(admin_router)
+app.include_router(feedback_router)
 app.include_router(prescription_router)
 
 

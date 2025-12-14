@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Leaf Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-emerald-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-leaf text-primary text-3xl mr-3"></i>
+                    <span class="text-2xl font-bold text-gray-800">Leaf Disease Detection</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-primary">Home</a>
+                    <a href="/about" class="text-gray-600 hover:text-primary">About</a>
+                    <a href="/diseases" class="text-gray-600 hover:text-primary">Diseases</a>
+                    <a href="/faq" class="text-primary font-semibold">FAQ</a>
+                    <a href="/login" class="text-gray-600 hover:text-primary">Login</a>
+                    <a href="/register" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h1>
+            <p class="text-xl text-gray-600">Find answers to common questions about our plant disease detection system</p>
+        </div>
+
+        <!-- FAQ Items -->
+        <div class="space-y-4">
+            <!-- General Questions -->
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq1')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">How accurate is the disease detection?</h3>
+                        <i id="faq1-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq1" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">Our AI system achieves 85-95% accuracy across different disease categories. The accuracy varies by disease type, with fungal diseases having the highest detection rate at 92.3%.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq2')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">What image formats are supported?</h3>
+                        <i id="faq2-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq2" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">We support JPEG, PNG, WebP, BMP, and TIFF formats. Maximum file size is 10MB per image. For best results, use clear, well-lit photos with the leaf filling most of the frame.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq3')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">How many plant diseases can you detect?</h3>
+                        <i id="faq3-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq3" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">Our system can identify over 500 plant diseases including fungal, bacterial, viral, pest-related damage, and nutrient deficiencies across multiple crop types.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq4')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">How fast is the analysis?</h3>
+                        <i id="faq4-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq4" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">Analysis typically takes 2-5 seconds per image. Response time may vary based on image size and server load, but we maintain sub-5-second processing for optimal user experience.</p>
+                </div>
+            </div>
+
+            <!-- Technical Questions -->
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq5')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">Do I need to create an account to use the service?</h3>
+                        <i id="faq5-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq5" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">Yes, registration is required to access our disease detection services. This allows us to save your analysis history and provide personalized recommendations.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq6')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">Can I use the camera on my mobile device?</h3>
+                        <i id="faq6-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq6" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">Yes! Our platform works on mobile devices and supports live camera capture. You can take photos directly through your browser or upload existing images from your gallery.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq7')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">Is my data secure and private?</h3>
+                        <i id="faq7-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq7" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">Yes, we take data security seriously. All images are processed securely and can be deleted from your account at any time. We do not share your data with third parties without consent.</p>
+                </div>
+            </div>
+
+            <!-- Usage Questions -->
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq8')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">What should I do if the system doesn't detect a disease correctly?</h3>
+                        <i id="faq8-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq8" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">Try taking a clearer photo with better lighting. If issues persist, contact our support team. We continuously improve our AI models based on user feedback.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq9')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">Do you provide treatment recommendations?</h3>
+                        <i id="faq9-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq9" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">Yes, we provide evidence-based treatment recommendations for each detected disease, including organic and chemical treatment options, preventive measures, and care instructions.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg">
+                <button onclick="toggleFaq('faq10')" class="w-full text-left p-6 focus:outline-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">Is there a limit to how many images I can analyze?</h3>
+                        <i id="faq10-icon" class="fas fa-chevron-down text-primary"></i>
+                    </div>
+                </button>
+                <div id="faq10" class="hidden px-6 pb-6">
+                    <p class="text-gray-600">Free accounts have reasonable usage limits. For commercial or high-volume usage, please contact us about our premium plans with higher limits and additional features.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="mt-16 bg-gradient-to-r from-primary to-secondary rounded-xl p-8 text-white text-center">
+            <h2 class="text-2xl font-bold mb-4">Still have questions?</h2>
+            <p class="text-green-100 mb-6">Our support team is here to help you get the most out of our platform.</p>
+            <a href="mailto:support@leafdetect.com" class="bg-white text-primary px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+                <i class="fas fa-envelope mr-2"></i>Contact Support
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold mb-3 text-primary">Our Services</h3>
+                    <ul class="space-y-1 text-sm">
+                        <li><a href="/live-detection" class="hover:text-primary transition">Live Disease Detection</a></li>
+                        <li><a href="/diseases" class="hover:text-primary transition">Disease Database</a></li>
+                        <li><a href="/dashboard" class="hover:text-primary transition">Health Dashboard</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-3 text-primary">Quick Links</h3>
+                    <ul class="space-y-1 text-sm">
+                        <li><a href="/" class="hover:text-primary transition">Home</a></li>
+                        <li><a href="/about" class="hover:text-primary transition">About</a></li>
+                        <li><a href="/login" class="hover:text-primary transition">Login</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-3 text-primary">Contact</h3>
+                    <p class="text-sm text-gray-300">support@leafdetect.com</p>
+                    <div class="flex space-x-3 mt-2">
+                        <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white hover:text-primary transition"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-6 pt-4 text-center text-sm">
+                <p>&copy; 2023 Leaf Disease Detection. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleFaq(faqId) {
+            const content = document.getElementById(faqId);
+            const icon = document.getElementById(faqId + '-icon');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+    </script>
+</body>
+</html>
