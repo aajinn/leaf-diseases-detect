@@ -918,7 +918,8 @@ function displayResults(result) {
                     <div class="flex items-center">
                         <i class="fas fa-virus text-red-500 text-3xl mr-4"></i>
                         <div>
-                            <h4 class="text-2xl font-bold text-red-800">${result.disease_name}</h4>
+                            <h4 class="text-2xl font-bold text-red-800">${result.original_disease_name || result.disease_name}</h4>
+                            ${result.disease_name && result.original_disease_name && result.disease_name !== result.original_disease_name ? `<p class="text-xs text-gray-500 font-mono mb-1">ID: ${result.disease_name.split('#')[1] || 'N/A'}</p>` : ''}
                             <p class="text-red-600">Type: ${result.disease_type} | Severity: ${result.severity}</p>
                         </div>
                     </div>
@@ -990,6 +991,17 @@ function displayResults(result) {
             </div>
 
             ${displayYouTubeVideos(result.youtube_videos, false)}
+            
+            <!-- Feedback Section -->
+            <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h5 class="font-bold text-sm mb-3 flex items-center text-gray-700">
+                    <i class="fas fa-comment-alt text-gray-500 mr-2"></i>
+                    Was this analysis helpful?
+                </h5>
+                <button onclick="showFeedbackModal('${result.id}')" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition text-sm">
+                    <i class="fas fa-flag mr-2"></i>Report Issue / Provide Feedback
+                </button>
+            </div>
         `;
     } else {
         html = `
@@ -1019,6 +1031,17 @@ function displayResults(result) {
             </div>
 
             ${displayYouTubeVideos(result.youtube_videos, true)}
+            
+            <!-- Feedback Section -->
+            <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h5 class="font-bold text-sm mb-3 flex items-center text-gray-700">
+                    <i class="fas fa-comment-alt text-gray-500 mr-2"></i>
+                    Was this analysis helpful?
+                </h5>
+                <button onclick="showFeedbackModal('${result.id}')" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition text-sm">
+                    <i class="fas fa-flag mr-2"></i>Report Issue / Provide Feedback
+                </button>
+            </div>
         `;
     }
 
@@ -1095,6 +1118,129 @@ function displayYouTubeVideos(videos, isHealthy = false) {
     `;
 }
 
+
+// Show feedback modal
+function showFeedbackModal(analysisId) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Provide Feedback</h3>
+                    <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="feedbackForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Issue Type</label>
+                        <select id="feedbackType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="incorrect">Incorrect Disease Detection</option>
+                            <option value="incomplete">Incomplete Information</option>
+                            <option value="other">Other Issue</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Your Message</label>
+                        <textarea id="feedbackMessage" rows="4" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Please describe the issue or provide your feedback..."></textarea>
+                    </div>
+                    
+                    <div id="correctDiseaseDiv" class="hidden">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Correct Disease (if known)</label>
+                        <input type="text" id="correctDisease" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter the correct disease name">
+                    </div>
+                    
+                    <div id="correctTreatmentDiv" class="hidden">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Correct Treatment (if known)</label>
+                        <textarea id="correctTreatment" rows="2" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter the correct treatment"></textarea>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="button" onclick="submitFeedback('${analysisId}')" class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-secondary transition font-semibold">
+                            <i class="fas fa-paper-plane mr-2"></i>Submit Feedback
+                        </button>
+                        <button type="button" onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Show/hide additional fields based on feedback type
+    document.getElementById('feedbackType').addEventListener('change', (e) => {
+        const correctDiseaseDiv = document.getElementById('correctDiseaseDiv');
+        const correctTreatmentDiv = document.getElementById('correctTreatmentDiv');
+        
+        if (e.target.value === 'incorrect') {
+            correctDiseaseDiv.classList.remove('hidden');
+            correctTreatmentDiv.classList.remove('hidden');
+        } else {
+            correctDiseaseDiv.classList.add('hidden');
+            correctTreatmentDiv.classList.add('hidden');
+        }
+    });
+}
+
+// Submit feedback
+async function submitFeedback(analysisId) {
+    try {
+        const feedbackType = document.getElementById('feedbackType').value;
+        const message = document.getElementById('feedbackMessage').value.trim();
+        const correctDisease = document.getElementById('correctDisease').value.trim();
+        const correctTreatment = document.getElementById('correctTreatment').value.trim();
+        
+        if (!message) {
+            showNotification('Please provide a message', 'error');
+            return;
+        }
+        
+        const token = sessionManager.getToken();
+        if (!token) {
+            showNotification('Please login to submit feedback', 'error');
+            return;
+        }
+        
+        const feedbackData = {
+            analysis_id: analysisId,
+            feedback_type: feedbackType,
+            message: message,
+            correct_disease: correctDisease || null,
+            correct_treatment: correctTreatment || null
+        };
+        
+        const response = await fetch(`${API_URL}/api/feedback/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(feedbackData)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showNotification('Thank you for your feedback! Our team will review it.', 'success');
+            // Close the feedback modal
+            const modal = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
+            if (modal) {
+                modal.remove();
+            }
+        } else {
+            const error = await response.json();
+            showNotification(error.detail || 'Failed to submit feedback', 'error');
+        }
+    } catch (error) {
+        console.error('Error submitting feedback:', error);
+        showNotification('Error submitting feedback', 'error');
+    }
+}
 
 // Generate prescription for analysis
 async function generatePrescription(analysisId) {

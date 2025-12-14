@@ -652,6 +652,8 @@ function switchTab(tabName) {
         loadAPIConfig();
     } else if (tabName === 'prescriptions') {
         loadPrescriptionAnalytics();
+    } else if (tabName === 'feedback') {
+        loadFeedback();
     }
 }
 
@@ -679,7 +681,482 @@ function refreshCurrentTab() {
             loadAPIConfig();
         } else if (tabName === 'prescriptions') {
             loadPrescriptionAnalytics();
+        } else if (tabName === 'feedback') {
+            loadFeedback();
         }
+    }
+}
+
+// Load feedback
+async function loadFeedback() {
+    try {
+        console.log('Loading feedback...');
+        const status = document.getElementById('feedbackStatusFilter').value;
+        let url = `${API_URL}/api/feedback/admin`;
+        if (status) {
+            url += `?status=${status}`;
+        }
+        
+        console.log('Fetching feedback from:', url);
+        const response = await authenticatedFetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const feedback = await response.json();
+        console.log('Feedback loaded:', feedback);
+        
+        displayFeedback(feedback);
+    } catch (error) {
+        console.error('Error loading feedback:', error);
+        document.getElementById('feedbackTable').innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+                <p class="text-red-600 font-semibold">Error loading feedback</p>
+                <p class="text-gray-600 text-sm">${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+function displayFeedback(feedbackList) {
+    const container = document.getElementById('feedbackTable');
+    
+    // Store feedback data globally for editing
+    window.currentFeedbackList = feedbackList;
+    
+    console.log('Displaying feedback list:', feedbackList);
+    
+    if (feedbackList.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-8">No feedback found</p>';
+        return;
+    }
+    
+    container.innerHTML = feedbackList.map(feedback => {
+        const statusColors = {
+            'pending': 'bg-yellow-100 text-yellow-800',
+            'reviewed': 'bg-blue-100 text-blue-800',
+            'resolved': 'bg-green-100 text-green-800'
+        };
+        
+        const typeColors = {
+            'incorrect': 'bg-red-100 text-red-800',
+            'incomplete': 'bg-orange-100 text-orange-800',
+            'other': 'bg-gray-100 text-gray-800'
+        };
+        
+        return `
+            <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="px-2 py-1 text-xs rounded-full ${statusColors[feedback.status] || 'bg-gray-100 text-gray-800'}">
+                            ${feedback.status}
+                        </span>
+                        <span class="px-2 py-1 text-xs rounded-full ${typeColors[feedback.feedback_type] || 'bg-gray-100 text-gray-800'}">
+                            ${feedback.feedback_type}
+                        </span>
+                        <span class="text-sm text-gray-500">
+                            by ${feedback.username} • ${new Date(feedback.created_at).toLocaleDateString()}
+                        </span>
+                    </div>
+                    <button onclick="editFeedback('${feedback.id || feedback._id}')" class="text-primary hover:text-secondary text-sm">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-gray-800 mb-2">${feedback.message}</p>
+                    ${feedback.correct_disease ? `<p class="text-sm text-gray-600"><strong>Suggested Disease:</strong> ${feedback.correct_disease}</p>` : ''}
+                    ${feedback.correct_treatment ? `<p class="text-sm text-gray-600"><strong>Suggested Treatment:</strong> ${feedback.correct_treatment}</p>` : ''}
+                </div>
+                
+                ${feedback.analysis ? `
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                        <h5 class="font-bold text-sm mb-3">Original Analysis:</h5>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <img src="/images/${feedback.analysis.username}/${feedback.analysis.image_filename}" 
+                                     alt="Analysis Image" 
+                                     class="w-full h-32 object-cover rounded-lg border border-gray-300"
+                                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDIwMCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTI4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04NSA2NEw5NSA1NEwxMDUgNjRMOTUgNzRMODUgNjRaIiBmaWxsPSIjOUI5QjlCIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iODQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5QjlCOUIiIGZvbnQtc2l6ZT0iMTIiPkltYWdlIG5vdCBmb3VuZDwvdGV4dD4KPC9zdmc+'">
+                                <p class="text-xs text-gray-500 mt-1">${feedback.analysis.image_filename}</p>
+                            </div>
+                            <div class="text-sm space-y-1">
+                                <div><strong>Disease:</strong> ${feedback.analysis.disease_name || 'None detected'}</div>
+                                <div><strong>Confidence:</strong> ${feedback.analysis.confidence}%</div>
+                                <div><strong>Type:</strong> ${feedback.analysis.disease_type}</div>
+                                <div><strong>Severity:</strong> ${feedback.analysis.severity}</div>
+                                <div><strong>Date:</strong> ${new Date(feedback.analysis.analysis_timestamp).toLocaleDateString()}</div>
+                                ${feedback.analysis.description ? `<div class="col-span-2"><strong>Description:</strong> ${feedback.analysis.description}</div>` : ''}
+                            </div>
+                        </div>
+                        ${feedback.analysis.treatment && feedback.analysis.treatment.length > 0 ? `
+                            <div class="mt-3">
+                                <strong class="text-sm">Treatment:</strong>
+                                <ul class="list-disc list-inside text-sm text-gray-600 mt-1">
+                                    ${feedback.analysis.treatment.slice(0, 2).map(t => `<li>${t}</li>`).join('')}
+                                    ${feedback.analysis.treatment.length > 2 ? `<li class="text-gray-500">... and ${feedback.analysis.treatment.length - 2} more</li>` : ''}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        ${feedback.analysis.youtube_videos && feedback.analysis.youtube_videos.length > 0 ? `
+                            <div class="mt-3">
+                                <strong class="text-sm">YouTube Videos:</strong>
+                                <div class="mt-1 space-y-1">
+                                    ${feedback.analysis.youtube_videos.slice(0, 2).map(video => `
+                                        <div class="flex items-center space-x-2">
+                                            <i class="fab fa-youtube text-red-500 text-sm"></i>
+                                            <a href="${video.url}" target="_blank" class="text-xs text-blue-600 hover:underline truncate">${video.title}</a>
+                                        </div>
+                                    `).join('')}
+                                    ${feedback.analysis.youtube_videos.length > 2 ? `<p class="text-xs text-gray-500">... and ${feedback.analysis.youtube_videos.length - 2} more videos</p>` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+                
+                ${feedback.admin_notes ? `
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-3 rounded">
+                        <p class="text-sm text-blue-800"><strong>Admin Notes:</strong> ${feedback.admin_notes}</p>
+                    </div>
+                ` : ''}
+                
+                <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+                    <span class="text-sm text-gray-500">Analysis ID: ${feedback.analysis_id}</span>
+                    <div class="space-x-2">
+                        ${feedback.status === 'pending' ? `
+                            <button onclick="updateFeedbackStatus('${feedback.id || feedback._id}', 'reviewed')" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+                                Mark Reviewed
+                            </button>
+                        ` : ''}
+                        ${feedback.status !== 'resolved' ? `
+                            <button onclick="updateFeedbackStatus('${feedback.id || feedback._id}', 'resolved')" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                                Mark Resolved
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Edit feedback modal
+function editFeedback(feedbackId) {
+    // Find the feedback data
+    const feedbackData = window.currentFeedbackList?.find(f => f.id === feedbackId || f._id === feedbackId);
+    console.log('Edit feedback called with ID:', feedbackId);
+    console.log('Found feedback data:', feedbackData);
+    console.log('Available feedback list:', window.currentFeedbackList);
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Edit Analysis & Feedback</h3>
+                    <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                ${feedbackData?.analysis ? `
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-blue-800 mb-3">Current Full Analysis</h4>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div class="lg:col-span-1">
+                                <img src="/images/${feedbackData.analysis.username}/${feedbackData.analysis.image_filename}" 
+                                     alt="Analysis Image" 
+                                     class="w-full h-48 object-cover rounded-lg border border-blue-300"
+                                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDIwMCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTI4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04NSA2NEw5NSA1NEwxMDUgNjRMOTUgNzRMODUgNjRaIiBmaWxsPSIjOUI5QjlCIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iODQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5QjlCOUIiIGZvbnQtc2l6ZT0iMTIiPkltYWdlIG5vdCBmb3VuZDwvdGV4dD4KPC9zdmc+'">
+                                <p class="text-xs text-gray-500 mt-1">${feedbackData.analysis.image_filename}</p>
+                            </div>
+                            <div class="lg:col-span-2 space-y-3">
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div><strong>Disease:</strong> ${feedbackData.analysis.disease_name || 'None detected'}</div>
+                                    <div><strong>Confidence:</strong> ${feedbackData.analysis.confidence}%</div>
+                                    <div><strong>Type:</strong> ${feedbackData.analysis.disease_type}</div>
+                                    <div><strong>Severity:</strong> ${feedbackData.analysis.severity}</div>
+                                    <div><strong>Date:</strong> ${new Date(feedbackData.analysis.analysis_timestamp).toLocaleDateString()}</div>
+                                    <div><strong>Detection:</strong> ${feedbackData.analysis.disease_detected ? 'Yes' : 'No'}</div>
+                                </div>
+                                
+                                ${feedbackData.analysis.symptoms && feedbackData.analysis.symptoms.length > 0 ? `
+                                    <div>
+                                        <strong class="text-sm">Symptoms:</strong>
+                                        <ul class="list-disc list-inside text-sm text-gray-600 mt-1">
+                                            ${feedbackData.analysis.symptoms.map(s => `<li>${s}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                                
+                                ${feedbackData.analysis.possible_causes && feedbackData.analysis.possible_causes.length > 0 ? `
+                                    <div>
+                                        <strong class="text-sm">Possible Causes:</strong>
+                                        <ul class="list-disc list-inside text-sm text-gray-600 mt-1">
+                                            ${feedbackData.analysis.possible_causes.map(c => `<li>${c}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                                
+                                ${feedbackData.analysis.treatment && feedbackData.analysis.treatment.length > 0 ? `
+                                    <div>
+                                        <strong class="text-sm">Treatment:</strong>
+                                        <ul class="list-disc list-inside text-sm text-gray-600 mt-1">
+                                            ${feedbackData.analysis.treatment.map(t => `<li>${t}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                                
+                                ${feedbackData.analysis.description ? `
+                                    <div>
+                                        <strong class="text-sm">Description:</strong>
+                                        <p class="text-sm text-gray-600 mt-1">${feedbackData.analysis.description}</p>
+                                    </div>
+                                ` : ''}
+                                
+                                ${feedbackData.analysis.youtube_videos && feedbackData.analysis.youtube_videos.length > 0 ? `
+                                    <div>
+                                        <strong class="text-sm">YouTube Videos:</strong>
+                                        <div class="mt-2 space-y-2">
+                                            ${feedbackData.analysis.youtube_videos.map(video => `
+                                                <div class="flex items-center space-x-3 p-2 bg-white rounded border">
+                                                    <img src="${video.thumbnail}" alt="Video thumbnail" class="w-16 h-12 object-cover rounded">
+                                                    <div class="flex-1">
+                                                        <p class="text-sm font-medium">${video.title}</p>
+                                                        <a href="${video.url}" target="_blank" class="text-xs text-blue-600 hover:underline">${video.url}</a>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <form id="editFeedbackForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Admin Notes</label>
+                        <textarea id="adminNotes" rows="3" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Add your notes..."></textarea>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold mb-3">Update Original Analysis (Optional)</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Disease Name</label>
+                                <input type="text" id="updatedDiseaseName" class="w-full p-2 border rounded-lg" placeholder="Corrected disease name">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Confidence</label>
+                                <input type="number" id="updatedConfidence" min="0" max="100" class="w-full p-2 border rounded-lg" placeholder="0-100">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Disease Type</label>
+                                <select id="updatedDiseaseType" class="w-full p-2 border rounded-lg">
+                                    <option value="">Select type</option>
+                                    <option value="fungal" ${feedbackData?.analysis?.disease_type === 'fungal' ? 'selected' : ''}>Fungal</option>
+                                    <option value="bacterial" ${feedbackData?.analysis?.disease_type === 'bacterial' ? 'selected' : ''}>Bacterial</option>
+                                    <option value="viral" ${feedbackData?.analysis?.disease_type === 'viral' ? 'selected' : ''}>Viral</option>
+                                    <option value="pest" ${feedbackData?.analysis?.disease_type === 'pest' ? 'selected' : ''}>Pest</option>
+                                    <option value="nutrient" ${feedbackData?.analysis?.disease_type === 'nutrient' ? 'selected' : ''}>Nutrient</option>
+                                    <option value="healthy" ${feedbackData?.analysis?.disease_type === 'healthy' ? 'selected' : ''}>Healthy</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                                <select id="updatedSeverity" class="w-full p-2 border rounded-lg">
+                                    <option value="">Select severity</option>
+                                    <option value="none" ${feedbackData?.analysis?.severity === 'none' ? 'selected' : ''}>None</option>
+                                    <option value="mild" ${feedbackData?.analysis?.severity === 'mild' ? 'selected' : ''}>Mild</option>
+                                    <option value="moderate" ${feedbackData?.analysis?.severity === 'moderate' ? 'selected' : ''}>Moderate</option>
+                                    <option value="severe" ${feedbackData?.analysis?.severity === 'severe' ? 'selected' : ''}>Severe</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="updatedDescription" rows="2" class="w-full p-2 border rounded-lg" placeholder="Analysis description"></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Symptoms (one per line)</label>
+                                <textarea id="updatedSymptoms" rows="3" class="w-full p-2 border rounded-lg" placeholder="Enter symptoms, one per line"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Possible Causes (one per line)</label>
+                                <textarea id="updatedCauses" rows="3" class="w-full p-2 border rounded-lg" placeholder="Enter causes, one per line"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Treatment (one per line)</label>
+                            <textarea id="updatedTreatment" rows="3" class="w-full p-2 border rounded-lg" placeholder="Enter treatments, one per line"></textarea>
+                        </div>
+                        <div class="mt-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">YouTube Video URLs (one per line)</label>
+                            <textarea id="updatedYouTubeVideos" rows="2" class="w-full p-2 border rounded-lg" placeholder="Enter YouTube URLs, one per line"></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Note: Only URLs will be updated. Titles and thumbnails will be fetched automatically.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="button" onclick="saveFeedbackChanges('${feedbackId}')" class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-secondary transition font-semibold">
+                            <i class="fas fa-save mr-2"></i>Save Changes
+                        </button>
+                        <button type="button" onclick="this.closest('.fixed').remove()" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Populate form fields after modal is added to DOM
+    if (feedbackData) {
+        setTimeout(() => {
+            // Admin notes
+            document.getElementById('adminNotes').value = feedbackData.admin_notes || '';
+            
+            // Analysis fields
+            if (feedbackData.analysis) {
+                document.getElementById('updatedDiseaseName').value = feedbackData.analysis.disease_name || '';
+                document.getElementById('updatedConfidence').value = feedbackData.analysis.confidence || '';
+                document.getElementById('updatedDiseaseType').value = feedbackData.analysis.disease_type || '';
+                document.getElementById('updatedSeverity').value = feedbackData.analysis.severity || '';
+                document.getElementById('updatedDescription').value = feedbackData.analysis.description || '';
+                document.getElementById('updatedSymptoms').value = (feedbackData.analysis.symptoms || []).join('\n');
+                document.getElementById('updatedCauses').value = (feedbackData.analysis.possible_causes || []).join('\n');
+                document.getElementById('updatedTreatment').value = (feedbackData.analysis.treatment || []).join('\n');
+                document.getElementById('updatedYouTubeVideos').value = (feedbackData.analysis.youtube_videos || []).map(v => v.url || '').join('\n');
+            }
+        }, 100);
+    }
+}
+
+// Save feedback changes
+async function saveFeedbackChanges(feedbackId) {
+    try {
+        const adminNotes = document.getElementById('adminNotes').value.trim();
+        const updatedDiseaseName = document.getElementById('updatedDiseaseName').value.trim();
+        const updatedConfidence = document.getElementById('updatedConfidence').value;
+        const updatedDiseaseType = document.getElementById('updatedDiseaseType').value;
+        const updatedSeverity = document.getElementById('updatedSeverity').value;
+        const updatedDescription = document.getElementById('updatedDescription').value.trim();
+        const updatedSymptoms = document.getElementById('updatedSymptoms').value.trim();
+        const updatedCauses = document.getElementById('updatedCauses').value.trim();
+        const updatedTreatment = document.getElementById('updatedTreatment').value.trim();
+        const updatedYouTubeVideos = document.getElementById('updatedYouTubeVideos').value.trim();
+        
+        const updateData = {
+            status: 'reviewed',
+            admin_notes: adminNotes || null
+        };
+        
+        // Add updated analysis if any field is provided
+        if (updatedDiseaseName || updatedConfidence || updatedDiseaseType || updatedSeverity || 
+            updatedDescription || updatedSymptoms || updatedCauses || updatedTreatment || updatedYouTubeVideos) {
+            updateData.updated_analysis = {};
+            
+            if (updatedDiseaseName) {
+                updateData.updated_analysis.disease_name = updatedDiseaseName;
+                updateData.updated_analysis.disease_detected = updatedDiseaseName !== '' && updatedDiseaseName.toLowerCase() !== 'none';
+            }
+            
+            if (updatedConfidence) {
+                updateData.updated_analysis.confidence = parseFloat(updatedConfidence);
+            }
+            
+            if (updatedDiseaseType) {
+                updateData.updated_analysis.disease_type = updatedDiseaseType;
+            }
+            
+            if (updatedSeverity) {
+                updateData.updated_analysis.severity = updatedSeverity;
+            }
+            
+            if (updatedDescription) {
+                updateData.updated_analysis.description = updatedDescription;
+            }
+            
+            if (updatedSymptoms) {
+                updateData.updated_analysis.symptoms = updatedSymptoms.split('\n').filter(s => s.trim());
+            }
+            
+            if (updatedCauses) {
+                updateData.updated_analysis.possible_causes = updatedCauses.split('\n').filter(c => c.trim());
+            }
+            
+            if (updatedTreatment) {
+                updateData.updated_analysis.treatment = updatedTreatment.split('\n').filter(t => t.trim());
+            }
+            
+            if (updatedYouTubeVideos) {
+                const videoUrls = updatedYouTubeVideos.split('\n').filter(url => url.trim());
+                updateData.updated_analysis.youtube_video_urls = videoUrls;
+            }
+        }
+        
+        const response = await authenticatedFetch(`${API_URL}/api/feedback/admin/${feedbackId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
+        
+        if (response.ok) {
+            showNotification('Feedback updated successfully', 'success');
+            document.querySelector('.fixed').remove();
+            loadFeedback();
+        } else {
+            const error = await response.json();
+            showNotification(error.detail || 'Failed to update feedback', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving feedback changes:', error);
+        showNotification('Error saving changes', 'error');
+    }
+}
+
+// Update feedback status
+async function updateFeedbackStatus(feedbackId, status) {
+    try {
+        console.log('updateFeedbackStatus called with:', feedbackId, status);
+        
+        if (!feedbackId || feedbackId === 'undefined') {
+            console.error('Invalid feedback ID:', feedbackId);
+            showNotification('Invalid feedback ID', 'error');
+            return;
+        }
+        
+        const response = await authenticatedFetch(`${API_URL}/api/feedback/admin/${feedbackId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+        });
+        
+        if (response.ok) {
+            showNotification(`Feedback marked as ${status}`, 'success');
+            loadFeedback();
+        } else {
+            const error = await response.json();
+            showNotification(error.detail || 'Failed to update status', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating feedback status:', error);
+        showNotification('Error updating status', 'error');
     }
 }
 

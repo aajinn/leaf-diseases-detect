@@ -125,3 +125,7 @@ async def get_current_admin_user(
     if not current_user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
     return current_user
+
+
+# Alias for backward compatibility
+require_admin = get_current_admin_user

@@ -151,6 +151,11 @@
                         <i class="fas fa-server mr-1 sm:mr-2"></i><span class="hidden sm:inline">API Usage</span><span class="sm:hidden">API</span>
                     </button>
                     
+                    <!-- Feedback -->
+                    <button onclick="switchTab('feedback')" id="tab-feedback" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+                        <i class="fas fa-comment-alt mr-1 sm:mr-2"></i>Feedback
+                    </button>
+                    
                     <!-- Settings & Configuration -->
                     <button onclick="switchTab('api-config')" id="tab-api-config" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
                         <i class="fas fa-cog mr-1 sm:mr-2"></i>Settings
@@ -327,6 +332,22 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Tab -->
+                <div id="content-feedback" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">User Feedback</h3>
+                        <select id="feedbackStatusFilter" onchange="loadFeedback()" class="px-4 py-2 border rounded-lg">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="reviewed">Reviewed</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+                    <div id="feedbackTable" class="space-y-4">
+                        <p class="text-gray-500">Loading feedback...</p>
                     </div>
                 </div>
 

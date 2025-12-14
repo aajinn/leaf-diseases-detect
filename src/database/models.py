@@ -124,6 +124,7 @@ class AnalysisRecord(BaseModel):
     image_path: str
     disease_detected: bool
     disease_name: Optional[str] = None
+    original_disease_name: Optional[str] = None
     disease_type: str
     severity: str
     confidence: float
@@ -133,6 +134,8 @@ class AnalysisRecord(BaseModel):
     description: str = ""
     youtube_videos: List[YouTubeVideo] = []
     analysis_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    updated_by_admin: bool = False
+    updated_at: Optional[datetime] = None
 
     class Config:
         populate_by_name = True
@@ -159,6 +162,7 @@ class AnalysisResponse(BaseModel):
     id: str
     disease_detected: bool
     disease_name: Optional[str]
+    original_disease_name: Optional[str]
     disease_type: str
     severity: str
     confidence: float
@@ -168,3 +172,66 @@ class AnalysisResponse(BaseModel):
     description: str = ""
     youtube_videos: List[YouTubeVideo] = []
     analysis_timestamp: datetime
+    updated_by_admin: bool = False
+    updated_at: Optional[datetime] = None
+
+
+class FeedbackCreate(BaseModel):
+    """Feedback creation model"""
+    
+    analysis_id: str
+    feedback_type: str = Field(..., pattern="^(incorrect|incomplete|other)$")
+    message: str = Field(..., min_length=1, max_length=1000)
+    correct_disease: Optional[str] = Field(None, max_length=200)
+    correct_treatment: Optional[str] = Field(None, max_length=1000)
+
+
+class FeedbackInDB(BaseModel):
+    """Feedback model as stored in database"""
+    
+    id: Optional[PyObjectId] = Field(default_factory=ObjectId, alias="_id")
+    analysis_id: str
+    user_id: str
+    username: str
+    feedback_type: str
+    message: str
+    correct_disease: Optional[str] = None
+    correct_treatment: Optional[str] = None
+    status: str = "pending"  # pending, reviewed, resolved
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    reviewed_at: Optional[datetime] = None
+    admin_notes: Optional[str] = None
+    
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+
+
+class FeedbackResponse(BaseModel):
+    """Feedback response model"""
+    
+    id: str = Field(alias="_id")
+    analysis_id: str
+    user_id: str
+    username: str
+    feedback_type: str
+    message: str
+    correct_disease: Optional[str] = None
+    correct_treatment: Optional[str] = None
+    status: str
+    created_at: datetime
+    reviewed_at: Optional[datetime] = None
+    admin_notes: Optional[str] = None
+    analysis: Optional[dict] = None  # Include analysis data
+    
+    class Config:
+        populate_by_name = True
+
+
+class FeedbackUpdate(BaseModel):
+    """Feedback update model"""
+    
+    status: Optional[str] = Field(None, pattern="^(pending|reviewed|resolved)$")
+    admin_notes: Optional[str] = Field(None, max_length=1000)
+    updated_analysis: Optional[dict] = None  # Contains all analysis fields that can be updated

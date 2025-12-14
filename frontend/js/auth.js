@@ -74,7 +74,12 @@ function isProtectedPage() {
            window.location.pathname.includes('history');
 }
 
+let sessionExpiredHandled = false;
+
 async function handleSessionExpired() {
+    if (sessionExpiredHandled) return;
+    sessionExpiredHandled = true;
+    
     sessionManager.clearSession();
     try {
         if (typeof showAlert === 'function') {
@@ -82,7 +87,6 @@ async function handleSessionExpired() {
         } else if (typeof notificationManager !== 'undefined' && typeof notificationManager.alert === 'function') {
             await notificationManager.alert('Your session has expired. Please login again.', 'Session Expired', 'info');
         } else {
-            // Notification system not available — log warning and continue to redirect
             console.warn('Session expired but notification system unavailable. Redirecting to login.');
         }
     } catch (e) {

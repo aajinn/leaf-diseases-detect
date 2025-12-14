@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sys
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -31,6 +32,7 @@ class DiseaseAnalysisResult:
 
     disease_detected: bool
     disease_name: Optional[str]
+    original_disease_name: Optional[str]
     disease_type: str
     severity: str
     confidence: float
@@ -245,6 +247,16 @@ class LeafDiseaseDetector:
                     f"Total: {completion.usage.total_tokens}"
                 )
 
+            # Add unique identifier to disease name if disease detected
+            if result_dict.get('disease_detected') and result_dict.get('disease_name'):
+                unique_id = str(uuid.uuid4())[:8].upper()
+                original_name = result_dict['disease_name']
+                result_dict['original_disease_name'] = original_name
+                result_dict['disease_name'] = f"{original_name} #{unique_id}"
+                logger.info(f"Added unique ID to disease: {original_name} -> {result_dict['disease_name']}")
+            else:
+                result_dict['original_disease_name'] = result_dict.get('disease_name')
+
             # Return as dictionary for JSON serialization
             return result_dict
 
@@ -280,6 +292,7 @@ class LeafDiseaseDetector:
             return DiseaseAnalysisResult(
                 disease_detected=bool(disease_data.get("disease_detected", False)),
                 disease_name=disease_data.get("disease_name"),
+                original_disease_name=disease_data.get("original_disease_name"),
                 disease_type=disease_data.get("disease_type", "unknown"),
                 severity=disease_data.get("severity", "unknown"),
                 confidence=float(disease_data.get("confidence", 0)),
@@ -303,6 +316,7 @@ class LeafDiseaseDetector:
                     return DiseaseAnalysisResult(
                         disease_detected=bool(disease_data.get("disease_detected", False)),
                         disease_name=disease_data.get("disease_name"),
+                        original_disease_name=disease_data.get("original_disease_name"),
                         disease_type=disease_data.get("disease_type", "unknown"),
                         severity=disease_data.get("severity", "unknown"),
                         confidence=float(disease_data.get("confidence", 0)),

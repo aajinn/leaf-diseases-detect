@@ -144,6 +144,23 @@ async def disease_detection_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+@app.get("/images/{username}/{filename}")
+async def serve_image(username: str, filename: str):
+    """Serve analysis images"""
+    import os
+    from fastapi import HTTPException
+    
+    image_path = f"storage/uploads/{username}/{filename}"
+    logger.info(f"Looking for image at: {image_path}")
+    
+    if os.path.exists(image_path):
+        return FileResponse(image_path)
+    else:
+        logger.warning(f"Image not found: {image_path}")
+        # Return a placeholder image or 404
+        raise HTTPException(status_code=404, detail=f"Image not found: {filename}")
+
+
 @app.get("/api")
 async def api_info():
     """API information endpoint"""
