@@ -198,7 +198,7 @@ async function captureAndAnalyze() {
         
         displayQuickResult(result);
         
-        // Update frame color
+        // Update frame color and handle disease detection
         if (result.disease_detected) {
             frameGuide.classList.remove('border-yellow-500', 'border-green-500');
             frameGuide.classList.add('border-red-500');
@@ -207,6 +207,9 @@ async function captureAndAnalyze() {
             if (typeof window.setDiseaseStatus === 'function') {
                 window.setDiseaseStatus('diseased');
             }
+            
+            // Stop scanning when disease is detected
+            stopScanningOnDetection();
         } else {
             frameGuide.classList.remove('border-yellow-500', 'border-red-500');
             frameGuide.classList.add('border-green-500');
@@ -286,6 +289,65 @@ async function quickAnalyze(file) {
     }
 }
 
+function stopScanningOnDetection() {
+    // Stop the scanning interval but keep camera active
+    if (scanInterval) {
+        clearInterval(scanInterval);
+        scanInterval = null;
+    }
+    
+    isScanning = false;
+    
+    // Update status
+    updateStatus('detected', 'Disease Detected - Scanning Stopped');
+    
+    // Show notification
+    showNotification('Disease detected! Scanning stopped.', 'warning');
+    
+    // Update UI to show detection stopped
+    const stopBtn = document.getElementById('stopBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    
+    if (stopBtn) {
+        stopBtn.innerHTML = '<i class="fas fa-camera mr-2"></i>Resume Scanning';
+        stopBtn.onclick = resumeScanning;
+    }
+    
+    if (captureBtn) {
+        captureBtn.classList.add('hidden');
+    }
+}
+
+function resumeScanning() {
+    isScanning = true;
+    
+    // Restart scanning interval
+    scanInterval = setInterval(() => {
+        if (isScanning && !isAnalyzing) {
+            const now = Date.now();
+            if (now - lastScanTime >= scanIntervalTime) {
+                captureAndAnalyze();
+            }
+        }
+    }, scanIntervalTime);
+    
+    // Update UI
+    const stopBtn = document.getElementById('stopBtn');
+    const captureBtn = document.getElementById('captureBtn');
+    
+    if (stopBtn) {
+        stopBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>Stop Scanning';
+        stopBtn.onclick = stopScanning;
+    }
+    
+    if (captureBtn) {
+        captureBtn.classList.remove('hidden');
+    }
+    
+    updateStatus('active', 'Scanning Active');
+    showNotification('Scanning resumed', 'success');
+}
+
 function displayQuickResult(result) {
     const panel = document.getElementById('resultPanel');
     const content = document.getElementById('resultContent');
@@ -293,64 +355,46 @@ function displayQuickResult(result) {
     panel.classList.remove('hidden');
     
     if (result.disease_detected) {
+        // Minified analysis for disease detection
         content.innerHTML = `
-            <div class="space-y-4">
-                <!-- Header -->
-                <div class="flex items-center justify-between border-b border-red-500 pb-4">
+            <div class="space-y-3">
+                <!-- Compact Header -->
+                <div class="flex items-center justify-between bg-red-900 bg-opacity-50 rounded-lg p-4">
                     <div class="flex items-center space-x-3">
-                        <div class="relative">
-                            <i class="fas fa-virus text-red-500 text-4xl"></i>
-                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full pulse-ring"></div>
-                        </div>
+                        <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
                         <div>
-                            <h3 class="text-2xl font-bold text-red-400">${result.disease_name}</h3>
-                            <p class="text-sm text-gray-400">${result.disease_type} • ${result.severity}</p>
+                            <h3 class="text-lg font-bold text-red-400">${result.disease_name}</h3>
+                            <p class="text-xs text-gray-400">${result.disease_type} • ${result.severity}</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <div class="text-4xl font-bold text-red-400">${result.confidence}%</div>
-                        <div class="text-xs text-gray-400">Confidence</div>
-                    </div>
+                    <div class="text-2xl font-bold text-red-400">${result.confidence}%</div>
                 </div>
                 
-                <!-- Quick Info Grid -->
-                <div class="grid grid-cols-2 gap-4">
-                    <!-- Symptoms -->
-                    <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4">
-                        <h4 class="font-bold text-sm text-red-400 mb-2 flex items-center">
-                            <i class="fas fa-stethoscope mr-2"></i>Symptoms Observed
-                        </h4>
-                        <ul class="space-y-1 text-sm">
-                            ${result.symptoms.slice(0, 3).map(s => `
-                                <li class="flex items-start">
-                                    <i class="fas fa-circle text-xs text-red-500 mr-2 mt-1"></i>
-                                    <span class="text-gray-300">${s}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                    
-                    <!-- Causes -->
-                    <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4">
-                        <h4 class="font-bold text-sm text-yellow-400 mb-2 flex items-center">
-                            <i class="fas fa-search mr-2"></i>Possible Causes
-                        </h4>
-                        <ul class="space-y-1 text-sm">
-                            ${result.possible_causes.slice(0, 3).map(c => `
-                                <li class="flex items-start">
-                                    <i class="fas fa-circle text-xs text-yellow-500 mr-2 mt-1"></i>
-                                    <span class="text-gray-300">${c}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
+                <!-- Quick Summary -->
+                <div class="bg-gray-900 bg-opacity-50 rounded-lg p-3">
+                    <p class="text-sm text-gray-300 mb-2">
+                        <i class="fas fa-stethoscope text-red-400 mr-2"></i>
+                        <strong>Key Symptom:</strong> ${result.symptoms[0]}
+                    </p>
+                    <p class="text-sm text-gray-300">
+                        <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+                        <strong>Treatment:</strong> ${result.treatment[0]}
+                    </p>
                 </div>
                 
+                <!-- Action Buttons -->
+                <div class="flex space-x-2">
+                    <button onclick="goToFullAnalysis()" 
+                        class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition font-semibold text-sm">
+                        <i class="fas fa-microscope mr-2"></i>View Full Analysis
+                    </button>
+                    <button onclick="resumeScanning()" 
+                        class="bg-gray-700 text-white px-4 py-3 rounded-lg hover:bg-gray-600 transition text-sm">
+                        <i class="fas fa-play mr-2"></i>Resume
+                    </button>
+                </div>
             </div>
         `;
-        
-        // Show full analysis button
-        showFullAnalysisButton();
     } else {
         content.innerHTML = `
             <div class="space-y-4">
@@ -378,32 +422,12 @@ function displayQuickResult(result) {
                     <p class="text-lg text-gray-300">This plant appears to be healthy!</p>
                     <p class="text-sm text-gray-400 mt-2">Continue monitoring for best results</p>
                 </div>
-                
             </div>
         `;
-        
-        // Show full analysis button
-        showFullAnalysisButton();
     }
 }
 
-function showFullAnalysisButton() {
-    const btn = document.getElementById('fullAnalysisBtn');
-    console.log('Showing full analysis button, element found:', !!btn);
-    if (btn) {
-        btn.classList.remove('hidden');
-        console.log('Full analysis button shown');
-    } else {
-        console.error('fullAnalysisBtn element not found!');
-    }
-}
 
-function hideFullAnalysisButton() {
-    const btn = document.getElementById('fullAnalysisBtn');
-    if (btn) {
-        btn.classList.add('hidden');
-    }
-}
 
 function goToFullAnalysis() {
     if (!lastResult) {
@@ -430,6 +454,9 @@ function updateStatus(status, text) {
             break;
         case 'scanning':
             dot.classList.add('bg-yellow-500', 'animate-pulse');
+            break;
+        case 'detected':
+            dot.classList.add('bg-red-500', 'animate-pulse');
             break;
         case 'error':
             dot.classList.add('bg-red-500');
