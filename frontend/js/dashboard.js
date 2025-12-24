@@ -394,6 +394,64 @@ function showModal(title, content) {
     });
 }
 
+// Step-by-step guide
+function showGuide() {
+    const guideContent = `
+        <div class="space-y-6">
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h4 class="font-bold text-blue-800 mb-2">🌿 How to Use Leaf Disease Detection</h4>
+                <p class="text-blue-700 text-sm">Follow these simple steps to analyze your plant images</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="flex items-start space-x-3">
+                    <div class="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
+                    <div>
+                        <h5 class="font-semibold">Upload Image</h5>
+                        <p class="text-gray-600 text-sm">Click "Choose File" or drag & drop your leaf image. Supports JPG, PNG (max 10MB)</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div class="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
+                    <div>
+                        <h5 class="font-semibold">Preview & Analyze</h5>
+                        <p class="text-gray-600 text-sm">Review your image preview, then click "🔍 Analyze Image" button</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div class="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
+                    <div>
+                        <h5 class="font-semibold">View Results</h5>
+                        <p class="text-gray-600 text-sm">Get disease detection, confidence score, symptoms, and treatment recommendations</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div class="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</div>
+                    <div>
+                        <h5 class="font-semibold">Export & Save</h5>
+                        <p class="text-gray-600 text-sm">Export results as PDF or listen to audio summary. All analyses are saved in your history</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-yellow-50 p-4 rounded-lg">
+                <h5 class="font-semibold text-yellow-800 mb-2">💡 Tips for Best Results</h5>
+                <ul class="text-yellow-700 text-sm space-y-1">
+                    <li>• Use clear, well-lit images</li>
+                    <li>• Focus on affected leaf areas</li>
+                    <li>• Avoid blurry or dark photos</li>
+                    <li>• Include multiple symptoms if visible</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    
+    showModal('📖 Step-by-Step Guide', guideContent);
+}
+
 // Test duplicate detector
 function testDuplicateDetector() {
     console.log('=== Duplicate Detector Test ===');
@@ -478,7 +536,18 @@ async function loadUserInfo() {
         
         // Show admin link if user is admin
         if (profile.is_admin) {
-            document.getElementById('adminLink').classList.remove('hidden');
+            const adminLink = document.getElementById('adminLink');
+            if (adminLink) adminLink.classList.remove('hidden');
+        }
+        
+        // Show medical link if user is medical member
+        if (profile.is_medical) {
+            const medicalLink = document.getElementById('medicalLink');
+            if (medicalLink) medicalLink.classList.remove('hidden');
+        } else {
+            // Show apply for medical team button for non-medical users
+            const applyMedicalLink = document.getElementById('applyMedicalLink');
+            if (applyMedicalLink) applyMedicalLink.classList.remove('hidden');
         }
     } else {
         // Session invalid, redirect to login
@@ -488,15 +557,13 @@ async function loadUserInfo() {
 
 async function loadStats() {
     try {
-        // Use cached fetch with 2 minute TTL for dashboard stats
-        const data = await cachedFetch(
-            `${API_URL}/api/my-analyses`,
-            {},
-            'dashboard-stats',
-            false
-        );
-
+        console.log('Loading stats from API...');
+        const response = await authenticatedFetch(`${API_URL}/api/my-analyses`);
+        const data = await response.json();
+        
+        console.log('API response:', data);
         const records = data.records || [];
+        console.log('Records found:', records.length);
         
         document.getElementById('totalAnalyses').textContent = records.length;
         
@@ -510,9 +577,8 @@ async function loadStats() {
         displayRecentActivity(records.slice(0, 5));
     } catch (error) {
         console.error('Error loading stats:', error);
-        if (error.message === 'Session expired') {
-            return; // Already handled by authenticatedFetch
-        }
+        // Show fallback message
+        document.getElementById('recentActivity').innerHTML = '<p class="text-gray-500 text-sm">Unable to load recent activity</p>';
     }
 }
 
