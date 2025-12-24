@@ -4,20 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Treatment Prescriptions - Leaf Disease Detection</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#10b981',
-                        secondary: '#059669',
-                    }
-                }
-            }
-        }
+        // Custom colors already defined in tailwind.config.js
     </script>
     <style>
         .prescription-card {
@@ -186,6 +178,13 @@
                     <!-- Divider -->
                     <div class="h-6 w-px bg-gray-300 mx-1"></div>
                     
+                    <!-- Dark Mode Toggle -->
+                    <button id="darkModeBtn" onclick="toggleDarkMode()" 
+                        class="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:text-primary transition-colors"
+                        title="Toggle dark mode">
+                        <i id="darkModeIcon" class="fas fa-moon text-xs"></i>
+                    </button>
+                    
                     <button onclick="logout()" 
                         class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                         <i class="fas fa-sign-out-alt text-xs mr-1.5"></i>
@@ -230,6 +229,7 @@
 
     <script src="js/config.js"></script>
     <script src="js/cache-manager.js"></script>
+    <script src="js/dark-mode.js"></script>
     <script src="js/auth.js"></script>
     <script>
         let currentPrescriptions = [];

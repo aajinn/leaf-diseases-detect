@@ -520,13 +520,29 @@ function getNotificationIcon(type) {
 }
 
 function toggleNotifications() {
-    const dropdown = document.getElementById('notificationDropdown');
-    dropdown.classList.toggle('hidden');
-    
-    if (!dropdown.classList.contains('hidden')) {
-        loadNotifications();
-    }
+    showNotificationModal();
 }
+
+function showNotificationModal() {
+    const modal = document.getElementById('notificationModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    loadNotifications();
+}
+
+function closeNotificationModal() {
+    const modal = document.getElementById('notificationModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('notificationModal');
+    if (e.target === modal) {
+        closeNotificationModal();
+    }
+});
 
 async function markNotificationRead(notificationId) {
     try {
@@ -552,12 +568,7 @@ async function markAllRead() {
 
 // Close notification dropdown when clicking outside
 document.addEventListener('click', (e) => {
-    const dropdown = document.getElementById('notificationDropdown');
-    const button = document.getElementById('notificationBtn');
-    
-    if (dropdown && !dropdown.contains(e.target) && !button.contains(e.target)) {
-        dropdown.classList.add('hidden');
-    }
+    // Modal handles its own click outside logic
 });
 
 // Test duplicate detector

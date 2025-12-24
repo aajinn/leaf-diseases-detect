@@ -60,7 +60,7 @@
                     
                     <!-- Notifications -->
                     <div class="relative">
-                        <button id="notificationBtn" onclick="toggleNotifications()" 
+                        <button id="notificationBtn" onclick="showNotificationModal()" 
                             class="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:text-primary transition-colors relative">
                             <i class="fas fa-bell text-lg"></i>
                             <span id="notificationBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
@@ -100,19 +100,6 @@
             </div>
         </div>
     </nav>
-
-    <!-- Notification Dropdown (outside nav) -->
-    <div id="notificationDropdown" class="hidden fixed top-16 right-4 w-80 bg-white rounded-lg shadow-xl border border-gray-200" style="z-index: 99999;">
-        <div class="p-4 border-b border-gray-200">
-            <div class="flex justify-between items-center">
-                <h3 class="font-semibold text-gray-800">Notifications</h3>
-                <button onclick="markAllRead()" class="text-xs text-blue-600 hover:text-blue-800">Mark all read</button>
-            </div>
-        </div>
-        <div id="notificationList" class="max-h-96 overflow-y-auto">
-            <p class="p-4 text-gray-500 text-sm text-center">No notifications</p>
-        </div>
-    </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Welcome Section -->
@@ -396,5 +383,30 @@
     <script src="js/confirm-modal.js"></script>
     <script src="js/dark-mode.js"></script>
     <script src="js/dashboard.js"></script>
+
+    <!-- Notification Modal -->
+    <div id="notificationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-96">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-bell text-primary mr-2"></i>
+                        Notifications
+                    </h3>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="markAllRead()" class="text-xs text-blue-600 hover:text-blue-800 font-semibold">
+                            Mark all read
+                        </button>
+                        <button onclick="closeNotificationModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="notificationList" class="max-h-64 overflow-y-auto">
+                    <p class="p-4 text-gray-500 text-sm text-center">No notifications</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

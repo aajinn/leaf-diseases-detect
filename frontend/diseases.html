@@ -4,35 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plant Diseases Database - Leaf Disease Detection</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/animated-background.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#10b981',
-                        secondary: '#059669',
-                    }
-                }
-            }
-        }
+        // Custom colors already defined in tailwind.config.js
     </script>
     <script src="js/animated-background.js"></script>
 </head>
 <body class="bg-gray-50">
     <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
+    <nav class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <i class="fas fa-leaf text-primary text-3xl mr-3"></i>
-                    <span class="text-2xl font-bold text-gray-800">Plant Diseases Database</span>
+            <div class="flex justify-between items-center h-14">
+                <!-- Left: Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-leaf text-primary text-2xl"></i>
+                    <div class="flex flex-col">
+                        <span class="text-lg font-bold text-gray-800 leading-tight">Plant Diseases Database</span>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="text-gray-600 hover:text-primary">Home</a>
-                    <a href="/diseases" class="text-primary font-semibold">Diseases</a>
+                
+                <!-- Right: Actions -->
+                <div class="flex items-center space-x-2">
+                    <a href="/" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-primary transition-colors">
+                        <i class="fas fa-home text-xs mr-1.5"></i>
+                        <span class="hidden sm:inline">Home</span>
+                    </a>
+                    <a href="/diseases" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-primary font-semibold">
+                        <i class="fas fa-virus text-xs mr-1.5"></i>
+                        <span class="hidden sm:inline">Diseases</span>
+                    </a>
+                    
+                    <!-- Dark Mode Toggle -->
+                    <button id="darkModeBtn" onclick="toggleDarkMode()" 
+                        class="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:text-primary transition-colors"
+                        title="Toggle dark mode">
+                        <i id="darkModeIcon" class="fas fa-moon text-xs"></i>
+                    </button>
+                    
                     <span id="authLinks"></span>
                 </div>
             </div>
@@ -116,6 +127,7 @@
         </div>
     </div>
 
+    <script src="js/dark-mode.js"></script>
     <script src="js/diseases.js"></script>
 
     <!-- Footer -->

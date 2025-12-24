@@ -184,3 +184,31 @@
 .dark .border-purple-500 {
   border-color: #a855f7 !important;
 }
+
+/* Prescription-specific dark mode styles */
+.dark .prescription-card {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .modal-content {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .product-card {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .step-card {
+  background-color: #334155 !important;
+  border-left-color: #10b981 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .section-title {
+  color: #e2e8f0 !important;
+  border-bottom-color: #10b981 !important;
+}
