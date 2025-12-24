@@ -11,6 +11,7 @@ from src.image_utils import convert_image_to_base64_and_test
 from src.routes.admin import router as admin_router
 from src.routes.disease_detection import router as detection_router
 from src.routes.feedback_routes import router as feedback_router
+from src.routes.notification_routes import router as notification_router
 from src.routes.prescription_routes import router as prescription_router
 
 # Configure logging
@@ -115,6 +116,7 @@ app.include_router(auth_router)
 app.include_router(detection_router)
 app.include_router(admin_router)
 app.include_router(feedback_router)
+app.include_router(notification_router)
 app.include_router(prescription_router)
 
 

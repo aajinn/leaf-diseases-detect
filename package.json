@@ -1,0 +1,10 @@
+{
+  "name": "leaf-disease-detection",
+  "version": "1.0.0",
+  "scripts": {
+    "build-css": "tailwindcss -i ./frontend/css/input.css -o ./frontend/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

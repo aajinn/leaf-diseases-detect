@@ -452,6 +452,114 @@ function showGuide() {
     showModal('📖 Step-by-Step Guide', guideContent);
 }
 
+// Notification system
+async function loadNotifications() {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/api/notifications/`);
+        const notifications = await response.json();
+        
+        const countResponse = await authenticatedFetch(`${API_URL}/api/notifications/unread-count`);
+        const countData = await countResponse.json();
+        
+        updateNotificationBadge(countData.count);
+        displayNotifications(notifications);
+    } catch (error) {
+        console.error('Error loading notifications:', error);
+    }
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.getElementById('notificationBadge');
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function displayNotifications(notifications) {
+    const list = document.getElementById('notificationList');
+    
+    if (notifications.length === 0) {
+        list.innerHTML = '<p class="p-4 text-gray-500 text-sm text-center">No notifications</p>';
+        return;
+    }
+    
+    list.innerHTML = notifications.map(notification => `
+        <div class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-blue-50' : ''}" 
+             onclick="openNotificationAnalysis('${notification.id}', '${notification.analysis_id}')">
+            <div class="flex items-start space-x-3">
+                <i class="fas fa-${getNotificationIcon(notification.type)} text-blue-500 mt-1"></i>
+                <div class="flex-1">
+                    <h4 class="font-semibold text-sm text-gray-800">${notification.title}</h4>
+                    <p class="text-xs text-gray-600 mt-1">${notification.message}</p>
+                    <p class="text-xs text-gray-400 mt-2">${new Date(notification.created_at).toLocaleString()}</p>
+                </div>
+                ${!notification.read ? '<div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>' : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+async function openNotificationAnalysis(notificationId, analysisId) {
+    // Mark notification as read
+    await markNotificationRead(notificationId);
+    // Store analysis ID and redirect to history
+    sessionStorage.setItem('openAnalysisId', analysisId);
+    window.location.href = '/history';
+}
+
+function getNotificationIcon(type) {
+    switch (type) {
+        case 'analysis_correction': return 'edit';
+        case 'feedback_update': return 'comment';
+        case 'system': return 'info-circle';
+        default: return 'bell';
+    }
+}
+
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationDropdown');
+    dropdown.classList.toggle('hidden');
+    
+    if (!dropdown.classList.contains('hidden')) {
+        loadNotifications();
+    }
+}
+
+async function markNotificationRead(notificationId) {
+    try {
+        await authenticatedFetch(`${API_URL}/api/notifications/${notificationId}/read`, {
+            method: 'PUT'
+        });
+        loadNotifications();
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+    }
+}
+
+async function markAllRead() {
+    try {
+        await authenticatedFetch(`${API_URL}/api/notifications/mark-all-read`, {
+            method: 'PUT'
+        });
+        loadNotifications();
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+    }
+}
+
+// Close notification dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('notificationDropdown');
+    const button = document.getElementById('notificationBtn');
+    
+    if (dropdown && !dropdown.contains(e.target) && !button.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+
 // Test duplicate detector
 function testDuplicateDetector() {
     console.log('=== Duplicate Detector Test ===');
@@ -469,6 +577,7 @@ function testDuplicateDetector() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
     await loadStats();
+    await loadNotifications();
     setupFileUpload();
     initializeTTS();
     initializeAutoCropToggle();
@@ -480,6 +589,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
         testDuplicateDetector();
     }, 1000);
+    
+    // Refresh notifications every 30 seconds
+    setInterval(loadNotifications, 30000);
 });
 
 // Check for pending analysis from live detection
@@ -591,7 +703,8 @@ function displayRecentActivity(records) {
     }
     
     container.innerHTML = records.map(record => `
-        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors" 
+             onclick="openAnalysisInHistory('${record.id || record._id}')">
             <div class="flex items-center">
                 <i class="fas fa-${record.disease_detected ? 'exclamation-circle text-red-500' : 'check-circle text-green-500'} mr-3"></i>
                 <div>
@@ -601,6 +714,14 @@ function displayRecentActivity(records) {
             </div>
         </div>
     `).join('');
+}
+
+function openAnalysisInHistory(analysisId) {
+    console.log('Opening analysis in history:', analysisId);
+    // Store the analysis ID to open in history page
+    sessionStorage.setItem('openAnalysisId', analysisId);
+    // Redirect to history page
+    window.location.href = '/history';
 }
 
 function setupFileUpload() {

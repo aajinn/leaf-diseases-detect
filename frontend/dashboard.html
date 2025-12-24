@@ -4,21 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Leaf Disease Detection</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/animated-background.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#10b981',
-                        secondary: '#059669',
-                    }
-                }
-            }
-        }
+        // Custom colors already defined in tailwind.config.js
     </script>
     <script src="js/animated-background.js"></script>
 </head>
@@ -66,11 +58,27 @@
                     <!-- Divider -->
                     <div class="h-6 w-px bg-gray-300 mx-1"></div>
                     
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button id="notificationBtn" onclick="toggleNotifications()" 
+                            class="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:text-primary transition-colors relative">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span id="notificationBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                        </button>
+                    </div>
+                    
                     <!-- TTS Toggle -->
                     <button id="ttsButton" onclick="toggleTTS()" 
                         class="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
                         title="Toggle voice announcements">
                         <i id="ttsIcon" class="fas fa-volume-up text-xs"></i>
+                    </button>
+                    
+                    <!-- Dark Mode Toggle -->
+                    <button id="darkModeBtn" onclick="toggleDarkMode()" 
+                        class="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:text-primary transition-colors"
+                        title="Toggle dark mode">
+                        <i id="darkModeIcon" class="fas fa-moon text-xs"></i>
                     </button>
                     
                     <!-- Admin Link (shown only for admins) -->
@@ -92,6 +100,19 @@
             </div>
         </div>
     </nav>
+
+    <!-- Notification Dropdown (outside nav) -->
+    <div id="notificationDropdown" class="hidden fixed top-16 right-4 w-80 bg-white rounded-lg shadow-xl border border-gray-200" style="z-index: 99999;">
+        <div class="p-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h3 class="font-semibold text-gray-800">Notifications</h3>
+                <button onclick="markAllRead()" class="text-xs text-blue-600 hover:text-blue-800">Mark all read</button>
+            </div>
+        </div>
+        <div id="notificationList" class="max-h-96 overflow-y-auto">
+            <p class="p-4 text-gray-500 text-sm text-center">No notifications</p>
+        </div>
+    </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Welcome Section -->
@@ -373,6 +394,7 @@
     <script src="js/leaf-detection.js"></script>
     <script src="js/camera-capture.js"></script>
     <script src="js/confirm-modal.js"></script>
+    <script src="js/dark-mode.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 </html>

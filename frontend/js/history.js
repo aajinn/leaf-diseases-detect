@@ -10,7 +10,51 @@ function escapeHtml(text) {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
     await loadHistory();
+    
+    // Check for analysis to auto-open
+    const openAnalysisId = sessionStorage.getItem('openAnalysisId');
+    console.log('Checking for auto-open analysis ID:', openAnalysisId);
+    
+    if (openAnalysisId) {
+        console.log('Found analysis ID to open:', openAnalysisId);
+        sessionStorage.removeItem('openAnalysisId');
+        
+        // Show loading indicator
+        showAutoOpenLoading();
+        
+        // Wait for history to load, then open the analysis
+        setTimeout(async () => {
+            console.log('Attempting to open analysis:', openAnalysisId);
+            try {
+                await viewDetails(openAnalysisId);
+                hideAutoOpenLoading();
+            } catch (error) {
+                console.error('Error opening analysis:', error);
+                hideAutoOpenLoading();
+            }
+        }, 2000);
+    }
 });
+
+function showAutoOpenLoading() {
+    const loading = document.createElement('div');
+    loading.id = 'autoOpenLoading';
+    loading.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    loading.innerHTML = `
+        <div class="bg-white rounded-lg p-6 text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-primary mb-4"></i>
+            <p class="text-gray-700 font-semibold">Opening analysis...</p>
+        </div>
+    `;
+    document.body.appendChild(loading);
+}
+
+function hideAutoOpenLoading() {
+    const loading = document.getElementById('autoOpenLoading');
+    if (loading) {
+        loading.remove();
+    }
+}
 
 // Refresh history with visual feedback
 async function refreshHistory() {

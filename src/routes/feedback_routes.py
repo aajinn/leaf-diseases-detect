@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from src.auth.security import get_current_user, require_admin
 from src.database.connection import MongoDB
 from src.database.models import FeedbackCreate, FeedbackResponse, FeedbackUpdate, UserInDB
+from src.routes.notification_routes import create_notification
 
 router = APIRouter(prefix="/api/feedback", tags=["feedback"])
 
@@ -200,6 +201,15 @@ async def update_feedback(
             await MongoDB.get_collection("analysis_records").update_one(
                 {"_id": ObjectId(feedback["analysis_id"])},
                 {"$set": analysis_updates}
+            )
+            
+            # Create notification for user
+            await create_notification(
+                user_id=feedback["user_id"],
+                analysis_id=feedback["analysis_id"],
+                title="Analysis Updated",
+                message=f"Your analysis has been reviewed and updated by admin. {update.admin_notes or ''}",
+                notification_type="analysis_correction"
             )
         
         return {"success": True, "message": "Feedback updated successfully"}
