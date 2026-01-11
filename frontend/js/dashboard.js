@@ -721,6 +721,12 @@ function displayRecentActivity(records) {
                 <div>
                     <p class="font-semibold text-sm">${record.disease_name || 'Healthy'}</p>
                     <p class="text-xs text-gray-500">${new Date(record.analysis_timestamp).toLocaleDateString()}</p>
+                    ${record.disease_detected ? `
+                        <button onclick="event.stopPropagation(); openPrescriptionFromAnalysis('${record.id || record._id}')" 
+                                class="text-xs text-blue-600 hover:text-blue-800 mt-1">
+                            <i class="fas fa-prescription mr-1"></i>View Prescription
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         </div>
@@ -733,6 +739,42 @@ function openAnalysisInHistory(analysisId) {
     sessionStorage.setItem('openAnalysisId', analysisId);
     // Redirect to history page
     window.location.href = '/history';
+}
+
+// Open prescription from analysis ID
+async function openPrescriptionFromAnalysis(analysisId) {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showNotification('Please login to view prescriptions', 'error');
+            return;
+        }
+
+        // Find prescription by analysis ID
+        const response = await fetch(`/api/prescriptions/my-prescriptions`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const prescription = data.prescriptions?.find(p => p.analysis_id === analysisId);
+            
+            if (prescription) {
+                // Store prescription ID and redirect
+                sessionStorage.setItem('openPrescriptionId', prescription.prescription_id);
+                window.location.href = '/prescriptions';
+            } else {
+                showNotification('No prescription found for this analysis', 'info');
+            }
+        } else {
+            showNotification('Failed to load prescriptions', 'error');
+        }
+    } catch (error) {
+        console.error('Error opening prescription:', error);
+        showNotification('Error loading prescription', 'error');
+    }
 }
 
 function setupFileUpload() {
@@ -1505,8 +1547,12 @@ async function generatePrescription(analysisId) {
             }
             
             // Show beautiful confirmation modal
-            const viewPrescription = await showPrescriptionConfirm(isExisting);
+            const viewPrescription = await showPrescriptionConfirm(isExisting, data.prescription?.prescription_id);
             if (viewPrescription) {
+                // Store prescription ID to open it directly
+                if (data.prescription?.prescription_id) {
+                    sessionStorage.setItem('openPrescriptionId', data.prescription.prescription_id);
+                }
                 window.location.href = '/prescriptions';
             }
         } else {
@@ -1516,4 +1562,49 @@ async function generatePrescription(analysisId) {
         console.error('Error generating prescription:', error);
         showNotification('Error: ' + error.message, 'error');
     }
+}
+
+// Show prescription confirmation modal
+async function showPrescriptionConfirm(isExisting = false, prescriptionId = null) {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <div class="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-prescription-bottle-medical text-green-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">
+                            ${isExisting ? 'Prescription Found!' : 'Prescription Generated!'}
+                        </h3>
+                        <p class="text-gray-600">
+                            ${isExisting 
+                                ? 'A treatment prescription already exists for this analysis.' 
+                                : 'Your comprehensive treatment plan is ready with product recommendations and step-by-step instructions.'}
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button onclick="handlePrescriptionChoice(true)" class="flex-1 bg-primary text-white py-3 rounded-lg hover:bg-secondary transition font-semibold">
+                            <i class="fas fa-eye mr-2"></i>View Prescription
+                        </button>
+                        <button onclick="handlePrescriptionChoice(false)" class="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                            Later
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Handle choice
+        window.handlePrescriptionChoice = (viewNow) => {
+            modal.remove();
+            delete window.handlePrescriptionChoice;
+            resolve(viewNow);
+        };
+    });
 }

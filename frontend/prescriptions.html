@@ -582,7 +582,22 @@
         }
 
         // Load prescriptions on page load
-        document.addEventListener('DOMContentLoaded', loadPrescriptions);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPrescriptions();
+            checkForSpecificPrescription();
+        });
+
+        // Check if we need to open a specific prescription
+        function checkForSpecificPrescription() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const prescriptionId = urlParams.get('id') || sessionStorage.getItem('openPrescriptionId');
+            
+            if (prescriptionId) {
+                sessionStorage.removeItem('openPrescriptionId');
+                // Wait for prescriptions to load, then open the specific one
+                setTimeout(() => viewPrescription(prescriptionId), 500);
+            }
+        }
     </script>
 </body>
 </html>
