@@ -57,6 +57,15 @@ if os.path.exists("frontend"):
     # Serve static assets (js, css, images)
     app.mount("/js", StaticFiles(directory="frontend/js"), name="js")
     app.mount("/css", StaticFiles(directory="frontend/css"), name="css")
+    
+    # Serve favicon
+    @app.get("/favicon.ico", response_class=FileResponse)
+    async def serve_favicon():
+        return FileResponse("frontend/leaf-16.ico")
+    
+    @app.get("/leaf-16.ico", response_class=FileResponse)
+    async def serve_leaf_favicon():
+        return FileResponse("frontend/leaf-16.ico")
 
     # Serve HTML pages at root
     @app.get("/", response_class=FileResponse)
