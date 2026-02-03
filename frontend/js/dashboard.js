@@ -1113,6 +1113,7 @@ async function analyzeImage() {
             analyzeBtn.innerHTML = '<i class="fas fa-microscope mr-2"></i>Analyze Image';
             
             await loadStats(); // Refresh stats
+            await loadSubscriptionStatus(); // Refresh subscription usage
             
             return;
         } else {
@@ -1236,6 +1237,7 @@ async function analyzeImage() {
             }
             
             await loadStats(); // Refresh stats
+            await loadSubscriptionStatus(); // Refresh subscription usage
         } else if (response.status === 401) {
             handleSessionExpired();
         } else {
@@ -1828,6 +1830,8 @@ async function loadFreeUsage() {
         const response = await authenticatedFetch(`${API_URL}/api/subscriptions/check-usage`);
         const data = await response.json();
         
+        console.log('Free usage data:', data);
+        
         const usageEl = document.getElementById('freeUsage');
         const usageBarEl = document.getElementById('freeUsageBar');
         
@@ -1835,6 +1839,8 @@ async function loadFreeUsage() {
             const used = data.analyses_used || 0;
             const limit = data.analyses_limit || 5;
             const percent = Math.min((used / limit) * 100, 100);
+            
+            console.log(`Usage: ${used}/${limit} (${percent}%)`);
             
             usageEl.textContent = `${used}/${limit}`;
             usageBarEl.style.width = `${percent}%`;
@@ -1847,6 +1853,8 @@ async function loadFreeUsage() {
             } else {
                 usageBarEl.className = 'bg-green-400 h-2 rounded-full transition-all';
             }
+        } else {
+            console.error('Usage elements not found:', { usageEl, usageBarEl });
         }
     } catch (error) {
         console.error('Error loading free usage:', error);
