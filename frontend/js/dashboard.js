@@ -659,7 +659,7 @@ async function loadSubscriptionStatus() {
         displaySubscriptionStatus(data);
         
         // Show usage warning if close to limit
-        if (data && data.usage && data.plan.analyses_limit !== -1) {
+        if (data && data.usage && data.plan && data.plan.analyses_limit !== -1) {
             const usagePercent = data.usage.usage_percent;
             if (usagePercent > 80) {
                 const remaining = data.plan.analyses_limit - data.usage.analyses_used;
