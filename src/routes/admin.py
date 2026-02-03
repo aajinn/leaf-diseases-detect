@@ -63,6 +63,15 @@ async def get_overview_stats(current_admin: UserInDB = Depends(get_current_admin
         users_collection = MongoDB.get_collection(USERS_COLLECTION)
         analysis_collection = MongoDB.get_collection(ANALYSIS_COLLECTION)
         usage_collection = MongoDB.get_collection(API_USAGE_COLLECTION)
+        
+        # Import subscription collections
+        from src.services.subscription_service import (
+            USER_SUBSCRIPTIONS_COLLECTION,
+            PAYMENT_RECORDS_COLLECTION,
+            USAGE_QUOTAS_COLLECTION
+        )
+        subscriptions_collection = MongoDB.get_collection(USER_SUBSCRIPTIONS_COLLECTION)
+        payments_collection = MongoDB.get_collection(PAYMENT_RECORDS_COLLECTION)
 
         # User stats
         total_users = await users_collection.count_documents({})
@@ -98,6 +107,48 @@ async def get_overview_stats(current_admin: UserInDB = Depends(get_current_admin
         recent_analyses = await analysis_collection.count_documents(
             {"analysis_timestamp": {"$gte": seven_days_ago}}
         )
+        
+        # Subscription stats
+        total_subscriptions = await subscriptions_collection.count_documents({})
+        active_subscriptions = await subscriptions_collection.count_documents({"status": "active"})
+        
+        # Revenue stats
+        total_revenue = 0
+        monthly_revenue = 0
+        try:
+            revenue_pipeline = [
+                {"$match": {"status": "completed"}},
+                {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+            ]
+            revenue_result = await payments_collection.aggregate(revenue_pipeline).to_list(1)
+            total_revenue = revenue_result[0]["total"] if revenue_result else 0
+            
+            # Monthly revenue (current month)
+            current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            monthly_pipeline = [
+                {"$match": {"status": "completed", "payment_date": {"$gte": current_month_start}}},
+                {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+            ]
+            monthly_result = await payments_collection.aggregate(monthly_pipeline).to_list(1)
+            monthly_revenue = monthly_result[0]["total"] if monthly_result else 0
+        except Exception as e:
+            logger.warning(f"Failed to calculate revenue: {str(e)}")
+        
+        # Plan distribution
+        plan_distribution = []
+        try:
+            plan_pipeline = [
+                {"$match": {"status": "active"}},
+                {"$group": {"_id": "$plan_type", "count": {"$sum": 1}}}
+            ]
+            plan_cursor = subscriptions_collection.aggregate(plan_pipeline)
+            async for item in plan_cursor:
+                plan_distribution.append({
+                    "plan_type": item["_id"],
+                    "count": item["count"]
+                })
+        except Exception as e:
+            logger.warning(f"Failed to get plan distribution: {str(e)}")
 
         return {
             "users": {
@@ -119,6 +170,13 @@ async def get_overview_stats(current_admin: UserInDB = Depends(get_current_admin
                 "groq_cost": round(groq_cost, 4),
                 "perplexity_cost": round(perplexity_cost, 4),
             },
+            "subscriptions": {
+                "total": total_subscriptions,
+                "active": active_subscriptions,
+                "total_revenue": round(total_revenue, 2),
+                "monthly_revenue": round(monthly_revenue, 2),
+                "plan_distribution": plan_distribution
+            }
         }
     except Exception as e:
         raise HTTPException(
@@ -507,6 +565,152 @@ async def get_cost_breakdown(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch cost breakdown: {str(e)}",
+        )
+
+
+@router.get("/subscription-stats")
+async def get_subscription_stats(current_admin: UserInDB = Depends(get_current_admin_user)):
+    """Get detailed subscription statistics"""
+    try:
+        from src.services.subscription_service import (
+            USER_SUBSCRIPTIONS_COLLECTION,
+            PAYMENT_RECORDS_COLLECTION,
+            USAGE_QUOTAS_COLLECTION
+        )
+        
+        subscriptions_collection = MongoDB.get_collection(USER_SUBSCRIPTIONS_COLLECTION)
+        payments_collection = MongoDB.get_collection(PAYMENT_RECORDS_COLLECTION)
+        quotas_collection = MongoDB.get_collection(USAGE_QUOTAS_COLLECTION)
+        
+        # Subscription counts by status
+        status_pipeline = [
+            {"$group": {"_id": "$status", "count": {"$sum": 1}}}
+        ]
+        status_cursor = subscriptions_collection.aggregate(status_pipeline)
+        status_counts = {}
+        async for item in status_cursor:
+            status_counts[item["_id"]] = item["count"]
+        
+        # Plan distribution with revenue
+        plan_pipeline = [
+            {"$match": {"status": "active"}},
+            {"$group": {
+                "_id": "$plan_type",
+                "count": {"$sum": 1},
+                "total_revenue": {"$sum": "$amount_paid"}
+            }}
+        ]
+        plan_cursor = subscriptions_collection.aggregate(plan_pipeline)
+        plan_stats = []
+        async for item in plan_cursor:
+            plan_stats.append({
+                "plan_type": item["_id"],
+                "active_subscriptions": item["count"],
+                "total_revenue": round(item["total_revenue"], 2)
+            })
+        
+        # Monthly revenue trend (last 6 months)
+        monthly_revenue = []
+        for i in range(6):
+            month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            if i > 0:
+                if month_start.month > i:
+                    month_start = month_start.replace(month=month_start.month - i)
+                else:
+                    year = month_start.year - 1
+                    month = 12 - (i - month_start.month)
+                    month_start = month_start.replace(year=year, month=month)
+            
+            month_end = (month_start.replace(month=month_start.month + 1) 
+                        if month_start.month < 12 
+                        else month_start.replace(year=month_start.year + 1, month=1))
+            
+            revenue_pipeline = [
+                {
+                    "$match": {
+                        "status": "completed",
+                        "payment_date": {"$gte": month_start, "$lt": month_end}
+                    }
+                },
+                {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+            ]
+            
+            revenue_result = await payments_collection.aggregate(revenue_pipeline).to_list(1)
+            revenue = revenue_result[0]["total"] if revenue_result else 0
+            
+            monthly_revenue.append({
+                "month": month_start.strftime("%Y-%m"),
+                "revenue": round(revenue, 2)
+            })
+        
+        # Usage statistics
+        current_month = datetime.utcnow()
+        usage_pipeline = [
+            {
+                "$match": {
+                    "month": current_month.month,
+                    "year": current_month.year
+                }
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "total_analyses_used": {"$sum": "$analyses_used"},
+                    "total_analyses_limit": {"$sum": "$analyses_limit"},
+                    "active_users": {"$sum": 1}
+                }
+            }
+        ]
+        
+        usage_result = await quotas_collection.aggregate(usage_pipeline).to_list(1)
+        usage_stats = usage_result[0] if usage_result else {
+            "total_analyses_used": 0,
+            "total_analyses_limit": 0,
+            "active_users": 0
+        }
+        
+        # Recent subscriptions (last 30 days)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        recent_subscriptions = await subscriptions_collection.count_documents({
+            "created_at": {"$gte": thirty_days_ago}
+        })
+        
+        # Churn rate (cancelled in last 30 days)
+        cancelled_subscriptions = await subscriptions_collection.count_documents({
+            "status": "cancelled",
+            "cancelled_at": {"$gte": thirty_days_ago}
+        })
+        
+        total_active = status_counts.get("active", 0)
+        churn_rate = (cancelled_subscriptions / max(total_active, 1)) * 100
+        
+        return {
+            "overview": {
+                "total_subscriptions": sum(status_counts.values()),
+                "active_subscriptions": status_counts.get("active", 0),
+                "cancelled_subscriptions": status_counts.get("cancelled", 0),
+                "expired_subscriptions": status_counts.get("expired", 0),
+                "recent_subscriptions_30d": recent_subscriptions,
+                "churn_rate_30d": round(churn_rate, 2)
+            },
+            "plan_distribution": plan_stats,
+            "monthly_revenue_trend": list(reversed(monthly_revenue)),
+            "usage_stats": {
+                "total_analyses_used_this_month": usage_stats.get("total_analyses_used", 0),
+                "total_analyses_limit": usage_stats.get("total_analyses_limit", 0),
+                "active_users_this_month": usage_stats.get("active_users", 0),
+                "usage_percentage": round(
+                    (usage_stats.get("total_analyses_used", 0) / 
+                     max(usage_stats.get("total_analyses_limit", 1), 1)) * 100, 2
+                )
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get subscription stats: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch subscription statistics: {str(e)}",
         )
 
 

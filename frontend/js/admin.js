@@ -51,6 +51,11 @@ async function loadOverviewStats() {
             document.getElementById('totalAPICalls').textContent = data.api_usage.total_calls;
             document.getElementById('totalCost').textContent = `$${data.api_usage.total_cost.toFixed(4)}`;
             
+            // Update revenue if available
+            if (data.subscriptions) {
+                document.getElementById('totalRevenue').textContent = `₹${data.subscriptions.total_revenue.toFixed(2)}`;
+            }
+            
             // Update breakdown
             document.getElementById('groqCost').textContent = `$${data.api_usage.groq_cost.toFixed(4)}`;
             document.getElementById('perplexityCost').textContent = `$${data.api_usage.perplexity_cost.toFixed(4)}`;
@@ -654,6 +659,9 @@ function switchTab(tabName) {
         loadPrescriptionAnalytics();
     } else if (tabName === 'feedback') {
         loadFeedback();
+    } else if (tabName === 'subscriptions') {
+        console.log('Switching to subscriptions tab');
+        loadSubscriptionStats();
     }
 }
 
@@ -683,6 +691,9 @@ function refreshCurrentTab() {
             loadPrescriptionAnalytics();
         } else if (tabName === 'feedback') {
             loadFeedback();
+        } else if (tabName === 'subscriptions') {
+            console.log('Refreshing subscriptions tab');
+            loadSubscriptionStats();
         }
     }
 }
@@ -1311,4 +1322,140 @@ function displayPrescriptionTopUsers(data) {
             </div>
         `;
     }).join('');
+}
+
+// Load subscription statistics
+let revenueChart = null;
+
+async function loadSubscriptionStats() {
+    try {
+        console.log('Loading subscription stats...');
+        const data = await cachedFetch(`${API_URL}/admin/subscription-stats`, {}, 'subscription-stats');
+        console.log('Subscription stats data:', data);
+        console.log('Data type:', typeof data);
+        console.log('Data keys:', data ? Object.keys(data) : 'no data');
+        if (data) {
+            // Update overview cards
+            document.getElementById('subTotal').textContent = data.overview.total_subscriptions;
+            document.getElementById('subActive').textContent = data.overview.active_subscriptions;
+            document.getElementById('subMonthlyRevenue').textContent = `₹${data.overview.monthly_revenue || 0}`;
+            document.getElementById('subChurnRate').textContent = `${data.overview.churn_rate_30d}%`;
+            
+            // Update recent activity
+            document.getElementById('recentSubs30d').textContent = data.overview.recent_subscriptions_30d;
+            document.getElementById('cancelledSubs30d').textContent = data.overview.cancelled_subscriptions || 0;
+            document.getElementById('expiredSubs').textContent = data.overview.expired_subscriptions || 0;
+            
+            // Display plan distribution
+            displayPlanDistribution(data.plan_distribution);
+            
+            // Display usage statistics
+            displayUsageStatistics(data.usage_stats);
+            
+            // Render revenue chart
+            renderRevenueChart(data.monthly_revenue_trend);
+        }
+    } catch (error) {
+        console.error('Error loading subscription stats:', error);
+        showNotification('Failed to load subscription statistics', 'error');
+    }
+}
+
+function displayPlanDistribution(planData) {
+    const container = document.getElementById('planDistribution');
+    if (!planData || planData.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">No subscription data available</p>';
+        return;
+    }
+    
+    const planColors = {
+        'free': 'bg-gray-500',
+        'basic': 'bg-blue-500',
+        'premium': 'bg-purple-500',
+        'enterprise': 'bg-green-500'
+    };
+    
+    const total = planData.reduce((sum, plan) => sum + plan.active_subscriptions, 0);
+    
+    container.innerHTML = planData.map(plan => {
+        const percentage = total > 0 ? ((plan.active_subscriptions / total) * 100).toFixed(1) : 0;
+        const color = planColors[plan.plan_type] || 'bg-gray-500';
+        
+        return `
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium capitalize">${plan.plan_type}</span>
+                    <span class="text-sm text-gray-600">${plan.active_subscriptions} (₹${plan.total_revenue.toFixed(2)})</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="${color} h-2 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function displayUsageStatistics(usageStats) {
+    document.getElementById('usageAnalysesUsed').textContent = usageStats.total_analyses_used_this_month || 0;
+    document.getElementById('usageAnalysesLimit').textContent = usageStats.total_analyses_limit || 0;
+    document.getElementById('usagePercentage').textContent = `${usageStats.usage_percentage || 0}%`;
+    document.getElementById('usageActiveUsers').textContent = usageStats.active_users_this_month || 0;
+}
+
+function renderRevenueChart(revenueData) {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    
+    if (revenueChart) {
+        revenueChart.destroy();
+    }
+    
+    if (!revenueData || revenueData.length === 0) {
+        ctx.fillText('No revenue data available', 10, 50);
+        return;
+    }
+    
+    revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: revenueData.map(d => d.month),
+            datasets: [{
+                label: 'Revenue (₹)',
+                data: revenueData.map(d => d.revenue),
+                borderColor: 'rgb(16, 185, 129)',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Revenue: ₹${context.parsed.y.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue (₹)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
 }

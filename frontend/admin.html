@@ -79,7 +79,7 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Overview Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6 mb-8">
             <!-- Users -->
             <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between">
@@ -134,6 +134,17 @@
                     <i class="fas fa-dollar-sign text-orange-600 text-3xl sm:text-4xl opacity-20"></i>
                 </div>
             </div>
+            
+            <!-- Revenue -->
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-xs sm:text-sm">Revenue</p>
+                        <p id="totalRevenue" class="text-2xl sm:text-3xl font-bold text-green-600">₹0</p>
+                    </div>
+                    <i class="fas fa-rupee-sign text-green-600 text-3xl sm:text-4xl opacity-20"></i>
+                </div>
+            </div>
         </div>
 
         <!-- Tabs -->
@@ -153,6 +164,11 @@
                     <!-- Prescriptions -->
                     <button onclick="switchTab('prescriptions')" id="tab-prescriptions" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
                         <i class="fas fa-prescription mr-1 sm:mr-2"></i>Prescriptions
+                    </button>
+                    
+                    <!-- Subscriptions -->
+                    <button onclick="switchTab('subscriptions')" id="tab-subscriptions" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+                        <i class="fas fa-credit-card mr-1 sm:mr-2"></i>Subscriptions
                     </button>
                     
                     <!-- API Usage & Monitoring -->
@@ -407,6 +423,88 @@
                     <div class="bg-white rounded-xl shadow-lg p-6">
                         <h4 class="text-lg font-bold mb-4">Top Users by Prescriptions</h4>
                         <div id="prescTopUsers" class="space-y-3"></div>
+                    </div>
+                </div>
+                
+                <!-- Subscriptions Tab -->
+                <div id="content-subscriptions" class="tab-content hidden">
+                    <h3 class="text-xl font-bold mb-4">Subscription Analytics</h3>
+                    
+                    <!-- Subscription Overview Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+                            <p class="text-sm opacity-90">Total Subscriptions</p>
+                            <p id="subTotal" class="text-4xl font-bold mt-2">0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                            <p class="text-sm opacity-90">Active Subscriptions</p>
+                            <p id="subActive" class="text-4xl font-bold mt-2">0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+                            <p class="text-sm opacity-90">Monthly Revenue</p>
+                            <p id="subMonthlyRevenue" class="text-4xl font-bold mt-2">₹0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
+                            <p class="text-sm opacity-90">Churn Rate</p>
+                            <p id="subChurnRate" class="text-4xl font-bold mt-2">0%</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Plan Distribution & Revenue Trend -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Plan Distribution -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="text-lg font-bold mb-4">Plan Distribution</h4>
+                            <div id="planDistribution" class="space-y-3"></div>
+                        </div>
+                        
+                        <!-- Usage Statistics -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="text-lg font-bold mb-4">Usage Statistics</h4>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span class="text-gray-700">Analyses Used This Month</span>
+                                    <span id="usageAnalysesUsed" class="font-bold text-blue-600">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span class="text-gray-700">Total Limit</span>
+                                    <span id="usageAnalysesLimit" class="font-bold text-green-600">0</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span class="text-gray-700">Usage Percentage</span>
+                                    <span id="usagePercentage" class="font-bold text-orange-600">0%</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                    <span class="text-gray-700">Active Users This Month</span>
+                                    <span id="usageActiveUsers" class="font-bold text-purple-600">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Revenue Trend Chart -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h4 class="text-lg font-bold mb-4">Monthly Revenue Trend (Last 6 Months)</h4>
+                        <canvas id="revenueChart" height="80"></canvas>
+                    </div>
+                    
+                    <!-- Recent Subscriptions -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-lg font-bold mb-4">Recent Activity</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                <p class="text-2xl font-bold text-blue-600" id="recentSubs30d">0</p>
+                                <p class="text-sm text-blue-700">New Subscriptions (30d)</p>
+                            </div>
+                            <div class="text-center p-4 bg-red-50 rounded-lg">
+                                <p class="text-2xl font-bold text-red-600" id="cancelledSubs30d">0</p>
+                                <p class="text-sm text-red-700">Cancelled (30d)</p>
+                            </div>
+                            <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                                <p class="text-2xl font-bold text-yellow-600" id="expiredSubs">0</p>
+                                <p class="text-sm text-yellow-700">Expired</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
