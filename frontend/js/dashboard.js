@@ -685,20 +685,35 @@ function displaySubscriptionStatus(subscription) {
         content.innerHTML = `
             <div class="text-center">
                 <div class="text-lg font-bold text-gray-800 mb-1">Free Plan</div>
-                <div class="text-sm text-gray-600 mb-3">₹0/month</div>
-                <div class="text-xs text-gray-500 mb-4">5 analyses/month</div>
+                <div class="text-sm text-gray-600 mb-2">₹0/month</div>
+                
+                <!-- Usage Progress -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Usage</span>
+                        <span id="freeUsage">0/5</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="freeUsageBar" class="bg-red-400 h-2 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="text-xs text-gray-500 mb-4">Limited features</div>
                 <button onclick="window.location.href='/subscription'" 
                     class="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-secondary transition text-sm font-semibold">
-                    <i class="fas fa-arrow-up mr-1"></i>Upgrade
+                    <i class="fas fa-arrow-up mr-1"></i>Upgrade Plan
                 </button>
             </div>
         `;
+        
+        // Load free plan usage
+        loadFreeUsage();
         return;
     }
     
     const plan = subscription.plan;
     const usage = subscription.usage || { analyses_used: 0 };
-    const usagePercent = Math.min((usage.analyses_used / plan.analyses_limit) * 100, 100);
+    const usagePercent = plan.analyses_limit === -1 ? 0 : Math.min((usage.analyses_used / plan.analyses_limit) * 100, 100);
     
     // Set card style based on plan
     let cardClass, planColor, planIcon;
@@ -725,33 +740,51 @@ function displaySubscriptionStatus(subscription) {
         ? new Date(subscription.next_billing_date).toLocaleDateString()
         : 'N/A';
     
+    const statusColor = subscription.status === 'active' ? 'text-green-600' : 'text-red-600';
+    const statusIcon = subscription.status === 'active' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    
     content.innerHTML = `
         <div class="text-center">
             <div class="flex items-center justify-center mb-2">
                 <i class="fas ${planIcon} text-yellow-500 mr-2"></i>
                 <div class="text-lg font-bold ${planColor}">${plan.name}</div>
             </div>
-            <div class="text-sm text-gray-600 mb-3">₹${plan.price}/${plan.billing_cycle}</div>
+            <div class="text-sm text-gray-600 mb-2">₹${plan.price}/${plan.billing_cycle}</div>
+            
+            <!-- Status -->
+            <div class="flex items-center justify-center mb-3">
+                <i class="fas ${statusIcon} ${statusColor} mr-1"></i>
+                <span class="text-xs ${statusColor} font-semibold capitalize">${subscription.status}</span>
+            </div>
             
             <!-- Usage Progress -->
             <div class="mb-4">
                 <div class="flex justify-between text-xs text-gray-600 mb-1">
-                    <span>Analyses Used</span>
+                    <span>Usage</span>
                     <span>${usage.analyses_used}/${plan.analyses_limit === -1 ? '∞' : plan.analyses_limit}</span>
                 </div>
                 ${plan.analyses_limit !== -1 ? `
                     <div class="w-full bg-gray-200 rounded-full h-2">
                         <div class="bg-primary h-2 rounded-full transition-all" style="width: ${usagePercent}%"></div>
                     </div>
+                    ${usagePercent > 80 ? '<div class="text-xs text-orange-600 mt-1">⚠️ Running low</div>' : ''}
                 ` : '<div class="text-xs text-green-600 font-semibold">Unlimited</div>'}
             </div>
             
             <div class="text-xs text-gray-500 mb-3">Next billing: ${nextBilling}</div>
             
-            <button onclick="window.location.href='/subscription'" 
-                class="w-full bg-white text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition text-sm font-semibold border">
-                <i class="fas fa-cog mr-1"></i>Manage
-            </button>
+            <div class="flex space-x-2">
+                <button onclick="window.location.href='/subscription'" 
+                    class="flex-1 bg-white text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition text-xs font-semibold border">
+                    <i class="fas fa-cog mr-1"></i>Manage
+                </button>
+                ${plan.name.toLowerCase() !== 'enterprise' ? `
+                    <button onclick="window.location.href='/subscription'" 
+                        class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-secondary transition text-xs font-semibold">
+                        <i class="fas fa-arrow-up mr-1"></i>Upgrade
+                    </button>
+                ` : ''}
+            </div>
         </div>
     `;
 }
@@ -1786,4 +1819,35 @@ async function showPrescriptionConfirm(isExisting = false, prescriptionId = null
             resolve(viewNow);
         };
     });
+}
+
+// Load free plan usage
+async function loadFreeUsage() {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/api/subscriptions/check-usage`);
+        const data = await response.json();
+        
+        const usageEl = document.getElementById('freeUsage');
+        const usageBarEl = document.getElementById('freeUsageBar');
+        
+        if (usageEl && usageBarEl) {
+            const used = data.analyses_used || 0;
+            const limit = data.analyses_limit || 5;
+            const percent = Math.min((used / limit) * 100, 100);
+            
+            usageEl.textContent = `${used}/${limit}`;
+            usageBarEl.style.width = `${percent}%`;
+            
+            // Change color based on usage
+            if (percent >= 100) {
+                usageBarEl.className = 'bg-red-500 h-2 rounded-full transition-all';
+            } else if (percent >= 80) {
+                usageBarEl.className = 'bg-orange-400 h-2 rounded-full transition-all';
+            } else {
+                usageBarEl.className = 'bg-green-400 h-2 rounded-full transition-all';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading free usage:', error);
+    }
 }
