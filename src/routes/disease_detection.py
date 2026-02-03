@@ -54,6 +54,29 @@ async def detect_disease(
         logger.info(f"User {current_user.username} uploaded image for disease detection")
         logger.info(f"File details - filename: {file.filename}, content_type: {file.content_type}")
 
+        # Check subscription limits first
+        from src.services.subscription_service import SubscriptionService
+        
+        # Get user's subscription to check limits
+        subscription = await SubscriptionService.get_user_subscription(str(current_user.id))
+        usage_quota = await SubscriptionService.get_user_usage_quota(str(current_user.id))
+        
+        # Determine analysis limit
+        if subscription:
+            plan = await SubscriptionService.get_plan_by_id(subscription.plan_id)
+            analyses_limit = plan.max_analyses_per_month if plan else 5
+        else:
+            analyses_limit = 5  # Free plan default
+        
+        analyses_used = usage_quota.analyses_used if usage_quota else 0
+        
+        # Check if user has exceeded limit (unlimited = -1)
+        if analyses_limit != -1 and analyses_used >= analyses_limit:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Monthly analysis limit reached ({analyses_used}/{analyses_limit}). Please upgrade your plan."
+            )
+
         # Validate file
         if not file.filename:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No file provided")
@@ -181,6 +204,14 @@ async def detect_disease(
         insert_result = await analysis_collection.insert_one(analysis_record.dict(by_alias=True))
 
         logger.info(f"Analysis record saved with ID: {insert_result.inserted_id}")
+
+        # Increment usage count after successful analysis
+        try:
+            await SubscriptionService.increment_usage(str(current_user.id))
+            logger.info(f"Incremented usage count for user {current_user.username}")
+        except Exception as e:
+            logger.error(f"Failed to increment usage count: {str(e)}")
+            # Continue - don't fail the analysis for usage tracking issues
 
         # Generate prescription if disease detected
         prescription_id = None
