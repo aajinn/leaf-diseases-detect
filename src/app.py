@@ -13,6 +13,7 @@ from src.routes.disease_detection import router as detection_router
 from src.routes.feedback_routes import router as feedback_router
 from src.routes.notification_routes import router as notification_router
 from src.routes.prescription_routes import router as prescription_router
+from src.routes.subscription_routes import router as subscription_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -112,6 +113,12 @@ if os.path.exists("frontend"):
     async def serve_prescriptions():
         """Serve the prescriptions page"""
         return FileResponse("frontend/prescriptions.html")
+    
+    @app.get("/subscription", response_class=FileResponse)
+    async def serve_subscription():
+        """Serve the subscription page"""
+        return FileResponse("frontend/subscription.html")
+    
     @app.get("/about", response_class=FileResponse)
     async def serve_about():
         return FileResponse("frontend/about.html")
@@ -127,6 +134,7 @@ app.include_router(admin_router)
 app.include_router(feedback_router)
 app.include_router(notification_router)
 app.include_router(prescription_router)
+app.include_router(subscription_router)
 
 
 @app.post("/disease-detection-file")
