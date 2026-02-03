@@ -320,10 +320,11 @@ class SubscriptionService:
                 {
                     "$inc": {"analyses_used": 1},
                     "$set": {"updated_at": datetime.utcnow()}
-                }
+                },
+                upsert=True
             )
             
-            return result.modified_count > 0
+            return result.modified_count > 0 or result.upserted_id is not None
         except Exception as e:
             logger.error(f"Failed to increment usage for {user_id}: {str(e)}")
             return False
