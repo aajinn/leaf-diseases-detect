@@ -679,7 +679,7 @@ function displaySubscriptionStatus(subscription) {
     const content = document.getElementById('subscriptionContent');
     const card = document.getElementById('subscriptionCard');
     
-    if (!subscription) {
+    if (!subscription || !subscription.plan) {
         // No subscription - show free plan
         card.className = 'bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg p-6 border border-gray-200';
         content.innerHTML = `
@@ -713,7 +713,8 @@ function displaySubscriptionStatus(subscription) {
     
     const plan = subscription.plan;
     const usage = subscription.usage || { analyses_used: 0 };
-    const usagePercent = plan.analyses_limit === -1 ? 0 : Math.min((usage.analyses_used / plan.analyses_limit) * 100, 100);
+    const analysesLimit = plan.analyses_limit || 0;
+    const usagePercent = analysesLimit === -1 ? 0 : Math.min((usage.analyses_used / analysesLimit) * 100, 100);
     
     // Set card style based on plan
     let cardClass, planColor, planIcon;
@@ -761,9 +762,9 @@ function displaySubscriptionStatus(subscription) {
             <div class="mb-4">
                 <div class="flex justify-between text-xs text-gray-600 mb-1">
                     <span>Usage</span>
-                    <span>${usage.analyses_used}/${plan.analyses_limit === -1 ? '∞' : plan.analyses_limit}</span>
+                    <span>${usage.analyses_used}/${analysesLimit === -1 ? '∞' : analysesLimit}</span>
                 </div>
-                ${plan.analyses_limit !== -1 ? `
+                ${analysesLimit !== -1 ? `
                     <div class="w-full bg-gray-200 rounded-full h-2">
                         <div class="bg-primary h-2 rounded-full transition-all" style="width: ${usagePercent}%"></div>
                     </div>
