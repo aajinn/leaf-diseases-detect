@@ -33,3 +33,6 @@ pymongo>=4.6.0
 
 # Email validation
 email-validator>=2.1.0
+
+# Payment gateway
+razorpay>=1.4.0
