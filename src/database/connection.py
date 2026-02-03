@@ -56,3 +56,7 @@ class MongoDB:
 # Collection names
 USERS_COLLECTION = "users"
 ANALYSIS_COLLECTION = "analysis_records"
+SUBSCRIPTION_PLANS_COLLECTION = "subscription_plans"
+USER_SUBSCRIPTIONS_COLLECTION = "user_subscriptions"
+PAYMENT_RECORDS_COLLECTION = "payment_records"
+USAGE_QUOTAS_COLLECTION = "usage_quotas"
