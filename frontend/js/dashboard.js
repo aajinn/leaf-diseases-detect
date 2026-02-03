@@ -584,9 +584,182 @@ function testDuplicateDetector() {
     console.log('=== End Test ===');
 }
 
+// Check subscription limits
+async function checkSubscriptionLimits() {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/api/subscriptions/check-usage`);
+        const data = await response.json();
+        
+        if (!data.can_analyze) {
+            showSubscriptionLimitModal(data);
+            return false;
+        }
+        
+        // Show warning if close to limit
+        if (data.usage_percent > 80) {
+            showNotification(`⚠️ You've used ${data.analyses_used}/${data.analyses_limit} analyses this month`, 'warning');
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error checking subscription limits:', error);
+        return true; // Allow analysis if check fails
+    }
+}
+
+// Show subscription limit modal
+function showSubscriptionLimitModal(data) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">
+                        Monthly Limit Reached
+                    </h3>
+                    <p class="text-gray-600">
+                        You've used all ${data.analyses_used} analyses in your ${data.plan_name} plan this month.
+                    </p>
+                </div>
+                
+                <div class="bg-blue-50 rounded-lg p-4 mb-6">
+                    <h4 class="font-semibold text-blue-800 mb-2">Options:</h4>
+                    <ul class="space-y-1 text-sm text-blue-700">
+                        <li class="flex items-center"><i class="fas fa-arrow-up text-blue-600 mr-2"></i>Upgrade to a higher plan</li>
+                        <li class="flex items-center"><i class="fas fa-calendar text-blue-600 mr-2"></i>Wait for next billing cycle</li>
+                        <li class="flex items-center"><i class="fas fa-gift text-blue-600 mr-2"></i>Contact support for assistance</li>
+                    </ul>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button onclick="window.location.href='/subscription'" class="flex-1 bg-primary text-white py-3 rounded-lg hover:bg-secondary transition font-semibold">
+                        <i class="fas fa-crown mr-2"></i>Upgrade Plan
+                    </button>
+                    <button onclick="this.closest('.fixed').remove()" class="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// Load subscription status
+async function loadSubscriptionStatus() {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/api/subscriptions/my-subscription`);
+        const data = await response.json();
+        
+        displaySubscriptionStatus(data);
+        
+        // Show usage warning if close to limit
+        if (data && data.usage && data.plan.analyses_limit !== -1) {
+            const usagePercent = data.usage.usage_percent;
+            if (usagePercent > 80) {
+                const remaining = data.plan.analyses_limit - data.usage.analyses_used;
+                showNotification(
+                    `⚠️ You're running low on analyses! ${remaining} remaining this month.`,
+                    'warning'
+                );
+            }
+        }
+    } catch (error) {
+        console.error('Error loading subscription:', error);
+        displaySubscriptionStatus(null);
+    }
+}
+
+function displaySubscriptionStatus(subscription) {
+    const content = document.getElementById('subscriptionContent');
+    const card = document.getElementById('subscriptionCard');
+    
+    if (!subscription) {
+        // No subscription - show free plan
+        card.className = 'bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg p-6 border border-gray-200';
+        content.innerHTML = `
+            <div class="text-center">
+                <div class="text-lg font-bold text-gray-800 mb-1">Free Plan</div>
+                <div class="text-sm text-gray-600 mb-3">₹0/month</div>
+                <div class="text-xs text-gray-500 mb-4">5 analyses/month</div>
+                <button onclick="window.location.href='/subscription'" 
+                    class="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-secondary transition text-sm font-semibold">
+                    <i class="fas fa-arrow-up mr-1"></i>Upgrade
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    const plan = subscription.plan;
+    const usage = subscription.usage || { analyses_used: 0 };
+    const usagePercent = Math.min((usage.analyses_used / plan.analyses_limit) * 100, 100);
+    
+    // Set card style based on plan
+    let cardClass, planColor, planIcon;
+    switch(plan.name.toLowerCase()) {
+        case 'premium':
+            cardClass = 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200';
+            planColor = 'text-purple-900';
+            planIcon = 'fa-star';
+            break;
+        case 'enterprise':
+            cardClass = 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200';
+            planColor = 'text-yellow-900';
+            planIcon = 'fa-crown';
+            break;
+        default: // basic
+            cardClass = 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200';
+            planColor = 'text-blue-900';
+            planIcon = 'fa-gem';
+    }
+    
+    card.className = `${cardClass} rounded-xl shadow-lg p-6 border`;
+    
+    const nextBilling = subscription.next_billing_date 
+        ? new Date(subscription.next_billing_date).toLocaleDateString()
+        : 'N/A';
+    
+    content.innerHTML = `
+        <div class="text-center">
+            <div class="flex items-center justify-center mb-2">
+                <i class="fas ${planIcon} text-yellow-500 mr-2"></i>
+                <div class="text-lg font-bold ${planColor}">${plan.name}</div>
+            </div>
+            <div class="text-sm text-gray-600 mb-3">₹${plan.price}/${plan.billing_cycle}</div>
+            
+            <!-- Usage Progress -->
+            <div class="mb-4">
+                <div class="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>Analyses Used</span>
+                    <span>${usage.analyses_used}/${plan.analyses_limit === -1 ? '∞' : plan.analyses_limit}</span>
+                </div>
+                ${plan.analyses_limit !== -1 ? `
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-primary h-2 rounded-full transition-all" style="width: ${usagePercent}%"></div>
+                    </div>
+                ` : '<div class="text-xs text-green-600 font-semibold">Unlimited</div>'}
+            </div>
+            
+            <div class="text-xs text-gray-500 mb-3">Next billing: ${nextBilling}</div>
+            
+            <button onclick="window.location.href='/subscription'" 
+                class="w-full bg-white text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition text-sm font-semibold border">
+                <i class="fas fa-cog mr-1"></i>Manage
+            </button>
+        </div>
+    `;
+}
+
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
+    await loadSubscriptionStatus();
     await loadStats();
     await loadNotifications();
     setupFileUpload();
@@ -852,6 +1025,12 @@ async function handleFile(file) {
 
 async function analyzeImage() {
     if (!selectedFile) return;
+
+    // Check subscription limits first
+    const canAnalyze = await checkSubscriptionLimits();
+    if (!canAnalyze) {
+        return;
+    }
 
     const analyzeBtn = document.getElementById('analyzeBtn');
     analyzeBtn.disabled = true;
