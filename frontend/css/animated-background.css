@@ -25,7 +25,7 @@ nav,
     z-index: 1;
 }
 
-/* Smooth transitions for theme changes */
+/* Light Mode Themes */
 body.theme-guest {
     background-color: rgba(240, 248, 255, 0.3) !important;
 }
@@ -44,4 +44,48 @@ body.theme-analyzing {
 
 body.theme-healthy {
     background-color: rgba(232, 245, 233, 0.3) !important;
+}
+
+body.theme-diseased {
+    background-color: rgba(254, 226, 226, 0.3) !important;
+}
+
+/* Dark Mode Themes */
+body.dark.theme-guest {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+body.dark.theme-user {
+    background-color: rgba(20, 83, 45, 0.8) !important;
+}
+
+body.dark.theme-admin {
+    background-color: rgba(30, 58, 138, 0.8) !important;
+}
+
+body.dark.theme-analyzing {
+    background-color: rgba(120, 53, 15, 0.8) !important;
+}
+
+body.dark.theme-healthy {
+    background-color: rgba(20, 83, 45, 0.8) !important;
+}
+
+body.dark.theme-diseased {
+    background-color: rgba(127, 29, 29, 0.8) !important;
+}
+
+/* Dark mode animated background particles */
+body.dark #animated-bg {
+    filter: brightness(0.7) contrast(1.2);
+}
+
+/* Dark mode content adjustments */
+body.dark nav,
+body.dark .max-w-7xl,
+body.dark .bg-white,
+body.dark .bg-gradient-to-r,
+body.dark .bg-gradient-to-br {
+    position: relative;
+    z-index: 1;
 }
