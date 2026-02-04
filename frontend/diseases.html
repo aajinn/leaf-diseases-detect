@@ -4,20 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plant Diseases Database - Leaf Disease Detection</title>
-    <link rel="stylesheet" href="css/tailwind.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#22c55e',
+                        secondary: '#16a34a',
+                        accent: '#15803d'
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/animated-background.css">
     <link rel="stylesheet" href="css/dark-mode.css">
-    <script>
-        // Custom colors already defined in tailwind.config.js
-    </script>
     <script src="js/animated-background.js"></script>
 </head>
 <body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="bg-white border-b border-gray-200">
+    <nav class="bg-white border-b border-gray-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-14">
+            <div class="flex justify-between items-center h-16">
                 <!-- Left: Logo & Title -->
                 <div class="flex items-center space-x-3">
                     <i class="fas fa-leaf text-primary text-2xl"></i>
@@ -27,21 +36,21 @@
                 </div>
                 
                 <!-- Right: Actions -->
-                <div class="flex items-center space-x-2">
-                    <a href="/" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-primary transition-colors">
-                        <i class="fas fa-home text-xs mr-1.5"></i>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors rounded-lg hover:bg-gray-50">
+                        <i class="fas fa-home text-sm mr-2"></i>
                         <span class="hidden sm:inline">Home</span>
                     </a>
-                    <a href="/diseases" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-primary font-semibold">
-                        <i class="fas fa-virus text-xs mr-1.5"></i>
+                    <a href="/diseases" class="inline-flex items-center px-4 py-2 text-sm font-medium text-primary bg-green-50 rounded-lg font-semibold">
+                        <i class="fas fa-virus text-sm mr-2"></i>
                         <span class="hidden sm:inline">Diseases</span>
                     </a>
                     
                     <!-- Dark Mode Toggle -->
                     <button id="darkModeBtn" onclick="toggleDarkMode()" 
-                        class="inline-flex items-center px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:text-primary transition-colors"
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary transition-colors rounded-lg hover:bg-gray-50"
                         title="Toggle dark mode">
-                        <i id="darkModeIcon" class="fas fa-moon text-xs"></i>
+                        <i id="darkModeIcon" class="fas fa-moon text-sm"></i>
                     </button>
                     
                     <span id="authLinks"></span>
@@ -52,24 +61,34 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-8 mb-8 shadow-lg">
-            <h1 class="text-4xl font-bold mb-2">Plant Diseases Encyclopedia</h1>
-            <p class="text-green-100">Comprehensive database of common plant diseases with symptoms and treatments</p>
+        <div class="bg-gradient-to-r from-primary to-secondary text-white rounded-2xl p-8 mb-8 shadow-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-3">Plant Diseases Encyclopedia</h1>
+                    <p class="text-green-100 text-lg">Comprehensive database of common plant diseases with symptoms and treatments</p>
+                </div>
+                <div class="hidden md:block">
+                    <i class="fas fa-microscope text-6xl text-green-200 opacity-50"></i>
+                </div>
+            </div>
         </div>
 
         <!-- Search and Filter -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
+            <div class="grid md:grid-cols-3 gap-6">
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Search Diseases</label>
-                    <input type="text" id="searchInput" placeholder="Search by name, plant, or symptoms..." 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                        onkeyup="filterDiseases()">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Search Diseases</label>
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search by name, plant, or symptoms..." 
+                            class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all duration-200"
+                            onkeyup="filterDiseases()">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Filter by Type</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Filter by Type</label>
                     <select id="typeFilter" onchange="filterDiseases()" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all duration-200 bg-white">
                         <option value="">All Types</option>
                         <option value="Fungal">Fungal</option>
                         <option value="Bacterial">Bacterial</option>
@@ -79,12 +98,12 @@
                     </select>
                 </div>
             </div>
-            <div class="mt-4 flex items-center justify-between">
-                <p class="text-sm text-gray-600">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    Showing <span id="resultCount" class="font-bold text-primary">0</span> diseases
+            <div class="mt-6 flex items-center justify-between">
+                <p class="text-sm text-gray-600 flex items-center">
+                    <i class="fas fa-info-circle mr-2 text-primary"></i>
+                    Showing <span id="resultCount" class="font-bold text-primary mx-1">0</span> diseases
                 </p>
-                <button onclick="resetFilters()" class="text-sm text-primary hover:text-secondary font-semibold">
+                <button onclick="resetFilters()" class="text-sm text-primary hover:text-secondary font-semibold flex items-center px-4 py-2 rounded-lg hover:bg-green-50 transition-all duration-200">
                     <i class="fas fa-redo mr-2"></i>Reset Filters
                 </button>
             </div>
@@ -96,33 +115,40 @@
         </div>
 
         <!-- Loading State -->
-        <div id="loading" class="text-center py-12">
-            <i class="fas fa-spinner fa-spin text-4xl text-primary mb-4"></i>
-            <p class="text-gray-600">Loading diseases database...</p>
+        <div id="loading" class="text-center py-16">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-primary bg-opacity-10 rounded-full mb-4">
+                <i class="fas fa-spinner fa-spin text-2xl text-primary"></i>
+            </div>
+            <p class="text-gray-600 text-lg">Loading diseases database...</p>
         </div>
 
         <!-- No Results -->
-        <div id="noResults" class="hidden text-center py-12">
-            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
-            <p class="text-xl text-gray-600 mb-2">No diseases found</p>
-            <p class="text-gray-500">Try adjusting your search or filters</p>
+        <div id="noResults" class="hidden text-center py-16">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
+                <i class="fas fa-search text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-2xl font-semibold text-gray-700 mb-2">No diseases found</h3>
+            <p class="text-gray-500 mb-6">Try adjusting your search or filters</p>
+            <button onclick="resetFilters()" class="inline-flex items-center px-6 py-3 bg-primary text-white rounded-xl hover:bg-secondary transition-all duration-200 font-semibold">
+                <i class="fas fa-redo mr-2"></i>Reset Filters
+            </button>
         </div>
     </div>
 
     <!-- Disease Detail Modal -->
-    <div id="diseaseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-screen overflow-y-auto">
+    <div id="diseaseModal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-8">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h2 id="modalTitle" class="text-3xl font-bold text-gray-800 mb-2"></h2>
+                <div class="flex justify-between items-start mb-8">
+                    <div class="flex-1">
+                        <h2 id="modalTitle" class="text-3xl font-bold text-gray-800 mb-3"></h2>
                         <div id="modalMeta" class="flex items-center space-x-4 text-sm"></div>
                     </div>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times text-2xl"></i>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-all duration-200">
+                        <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <div id="modalContent"></div>
+                <div id="modalContent" class="prose max-w-none"></div>
             </div>
         </div>
     </div>

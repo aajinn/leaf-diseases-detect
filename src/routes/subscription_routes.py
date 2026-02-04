@@ -702,9 +702,7 @@ async def check_usage_limits(current_user: UserInDB = Depends(get_current_active
         
         if not subscription:
             # No subscription = free plan with 5 analyses limit
-            # Check usage from usage quota or default to 0
-            quota = await SubscriptionService.get_user_usage_quota(str(current_user.id))
-            analyses_used = quota.analyses_used if quota else 0
+            analyses_used = current_user.analyses_this_month
             analyses_limit = 5  # Free plan limit
             
             return {
@@ -724,8 +722,8 @@ async def check_usage_limits(current_user: UserInDB = Depends(get_current_active
                 detail="Subscription plan not found"
             )
         
-        analyses_used = subscription.analyses_used_this_month
-        analyses_limit = plan.analyses_limit
+        analyses_used = current_user.analyses_this_month
+        analyses_limit = plan.max_analyses_per_month
         
         # Unlimited plans (-1) can always analyze
         if analyses_limit == -1:
@@ -772,14 +770,122 @@ async def get_usage_quota(current_user: UserInDB = Depends(get_current_active_us
             )
         
         remaining = max(0, quota.analyses_limit - quota.analyses_used) if quota.analyses_limit > 0 else float('inf')
-        usage_percentage = (quota.analyses_used / quota.analyses_limit * 100) if quota.analyses_limit > 0 else 0
         
         return UsageResponse(
             analyses_used=quota.analyses_used,
             analyses_limit=quota.analyses_limit,
-            remaining_analyses=remaining,
-            usage_percentage=usage_percentage,
-            next_reset_date=quota.next_reset_date
+            remaining=remaining,
+            usage_percent=(quota.analyses_used / quota.analyses_limit * 100) if quota.analyses_limit > 0 else 0
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get usage quota for {current_user.username}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve usage quota"
+        )
+
+
+@router.post("/increment-usage")
+async def increment_usage(current_user: UserInDB = Depends(get_current_active_user)):
+    """Increment user's analysis usage count"""
+    try:
+        from src.database.connection import MongoDB
+        from datetime import datetime
+        
+        users_collection = MongoDB.get_collection("users")
+        
+        # Check if we need to reset monthly count
+        now = datetime.utcnow()
+        if (now.year != current_user.last_reset_date.year or 
+            now.month != current_user.last_reset_date.month):
+            # Reset monthly count
+            await users_collection.update_one(
+                {"_id": current_user.id},
+                {
+                    "$set": {
+                        "analyses_this_month": 1,
+                        "last_reset_date": now,
+                        "updated_at": now
+                    },
+                    "$inc": {"total_analyses": 1}
+                }
+            )
+            analyses_this_month = 1
+        else:
+            # Increment both counters
+            await users_collection.update_one(
+                {"_id": current_user.id},
+                {
+                    "$inc": {
+                        "total_analyses": 1,
+                        "analyses_this_month": 1
+                    },
+                    "$set": {"updated_at": now}
+                }
+            )
+            analyses_this_month = current_user.analyses_this_month + 1
+        
+        # Get subscription info for response
+        subscription = await SubscriptionService.get_user_subscription(str(current_user.id))
+        
+        if subscription:
+            plan = await SubscriptionService.get_plan_by_id(subscription.plan_id)
+            analyses_limit = plan.max_analyses_per_month if plan else -1
+            plan_name = plan.name if plan else "Unknown"
+        else:
+            analyses_limit = 5  # Free plan limit
+            plan_name = "Free"
+        
+        return {
+            "success": True,
+            "message": "Usage incremented successfully",
+            "analyses_used": analyses_this_month,
+            "analyses_limit": analyses_limit,
+            "usage_percent": (analyses_this_month / analyses_limit * 100) if analyses_limit > 0 else 0,
+            "plan_name": plan_name,
+            "remaining": max(0, analyses_limit - analyses_this_month) if analyses_limit > 0 else float('inf')
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to increment usage for {current_user.username}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to increment usage"
+        )
+
+
+@router.post("/reset-usage")
+async def reset_usage(
+    current_user: UserInDB = Depends(get_current_active_user),
+    admin_user: UserInDB = Depends(get_current_admin_user)
+):
+    """Reset user's usage count (admin only)"""
+    try:
+        success = await SubscriptionService.reset_user_usage(str(current_user.id))
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to reset usage"
+            )
+        
+        return {
+            "success": True,
+            "message": f"Usage reset successfully for user {current_user.username}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reset usage for {current_user.username}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reset usage"
         )
         
     except HTTPException:

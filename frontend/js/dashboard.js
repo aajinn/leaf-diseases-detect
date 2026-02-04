@@ -706,8 +706,8 @@ function displaySubscriptionStatus(subscription) {
             </div>
         `;
         
-        // Load free plan usage
-        loadFreeUsage();
+        // Load free plan usage immediately
+        setTimeout(() => loadFreeUsage(), 100);
         return;
     }
     
@@ -769,7 +769,7 @@ function displaySubscriptionStatus(subscription) {
                         <div class="bg-primary h-2 rounded-full transition-all" style="width: ${usagePercent}%"></div>
                     </div>
                     ${usagePercent > 80 ? '<div class="text-xs text-orange-600 mt-1">⚠️ Running low</div>' : ''}
-                ` : '<div class="text-xs text-green-600 font-semibold">Unlimited</div>'}
+                ` : '<div class="text-xs text-green-600 font-semibold">✨ Unlimited</div>'}
             </div>
             
             <div class="text-xs text-gray-500 mb-3">Next billing: ${nextBilling}</div>
@@ -1112,10 +1112,20 @@ async function analyzeImage() {
             analyzeBtn.disabled = false;
             analyzeBtn.innerHTML = '<i class="fas fa-microscope mr-2"></i>Analyze Image';
             
+            // Invalidate cache after new analysis
+            if (typeof apiCache !== 'undefined') {
+                apiCache.invalidate('history');
+                apiCache.clearPattern(/dashboard-stats/);
+            }
+            
             await loadStats(); // Refresh stats
             await loadSubscriptionStatus(); // Refresh subscription usage
             
-            return;
+            // Force refresh of usage display after a delay
+            setTimeout(async () => {
+                await loadSubscriptionStatus();
+                console.log('Subscription status refreshed after cached analysis');
+            }, 1000);
         } else {
             console.log('No duplicate found, proceeding with analysis');
         }
@@ -1185,6 +1195,22 @@ async function analyzeImage() {
             lastAnalysisResult = result;
             analysisSuccessful = true;
             
+            // Update usage count immediately after successful analysis
+            try {
+                const usageResponse = await authenticatedFetch(`${API_URL}/api/subscriptions/increment-usage`, {
+                    method: 'POST'
+                });
+                
+                if (usageResponse.ok) {
+                    const usageData = await usageResponse.json();
+                    console.log('Usage incremented:', usageData);
+                } else {
+                    console.error('Failed to increment usage:', usageResponse.status);
+                }
+            } catch (error) {
+                console.error('Failed to increment usage:', error);
+            }
+            
             // Cache the result for future duplicate detection (only valid images)
             if (typeof duplicateDetector !== 'undefined' && imageHash) {
                 // Only cache if it's a valid plant image (not invalid_image type)
@@ -1228,6 +1254,22 @@ async function analyzeImage() {
             // Speak the results
             if (typeof tts !== 'undefined') {
                 tts.speakAnalysisResult(result);
+            }
+            
+            // Update usage count immediately after successful analysis
+            try {
+                const usageResponse = await authenticatedFetch(`${API_URL}/api/subscriptions/increment-usage`, {
+                    method: 'POST'
+                });
+                
+                if (usageResponse.ok) {
+                    const usageData = await usageResponse.json();
+                    console.log('Usage incremented:', usageData);
+                } else {
+                    console.error('Failed to increment usage:', usageResponse.status);
+                }
+            } catch (error) {
+                console.error('Failed to increment usage:', error);
             }
             
             // Invalidate cache after new analysis

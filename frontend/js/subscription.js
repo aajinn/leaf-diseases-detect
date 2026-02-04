@@ -114,29 +114,77 @@ function displayCurrentSubscription(subscription) {
 
 // Update plan buttons based on current subscription
 function updatePlanButtons() {
-    const buttons = document.querySelectorAll('[onclick^="subscribeToPlan"]');
+    const planButtons = {
+        free: document.getElementById('freePlanBtn'),
+        basic: document.getElementById('basicPlanBtn'),
+        premium: document.getElementById('premiumPlanBtn'),
+        enterprise: document.getElementById('enterprisePlanBtn')
+    };
     
-    buttons.forEach(button => {
-        const planName = button.getAttribute('onclick').match(/subscribeToPlan\('(.+?)'\)/)[1];
+    // Reset all buttons to default state
+    Object.keys(planButtons).forEach(planName => {
+        const button = planButtons[planName];
+        if (!button) return;
         
-        if (currentSubscription && currentSubscription.plan.name.toLowerCase() === planName) {
-            button.textContent = 'Current Plan';
-            button.className = 'w-full bg-gray-100 text-gray-600 py-3 rounded-lg font-semibold cursor-not-allowed';
-            button.disabled = true;
-            button.onclick = null;
-        } else if (currentSubscription) {
-            const currentPlanLevel = getPlanLevel(currentSubscription.plan.name);
+        button.disabled = false;
+        button.onclick = () => subscribeToPlan(planName);
+        
+        // Set default button styles
+        if (planName === 'free') {
+            button.className = 'w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition font-semibold';
+            button.innerHTML = 'Subscribe Now';
+        } else if (planName === 'basic') {
+            button.className = 'w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold';
+            button.innerHTML = 'Subscribe Now';
+        } else if (planName === 'premium') {
+            button.className = 'w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition font-semibold';
+            button.innerHTML = 'Subscribe Now';
+        } else if (planName === 'enterprise') {
+            button.className = 'w-full bg-yellow-600 text-white py-3 rounded-lg hover:bg-yellow-700 transition font-semibold';
+            button.innerHTML = 'Subscribe Now';
+        }
+    });
+    
+    if (currentSubscription && currentSubscription.plan) {
+        const currentPlanType = currentSubscription.plan.plan_type.toLowerCase();
+        
+        console.log('🔍 Current plan type:', currentPlanType);
+        
+        // Mark current plan button as disabled
+        const currentButton = planButtons[currentPlanType];
+        if (currentButton) {
+            currentButton.textContent = 'Current Plan';
+            currentButton.className = 'w-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 py-3 rounded-lg font-semibold cursor-not-allowed';
+            currentButton.disabled = true;
+            currentButton.onclick = null;
+            console.log('✅ Marked current plan:', currentPlanType);
+        }
+        
+        // Update other buttons with upgrade/downgrade text
+        Object.keys(planButtons).forEach(planName => {
+            const button = planButtons[planName];
+            if (!button || planName === currentPlanType) return;
+            
+            const currentPlanLevel = getPlanLevel(currentPlanType);
             const targetPlanLevel = getPlanLevel(planName);
             
             if (targetPlanLevel > currentPlanLevel) {
-                button.textContent = 'Upgrade';
                 button.innerHTML = '<i class="fas fa-arrow-up mr-2"></i>Upgrade';
             } else if (targetPlanLevel < currentPlanLevel) {
-                button.textContent = 'Downgrade';
                 button.innerHTML = '<i class="fas fa-arrow-down mr-2"></i>Downgrade';
             }
+        });
+    } else {
+        // No subscription - user is on free plan
+        const freeButton = planButtons.free;
+        if (freeButton) {
+            freeButton.textContent = 'Current Plan';
+            freeButton.className = 'w-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 py-3 rounded-lg font-semibold cursor-not-allowed';
+            freeButton.disabled = true;
+            freeButton.onclick = null;
+            console.log('✅ Marked free plan as current (no subscription)');
         }
-    });
+    }
 }
 
 // Get plan level for comparison
@@ -349,23 +397,23 @@ async function showSubscriptionConfirm(planName) {
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full">
                 <div class="p-6">
                     <div class="text-center mb-6">
-                        <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                        <div class="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
                             <i class="fas fa-crown text-blue-600 text-2xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">
                             Subscribe to ${planDetails.name}
                         </h3>
-                        <p class="text-gray-600">
+                        <p class="text-gray-600 dark:text-gray-300">
                             ₹${planDetails.price}/month • ${planDetails.analyses} analyses
                         </p>
                     </div>
                     
-                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                        <h4 class="font-semibold text-gray-800 mb-2">What you'll get:</h4>
-                        <ul class="space-y-1 text-sm text-gray-600">
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+                        <h4 class="font-semibold text-gray-800 dark:text-white mb-2">What you'll get:</h4>
+                        <ul class="space-y-1 text-sm text-gray-600 dark:text-gray-300">
                             ${planDetails.features.map(feature => `<li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i>${feature}</li>`).join('')}
                         </ul>
                     </div>
@@ -374,7 +422,7 @@ async function showSubscriptionConfirm(planName) {
                         <button onclick="handleSubscriptionChoice(true)" class="flex-1 bg-primary text-white py-3 rounded-lg hover:bg-secondary transition font-semibold">
                             <i class="fas fa-credit-card mr-2"></i>Subscribe Now
                         </button>
-                        <button onclick="handleSubscriptionChoice(false)" class="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        <button onclick="handleSubscriptionChoice(false)" class="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                             Cancel
                         </button>
                     </div>
@@ -409,9 +457,9 @@ function getPlanDetails(planName) {
         premium: {
             name: 'Premium Plan',
             price: 799,
-            analyses: '200',
+            analyses: '500',
             features: [
-                '200 analyses per month',
+                '500 analyses per month',
                 'Premium AI models',
                 'Prescription generation',
                 'Priority support',
@@ -476,16 +524,16 @@ async function showCancelConfirm() {
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
         modal.innerHTML = `
-            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full">
                 <div class="p-6">
                     <div class="text-center mb-6">
-                        <div class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                        <div class="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-4">
                             <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">
                             Cancel Subscription
                         </h3>
-                        <p class="text-gray-600">
+                        <p class="text-gray-600 dark:text-gray-300">
                             Are you sure you want to cancel your subscription? You'll lose access to premium features at the end of your billing cycle.
                         </p>
                     </div>
@@ -494,7 +542,7 @@ async function showCancelConfirm() {
                         <button onclick="handleCancelChoice(true)" class="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition font-semibold">
                             Yes, Cancel
                         </button>
-                        <button onclick="handleCancelChoice(false)" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        <button onclick="handleCancelChoice(false)" class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition font-semibold">
                             Keep Subscription
                         </button>
                     </div>

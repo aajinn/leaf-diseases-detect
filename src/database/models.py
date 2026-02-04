@@ -61,6 +61,9 @@ class UserInDB(UserBase):
 
     id: Optional[PyObjectId] = Field(default_factory=ObjectId, alias="_id")
     hashed_password: str
+    total_analyses: int = 0
+    analyses_this_month: int = 0
+    last_reset_date: datetime = Field(default_factory=datetime.utcnow)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -76,6 +79,8 @@ class UserInDB(UserBase):
                 "full_name": "Full Name",
                 "is_active": True,
                 "is_admin": False,
+                "total_analyses": 0,
+                "analyses_this_month": 0,
             }
         }
 

@@ -5,6 +5,7 @@
 - No summaries after implementing or fixing something
 - Be concise and direct in responses
 - Only provide explanations when requested
+- Only short 2 to 5 line explantions
 
 ## Code Style Guidelines
 - Use Python type hints for all function parameters and return values
