@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="leaf-16.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/animated-background.css">
     <script>
         tailwind.config = {
             theme: {
@@ -19,10 +20,10 @@
             }
         }
     </script>
+    <script src="js/animated-background.js"></script>
 </head>
-<body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="bg-white border-b border-gray-200">
+<body class="bg-gray-100 transition-colors duration-200">
+    <nav class="bg-white border-b border-gray-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-14">
                 <div class="flex items-center space-x-3">
@@ -42,7 +43,7 @@
         <!-- Header -->
         <div class="text-center mb-12">
             <h1 class="text-4xl font-bold text-gray-900 mb-4">Choose Your Plan</h1>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p class="text-xl text-gray-800 max-w-3xl mx-auto">
                 Unlock the full potential of AI-powered plant disease detection with our flexible subscription plans
             </p>
         </div>
@@ -61,8 +62,8 @@
         <!-- Subscription Plans -->
         <div class="grid md:grid-cols-4 gap-6 mb-12">
             <!-- Free Plan -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200 relative">
-                <div class="text-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200 relative hover:shadow-xl transition-shadow flex flex-col">
+                <div class="text-center flex-grow">
                     <div class="text-gray-600 text-sm font-semibold mb-2">FREE</div>
                     <div class="text-4xl font-bold text-gray-900 mb-1">₹0</div>
                     <div class="text-gray-500 text-sm mb-6">per month</div>
@@ -70,31 +71,31 @@
                     <ul class="space-y-3 mb-8 text-left">
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>5 analyses per month</span>
+                            <span class="text-gray-700">5 analyses per month</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Basic disease detection</span>
+                            <span class="text-gray-700">Basic disease detection</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Treatment recommendations</span>
+                            <span class="text-gray-700">Treatment recommendations</span>
                         </li>
                         <li class="flex items-center text-sm text-gray-400">
                             <i class="fas fa-times text-gray-400 mr-3"></i>
-                            <span>Priority support</span>
+                            <span class="text-gray-400">Priority support</span>
                         </li>
                     </ul>
-                    
-                    <button class="w-full bg-gray-100 text-gray-600 py-3 rounded-lg font-semibold cursor-not-allowed">
-                        Current Plan
-                    </button>
                 </div>
+                
+                <button id="freePlanBtn" onclick="subscribeToPlan('free')" class="w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition font-semibold mt-auto">
+                    Subscribe Now
+                </button>
             </div>
 
             <!-- Basic Plan -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border border-blue-200 relative">
-                <div class="text-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-blue-200 relative hover:shadow-xl transition-shadow flex flex-col">
+                <div class="text-center flex-grow">
                     <div class="text-blue-600 text-sm font-semibold mb-2">BASIC</div>
                     <div class="text-4xl font-bold text-gray-900 mb-1">₹299</div>
                     <div class="text-gray-500 text-sm mb-6">per month</div>
@@ -102,34 +103,34 @@
                     <ul class="space-y-3 mb-8 text-left">
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>50 analyses per month</span>
+                            <span class="text-gray-700">50 analyses per month</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Advanced AI detection</span>
+                            <span class="text-gray-700">Advanced AI detection</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Detailed treatment plans</span>
+                            <span class="text-gray-700">Detailed treatment plans</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Email support</span>
+                            <span class="text-gray-700">Email support</span>
                         </li>
                     </ul>
-                    
-                    <button onclick="subscribeToPlan('basic')" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
-                        Subscribe Now
-                    </button>
                 </div>
+                
+                <button id="basicPlanBtn" onclick="subscribeToPlan('basic')" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold mt-auto">
+                    Subscribe Now
+                </button>
             </div>
 
             <!-- Premium Plan -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-purple-500 relative">
+            <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-purple-500 relative hover:shadow-xl transition-shadow flex flex-col">
                 <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
                     <span class="bg-purple-500 text-white px-4 py-1 rounded-full text-xs font-semibold">POPULAR</span>
                 </div>
-                <div class="text-center">
+                <div class="text-center flex-grow">
                     <div class="text-purple-600 text-sm font-semibold mb-2">PREMIUM</div>
                     <div class="text-4xl font-bold text-gray-900 mb-1">₹799</div>
                     <div class="text-gray-500 text-sm mb-6">per month</div>
@@ -137,35 +138,35 @@
                     <ul class="space-y-3 mb-8 text-left">
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>200 analyses per month</span>
+                            <span class="text-gray-700">500 analyses per month</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Premium AI models</span>
+                            <span class="text-gray-700">Premium AI models</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Prescription generation</span>
+                            <span class="text-gray-700">Prescription generation</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Priority support</span>
+                            <span class="text-gray-700">Priority support</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Export reports (PDF)</span>
+                            <span class="text-gray-700">Export reports (PDF)</span>
                         </li>
                     </ul>
-                    
-                    <button onclick="subscribeToPlan('premium')" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition font-semibold">
-                        Subscribe Now
-                    </button>
                 </div>
+                
+                <button id="premiumPlanBtn" onclick="subscribeToPlan('premium')" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition font-semibold mt-auto">
+                    Subscribe Now
+                </button>
             </div>
 
             <!-- Enterprise Plan -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border border-yellow-200 relative">
-                <div class="text-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-yellow-200 relative hover:shadow-xl transition-shadow flex flex-col">
+                <div class="text-center flex-grow">
                     <div class="text-yellow-600 text-sm font-semibold mb-2">ENTERPRISE</div>
                     <div class="text-4xl font-bold text-gray-900 mb-1">₹2,499</div>
                     <div class="text-gray-500 text-sm mb-6">per month</div>
@@ -173,30 +174,30 @@
                     <ul class="space-y-3 mb-8 text-left">
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Unlimited analyses</span>
+                            <span class="text-gray-700">Unlimited analyses</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Enterprise AI models</span>
+                            <span class="text-gray-700">Enterprise AI models</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>API access</span>
+                            <span class="text-gray-700">API access</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>24/7 phone support</span>
+                            <span class="text-gray-700">24/7 phone support</span>
                         </li>
                         <li class="flex items-center text-sm">
                             <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span>Custom integrations</span>
+                            <span class="text-gray-700">Custom integrations</span>
                         </li>
                     </ul>
-                    
-                    <button onclick="subscribeToPlan('enterprise')" class="w-full bg-yellow-600 text-white py-3 rounded-lg hover:bg-yellow-700 transition font-semibold">
-                        Subscribe Now
-                    </button>
                 </div>
+                
+                <button id="enterprisePlanBtn" onclick="subscribeToPlan('enterprise')" class="w-full bg-yellow-600 text-white py-3 rounded-lg hover:bg-yellow-700 transition font-semibold mt-auto">
+                    Subscribe Now
+                </button>
             </div>
         </div>
 
@@ -217,10 +218,10 @@
                     <tbody class="divide-y divide-gray-100">
                         <tr>
                             <td class="py-3 px-4 text-gray-700">Monthly Analyses</td>
-                            <td class="text-center py-3 px-4">5</td>
-                            <td class="text-center py-3 px-4">50</td>
-                            <td class="text-center py-3 px-4">200</td>
-                            <td class="text-center py-3 px-4">Unlimited</td>
+                            <td class="text-center py-3 px-4 text-gray-700">5</td>
+                            <td class="text-center py-3 px-4 text-gray-700">50</td>
+                            <td class="text-center py-3 px-4 text-gray-700">500</td>
+                            <td class="text-center py-3 px-4 text-gray-700">Unlimited</td>
                         </tr>
                         <tr>
                             <td class="py-3 px-4 text-gray-700">Disease Detection</td>
@@ -259,10 +260,10 @@
                         </tr>
                         <tr>
                             <td class="py-3 px-4 text-gray-700">Support</td>
-                            <td class="text-center py-3 px-4 text-sm">Community</td>
-                            <td class="text-center py-3 px-4 text-sm">Email</td>
-                            <td class="text-center py-3 px-4 text-sm">Priority</td>
-                            <td class="text-center py-3 px-4 text-sm">24/7 Phone</td>
+                            <td class="text-center py-3 px-4 text-sm text-gray-700">Community</td>
+                            <td class="text-center py-3 px-4 text-sm text-gray-700">Email</td>
+                            <td class="text-center py-3 px-4 text-sm text-gray-700">Priority</td>
+                            <td class="text-center py-3 px-4 text-sm text-gray-700">24/7 Phone</td>
                         </tr>
                     </tbody>
                 </table>
