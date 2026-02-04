@@ -35,11 +35,18 @@ function animateValue(id, start, end, duration, isCurrency = false) {
         }
         
         if (isCurrency) {
-            element.textContent = `$${current.toFixed(4)}`;
+            element.textContent = `INR ${current.toFixed(4)}`;
         } else {
             element.textContent = Math.floor(current);
         }
     }, 16);
+}
+
+function setInrText(id, value) {
+    const element = document.getElementById(id);
+    if (!element) return;
+    const numericValue = Number.isFinite(value) ? value : 0;
+    element.textContent = `INR ${numericValue.toFixed(2)}`;
 }
 
 // Show loading for charts
@@ -191,6 +198,10 @@ async function loadOverviewStatsEnhanced() {
             
             if (data.prescriptions) {
                 animateValue('totalPrescriptions', 0, data.prescriptions.total || 0, 800);
+            }
+
+            if (data.subscriptions) {
+                setInrText('totalRevenue', data.subscriptions.total_revenue);
             }
             
             // Update breakdown with delay for smooth effect

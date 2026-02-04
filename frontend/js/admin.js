@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadOverviewStats();
     await loadAnalyticsTrends();
     await loadPrescriptionAnalytics();
+    await loadEnterpriseApiKeys();
 });
 
 async function checkAdminAccess() {
@@ -49,22 +50,46 @@ async function loadOverviewStats() {
             document.getElementById('totalUsers').textContent = data.users.total;
             document.getElementById('totalAnalyses').textContent = data.analyses.total;
             document.getElementById('totalAPICalls').textContent = data.api_usage.total_calls;
-            document.getElementById('totalCost').textContent = `$${data.api_usage.total_cost.toFixed(4)}`;
+            document.getElementById('totalCost').textContent = formatInrCost(data.api_usage.total_cost);
             
             // Update revenue if available
             if (data.subscriptions) {
-                document.getElementById('totalRevenue').textContent = `₹${data.subscriptions.total_revenue.toFixed(2)}`;
+                document.getElementById('totalRevenue').textContent = formatInr(data.subscriptions.total_revenue);
             }
             
             // Update breakdown
-            document.getElementById('groqCost').textContent = `$${data.api_usage.groq_cost.toFixed(4)}`;
-            document.getElementById('perplexityCost').textContent = `$${data.api_usage.perplexity_cost.toFixed(4)}`;
+            document.getElementById('groqCost').textContent = formatInrCost(data.api_usage.groq_cost);
+            document.getElementById('perplexityCost').textContent = formatInrCost(data.api_usage.perplexity_cost);
             document.getElementById('diseasesDetected').textContent = data.analyses.diseases_detected;
             document.getElementById('healthyPlants').textContent = data.analyses.healthy_plants;
         }
     } catch (error) {
         console.error('Error loading overview stats:', error);
     }
+}
+
+function formatInr(value) {
+    const numericValue = Number.isFinite(value) ? value : 0;
+    return `INR ${numericValue.toFixed(2)}`;
+}
+
+function formatInrCost(value) {
+    const numericValue = Number.isFinite(value) ? value : 0;
+    return `INR ${numericValue.toFixed(4)}`;
+}
+
+function formatDate(dateValue) {
+    if (!dateValue) return '-';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString();
+}
+
+function getLatestMonthlyRevenue(revenueTrend) {
+    if (!Array.isArray(revenueTrend) || revenueTrend.length === 0) {
+        return 0;
+    }
+    return revenueTrend[revenueTrend.length - 1].revenue || 0;
 }
 
 async function loadAnalyticsTrends() {
@@ -88,7 +113,7 @@ async function loadAnalyticsTrends() {
             // Update summary cards
             document.getElementById('avgAPICalls').textContent = trends.summary.avg_api_calls_per_day.toFixed(1);
             document.getElementById('avgAnalyses').textContent = trends.summary.avg_analyses_per_day.toFixed(1);
-            document.getElementById('avgCost').textContent = `$${trends.summary.avg_cost_per_day.toFixed(4)}`;
+            document.getElementById('avgCost').textContent = formatInrCost(trends.summary.avg_cost_per_day);
             document.getElementById('totalTokens').textContent = trends.summary.total_tokens.toLocaleString();
             
             const growthRate = trends.summary.growth_rate_percent;
@@ -179,7 +204,7 @@ function renderUsageChart(dailyTrends) {
                     fill: true
                 },
                 {
-                    label: 'Cost ($)',
+                    label: 'Cost (INR)',
                     data: dailyTrends.map(d => d.cost),
                     borderColor: 'rgb(249, 115, 22)',
                     backgroundColor: 'rgba(249, 115, 22, 0.1)',
@@ -207,8 +232,8 @@ function renderUsageChart(dailyTrends) {
                             if (label) {
                                 label += ': ';
                             }
-                            if (context.dataset.label === 'Cost ($)') {
-                                label += '$' + context.parsed.y.toFixed(4);
+                            if (context.dataset.label === 'Cost (INR)') {
+                                label += 'INR ' + context.parsed.y.toFixed(4);
                             } else {
                                 label += context.parsed.y;
                             }
@@ -233,7 +258,7 @@ function renderUsageChart(dailyTrends) {
                     position: 'right',
                     title: {
                         display: true,
-                        text: 'Cost ($)'
+                        text: 'Cost (INR)'
                     },
                     grid: {
                         drawOnChartArea: false,
@@ -437,7 +462,7 @@ function displayUsers(users) {
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.total_analyses}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${user.total_api_cost.toFixed(4)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatInrCost(user.total_api_cost)}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs rounded ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                                 ${user.is_active ? 'Active' : 'Inactive'}
@@ -539,7 +564,7 @@ function displayAPIUsage(data) {
                 </div>
                 <div>
                     <p class="text-sm text-gray-600">Total Cost</p>
-                    <p class="text-2xl font-bold text-orange-600">$${data.stats.total_cost.toFixed(4)}</p>
+                    <p class="text-2xl font-bold text-orange-600">${formatInrCost(data.stats.total_cost)}</p>
                 </div>
             </div>
         </div>
@@ -566,7 +591,7 @@ function displayAPIUsage(data) {
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.endpoint}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.tokens_used.toLocaleString()}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${record.estimated_cost.toFixed(4)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatInrCost(record.estimated_cost)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(record.timestamp).toLocaleString()}</td>
                     </tr>
                 `).join('')}
@@ -590,8 +615,72 @@ async function loadAPIConfig() {
             document.getElementById('perplexityStatus').textContent = data.perplexity.is_active ? 'Active' : 'Inactive';
             document.getElementById('perplexityStatus').className = `px-3 py-1 rounded-full text-sm font-semibold ${data.perplexity.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
         }
+        await loadSystemControls();
     } catch (error) {
         console.error('Error loading API config:', error);
+    }
+}
+
+async function loadSystemControls(forceRefresh = false) {
+    try {
+        const data = forceRefresh
+            ? await authenticatedFetch(`${API_URL}/admin/system-settings`).then(r => r.json())
+            : await cachedFetch(`${API_URL}/admin/system-settings`, {}, 'system-settings');
+        
+        document.getElementById('allowLoginsToggle').checked = !!data.allow_logins;
+        document.getElementById('allowRegistrationsToggle').checked = !!data.allow_registrations;
+        document.getElementById('allowAnalysisToggle').checked = !!data.allow_analysis;
+        document.getElementById('maintenanceModeToggle').checked = !!data.maintenance_mode;
+        document.getElementById('systemMessage').value = data.message || '';
+        
+        const status = document.getElementById('systemControlsStatus');
+        if (status) {
+            status.textContent = data.maintenance_mode ? 'Maintenance' : 'Active';
+            status.className = `px-3 py-1 rounded-full text-sm font-semibold ${data.maintenance_mode ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`;
+        }
+    } catch (error) {
+        console.error('Error loading system controls:', error);
+        const status = document.getElementById('systemControlsStatus');
+        if (status) {
+            status.textContent = 'Error';
+            status.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800';
+        }
+    }
+}
+
+async function updateSystemControls() {
+    const payload = {
+        allow_logins: document.getElementById('allowLoginsToggle').checked,
+        allow_registrations: document.getElementById('allowRegistrationsToggle').checked,
+        allow_analysis: document.getElementById('allowAnalysisToggle').checked,
+        maintenance_mode: document.getElementById('maintenanceModeToggle').checked,
+        message: document.getElementById('systemMessage').value.trim()
+    };
+    
+    try {
+        const confirmed = await showConfirm(
+            'Apply system controls? This will affect all users immediately.',
+            'Confirm System Controls'
+        );
+        if (!confirmed) return;
+        
+        const response = await authenticatedFetch(`${API_URL}/admin/system-settings`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to update system controls');
+        }
+        
+        apiCache.clearPattern('system-settings');
+        await loadSystemControls(true);
+        showNotification('System controls updated', 'success');
+    } catch (error) {
+        console.error('Error updating system controls:', error);
+        showNotification(error.message || 'Failed to update system controls', 'error');
     }
 }
 
@@ -662,6 +751,8 @@ function switchTab(tabName) {
     } else if (tabName === 'subscriptions') {
         console.log('Switching to subscriptions tab');
         loadSubscriptionStats();
+    } else if (tabName === 'enterprise-api') {
+        loadEnterpriseApiKeys();
     }
 }
 
@@ -694,6 +785,8 @@ function refreshCurrentTab() {
         } else if (tabName === 'subscriptions') {
             console.log('Refreshing subscriptions tab');
             loadSubscriptionStats();
+        } else if (tabName === 'enterprise-api') {
+            loadEnterpriseApiKeys(true);
         }
     }
 }
@@ -1236,7 +1329,7 @@ function displayPrescriptionsByPriority(data) {
             <div>
                 <div class="flex justify-between items-center mb-1">
                     <span class="text-sm font-medium capitalize">${item._id}</span>
-                    <span class="text-sm text-gray-600">${item.count} (${percentage}%)</span>
+                    <span class="text-sm text-gray-600">${plan.active_subscriptions} (${formatInr(plan.total_revenue)})</span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2">
                     <div class="${color} h-2 rounded-full" style="width: ${percentage}%"></div>
@@ -1264,7 +1357,7 @@ function displayPrescriptionsByDisease(data) {
             <div>
                 <div class="flex justify-between items-center mb-1">
                     <span class="text-sm font-medium">${item._id}</span>
-                    <span class="text-sm text-gray-600">${item.count} (${percentage}%)</span>
+                    <span class="text-sm text-gray-600">${plan.active_subscriptions} (${formatInr(plan.total_revenue)})</span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2">
                     <div class="${color} h-2 rounded-full" style="width: ${percentage}%"></div>
@@ -1338,7 +1431,8 @@ async function loadSubscriptionStats() {
             // Update overview cards
             document.getElementById('subTotal').textContent = data.overview.total_subscriptions;
             document.getElementById('subActive').textContent = data.overview.active_subscriptions;
-            document.getElementById('subMonthlyRevenue').textContent = `₹${data.overview.monthly_revenue || 0}`;
+            const monthlyRevenue = data.overview.monthly_revenue ?? getLatestMonthlyRevenue(data.monthly_revenue_trend);
+            document.getElementById('subMonthlyRevenue').textContent = formatInr(monthlyRevenue);
             document.getElementById('subChurnRate').textContent = `${data.overview.churn_rate_30d}%`;
             
             // Update recent activity
@@ -1358,6 +1452,129 @@ async function loadSubscriptionStats() {
     } catch (error) {
         console.error('Error loading subscription stats:', error);
         showNotification('Failed to load subscription statistics', 'error');
+    }
+}
+
+// Enterprise API admin controls
+let enterpriseApiKeysCache = [];
+
+async function loadEnterpriseApiKeys(forceRefresh = false) {
+    try {
+        const cacheKey = 'enterprise-api-keys';
+        const data = forceRefresh
+            ? await authenticatedFetch(`${API_URL}/admin/enterprise-api-keys`).then(r => r.json())
+            : await cachedFetch(`${API_URL}/admin/enterprise-api-keys`, {}, cacheKey);
+        
+        enterpriseApiKeysCache = data.keys || [];
+        renderEnterpriseApiSummary(enterpriseApiKeysCache);
+        renderEnterpriseApiTable(enterpriseApiKeysCache);
+    } catch (error) {
+        console.error('Error loading enterprise API keys:', error);
+        const table = document.getElementById('enterpriseApiTable');
+        if (table) {
+            table.innerHTML = '<p class="text-gray-500">Failed to load enterprise API keys.</p>';
+        }
+    }
+}
+
+function renderEnterpriseApiSummary(keys) {
+    const total = keys.length;
+    const active = keys.filter(k => k.is_active).length;
+    const usage = keys.reduce((sum, k) => sum + (k.usage_count || 0), 0);
+    document.getElementById('enterpriseTotalKeys').textContent = total;
+    document.getElementById('enterpriseActiveKeys').textContent = active;
+    document.getElementById('enterpriseTotalUsage').textContent = usage.toLocaleString();
+}
+
+function renderEnterpriseApiTable(keys) {
+    const container = document.getElementById('enterpriseApiTable');
+    if (!keys || keys.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">No enterprise API keys found.</p>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key Name</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Used</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                ${keys.map(key => `
+                    <tr>
+                        <td class="px-4 py-3 text-sm text-gray-900">${key.username || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">${key.name || '-'}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 text-xs rounded ${key.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${key.is_active ? 'Active' : 'Disabled'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">${formatDate(key.created_at)}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">${formatDate(key.expires_at)}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900">${(key.usage_count || 0).toLocaleString()}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">${key.last_used ? formatDate(key.last_used) : '-'}</td>
+                        <td class="px-4 py-3 text-sm space-x-2">
+                            <button class="text-blue-600 hover:text-blue-800" onclick="toggleEnterpriseApiKey('${key.key_id}')">
+                                ${key.is_active ? 'Disable' : 'Enable'}
+                            </button>
+                            <button class="text-orange-600 hover:text-orange-800" onclick="resetEnterpriseApiUsage('${key.key_id}')">
+                                Reset Usage
+                            </button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function filterEnterpriseApiKeys() {
+    const query = document.getElementById('enterpriseApiSearch').value.toLowerCase();
+    const filtered = enterpriseApiKeysCache.filter(key =>
+        (key.username || '').toLowerCase().includes(query) ||
+        (key.name || '').toLowerCase().includes(query)
+    );
+    renderEnterpriseApiSummary(filtered);
+    renderEnterpriseApiTable(filtered);
+}
+
+async function toggleEnterpriseApiKey(keyId) {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/admin/enterprise-api-keys/${keyId}/toggle`, {
+            method: 'POST'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to toggle key');
+        }
+        await loadEnterpriseApiKeys(true);
+        showNotification('API key status updated', 'success');
+    } catch (error) {
+        console.error('Error toggling API key:', error);
+        showNotification('Failed to update API key', 'error');
+    }
+}
+
+async function resetEnterpriseApiUsage(keyId) {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/admin/enterprise-api-keys/${keyId}/reset-usage`, {
+            method: 'POST'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to reset usage');
+        }
+        await loadEnterpriseApiKeys(true);
+        showNotification('API key usage reset', 'success');
+    } catch (error) {
+        console.error('Error resetting API usage:', error);
+        showNotification('Failed to reset API key usage', 'error');
     }
 }
 
@@ -1385,7 +1602,7 @@ function displayPlanDistribution(planData) {
             <div>
                 <div class="flex justify-between items-center mb-1">
                     <span class="text-sm font-medium capitalize">${plan.plan_type}</span>
-                    <span class="text-sm text-gray-600">${plan.active_subscriptions} (₹${plan.total_revenue.toFixed(2)})</span>
+                    <span class="text-sm text-gray-600">${plan.active_subscriptions} (${formatInr(plan.total_revenue)})</span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2">
                     <div class="${color} h-2 rounded-full" style="width: ${percentage}%"></div>
@@ -1437,7 +1654,7 @@ function renderRevenueChart(revenueData) {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return `Revenue: ₹${context.parsed.y.toFixed(2)}`;
+                            return `Revenue: INR ${context.parsed.y.toFixed(2)}`;
                         }
                     }
                 }
@@ -1459,3 +1676,4 @@ function renderRevenueChart(revenueData) {
         }
     });
 }
+

@@ -1,6 +1,9 @@
 // Dashboard functionality
 let selectedFile = null;
 let lastAnalysisResult = null;
+let analysisAllowed = true;
+let lastUsageData = null;
+let nextResetDate = null;
 
 // Preview image split/rejoin animation during analysis
 window._previewAnimation = window._previewAnimation || { running: false, pieces: [] };
@@ -209,6 +212,14 @@ function initializeColorThemeToggle() {
 
 // Analyze image file (used by both file upload and camera capture)
 async function analyzeImageFile(file) {
+    if (!analysisAllowed) {
+        if (lastUsageData && typeof showSubscriptionLimitModal === 'function') {
+            showSubscriptionLimitModal(lastUsageData);
+        } else {
+            showNotification('Monthly analysis limit reached. Please upgrade your plan.', 'warning');
+        }
+        return;
+    }
     // Auto-crop if enabled
     const autoCropEnabled = localStorage.getItem('autoCropEnabled') !== 'false';
     if (autoCropEnabled && typeof processImageWithAutoCrop === 'function') {
@@ -589,6 +600,8 @@ async function checkSubscriptionLimits() {
     try {
         const response = await authenticatedFetch(`${API_URL}/api/subscriptions/check-usage`);
         const data = await response.json();
+        lastUsageData = data;
+        setAnalysisAllowed(!!data.can_analyze, data);
         
         if (!data.can_analyze) {
             showSubscriptionLimitModal(data);
@@ -604,6 +617,75 @@ async function checkSubscriptionLimits() {
     } catch (error) {
         console.error('Error checking subscription limits:', error);
         return true; // Allow analysis if check fails
+    }
+}
+
+async function refreshAnalysisAccess() {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/api/subscriptions/check-usage`);
+        const data = await response.json();
+        lastUsageData = data;
+        setAnalysisAllowed(!!data.can_analyze, data);
+    } catch (error) {
+        console.error('Error refreshing analysis access:', error);
+    }
+}
+
+function setAnalysisAllowed(allowed, data = null) {
+    analysisAllowed = allowed;
+    window.isAnalysisAllowed = () => analysisAllowed;
+    
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const browseLabel = document.getElementById('browseLabel');
+    const cameraBtn = document.getElementById('cameraUploadBtn');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const notice = document.getElementById('analysisLimitNotice');
+
+    if (fileInput) fileInput.disabled = !allowed;
+    if (cameraBtn) cameraBtn.disabled = !allowed;
+    if (analyzeBtn) analyzeBtn.disabled = !allowed;
+    
+    if (browseLabel) {
+        browseLabel.classList.toggle('opacity-50', !allowed);
+        browseLabel.classList.toggle('cursor-not-allowed', !allowed);
+        browseLabel.classList.toggle('pointer-events-none', !allowed);
+    }
+    if (dropZone) {
+        dropZone.classList.toggle('opacity-60', !allowed);
+        dropZone.classList.toggle('pointer-events-none', !allowed);
+    }
+    if (cameraBtn) {
+        cameraBtn.classList.toggle('opacity-50', !allowed);
+        cameraBtn.classList.toggle('cursor-not-allowed', !allowed);
+    }
+    
+    if (notice) {
+        if (!allowed) {
+            const used = data?.analyses_used ?? data?.usage?.analyses_used ?? 0;
+            const limit = data?.analyses_limit ?? data?.usage?.analyses_limit ?? data?.plan?.analyses_limit ?? 0;
+            const planName = data?.plan_name ?? data?.plan?.name ?? 'your plan';
+            const resetText = formatLongDate(nextResetDate);
+            notice.innerHTML = `
+                <div class="flex flex-col gap-3">
+                    <div>
+                        <strong>Limit reached:</strong> ${used}/${limit} analyses used for ${planName}.
+                        Upload and analysis are disabled until <strong>${resetText}</strong>.
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="window.location.href='/subscription'" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition text-sm font-semibold">
+                            <i class="fas fa-crown mr-2"></i>Upgrade Plan
+                        </button>
+                        <button onclick="window.location.href='/subscription'" class="bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm font-semibold border">
+                            Manage Subscription
+                        </button>
+                    </div>
+                </div>
+            `;
+            notice.classList.remove('hidden');
+        } else {
+            notice.classList.add('hidden');
+        }
     }
 }
 
@@ -680,6 +762,7 @@ function displaySubscriptionStatus(subscription) {
     const card = document.getElementById('subscriptionCard');
     
     if (!subscription || !subscription.plan) {
+        nextResetDate = computeNextResetDate();
         // No subscription - show free plan
         card.className = 'bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg p-6 border border-gray-200';
         content.innerHTML = `
@@ -740,6 +823,7 @@ function displaySubscriptionStatus(subscription) {
     const nextBilling = subscription.next_billing_date 
         ? new Date(subscription.next_billing_date).toLocaleDateString()
         : 'N/A';
+    nextResetDate = subscription.next_billing_date ? new Date(subscription.next_billing_date) : computeNextResetDate();
     
     const statusColor = subscription.status === 'active' ? 'text-green-600' : 'text-red-600';
     const statusIcon = subscription.status === 'active' ? 'fa-check-circle' : 'fa-exclamation-circle';
@@ -794,6 +878,7 @@ function displaySubscriptionStatus(subscription) {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
     await loadSubscriptionStatus();
+    await refreshAnalysisAccess();
     await loadStats();
     await loadNotifications();
     setupFileUpload();
@@ -869,6 +954,9 @@ async function loadUserInfo() {
             const adminLink = document.getElementById('adminLink');
             if (adminLink) adminLink.classList.remove('hidden');
         }
+        
+        // Check for enterprise subscription and show enterprise dashboard link
+        checkEnterpriseAccess();
         
         // Show medical link if user is medical member
         if (profile.is_medical) {
@@ -1017,6 +1105,14 @@ function setupFileUpload() {
 }
 
 async function handleFile(file) {
+    if (!analysisAllowed) {
+        if (lastUsageData && typeof showSubscriptionLimitModal === 'function') {
+            showSubscriptionLimitModal(lastUsageData);
+        } else {
+            showNotification('Monthly analysis limit reached. Please upgrade your plan.', 'warning');
+        }
+        return;
+    }
     const validation = validateImageFile(file);
     
     if (!validation.valid) {
@@ -1059,6 +1155,14 @@ async function handleFile(file) {
 
 async function analyzeImage() {
     if (!selectedFile) return;
+    if (!analysisAllowed) {
+        if (lastUsageData && typeof showSubscriptionLimitModal === 'function') {
+            showSubscriptionLimitModal(lastUsageData);
+        } else {
+            showNotification('Monthly analysis limit reached. Please upgrade your plan.', 'warning');
+        }
+        return;
+    }
 
     // Check subscription limits first
     const canAnalyze = await checkSubscriptionLimits();
@@ -1120,6 +1224,7 @@ async function analyzeImage() {
             
             await loadStats(); // Refresh stats
             await loadSubscriptionStatus(); // Refresh subscription usage
+            await refreshAnalysisAccess();
             
             // Force refresh of usage display after a delay
             setTimeout(async () => {
@@ -1280,6 +1385,7 @@ async function analyzeImage() {
             
             await loadStats(); // Refresh stats
             await loadSubscriptionStatus(); // Refresh subscription usage
+            await refreshAnalysisAccess();
         } else if (response.status === 401) {
             handleSessionExpired();
         } else {
@@ -1901,4 +2007,31 @@ async function loadFreeUsage() {
     } catch (error) {
         console.error('Error loading free usage:', error);
     }
+}
+
+// Check enterprise access and show dashboard link
+async function checkEnterpriseAccess() {
+    try {
+        const response = await authenticatedFetch(`${API_URL}/api/enterprise/status`);
+        if (response.ok) {
+            const enterpriseLink = document.getElementById('enterpriseLink');
+            if (enterpriseLink) {
+                enterpriseLink.classList.remove('hidden');
+            }
+        }
+    } catch (error) {
+        // Silently fail - user doesn't have enterprise access
+        console.log('No enterprise access');
+    }
+}
+
+function computeNextResetDate() {
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return nextMonth;
+}
+
+function formatLongDate(date) {
+    if (!date) return 'N/A';
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }

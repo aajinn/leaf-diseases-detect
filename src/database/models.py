@@ -141,6 +141,12 @@ class AnalysisRecord(BaseModel):
     analysis_timestamp: datetime = Field(default_factory=datetime.utcnow)
     updated_by_admin: bool = False
     updated_at: Optional[datetime] = None
+    
+    # Enterprise features
+    batch_id: Optional[str] = None
+    batch_name: Optional[str] = None
+    api_access: bool = False
+    metadata: Optional[dict] = None
 
     class Config:
         populate_by_name = True

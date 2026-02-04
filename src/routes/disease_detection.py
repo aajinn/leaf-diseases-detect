@@ -19,6 +19,7 @@ from src.services.perplexity_service import get_perplexity_service
 from src.services.prescription_service import PrescriptionService
 from src.storage.image_storage import save_image
 from src.utils.usage_tracker import track_groq_usage, track_perplexity_usage
+from src.utils.system_settings import ensure_analysis_allowed
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ async def detect_disease(
     Authorization: Bearer <token>
     """
     try:
+        await ensure_analysis_allowed()
         logger.info(f"User {current_user.username} uploaded image for disease detection")
         logger.info(f"File details - filename: {file.filename}, content_type: {file.content_type}")
 

@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 # Simple in-memory cache with TTL
 _cache: Dict[str, tuple[datetime, any]] = {}
 CACHE_TTL_SECONDS = 60  # Cache for 1 minute
+SYSTEM_SETTINGS_COLLECTION = "system_settings"
+SYSTEM_SETTINGS_ID = "global"
 
 
 def get_cached_or_compute(cache_key: str, compute_func, ttl_seconds: int = CACHE_TTL_SECONDS):
@@ -642,6 +644,9 @@ async def get_subscription_stats(current_admin: UserInDB = Depends(get_current_a
                 "month": month_start.strftime("%Y-%m"),
                 "revenue": round(revenue, 2)
             })
+
+        # Current month revenue (for overview)
+        current_month_revenue = monthly_revenue[-1]["revenue"] if monthly_revenue else 0
         
         # Usage statistics
         current_month = datetime.utcnow()
@@ -691,7 +696,8 @@ async def get_subscription_stats(current_admin: UserInDB = Depends(get_current_a
                 "cancelled_subscriptions": status_counts.get("cancelled", 0),
                 "expired_subscriptions": status_counts.get("expired", 0),
                 "recent_subscriptions_30d": recent_subscriptions,
-                "churn_rate_30d": round(churn_rate, 2)
+                "churn_rate_30d": round(churn_rate, 2),
+                "monthly_revenue": round(current_month_revenue, 2)
             },
             "plan_distribution": plan_stats,
             "monthly_revenue_trend": list(reversed(monthly_revenue)),
@@ -711,6 +717,160 @@ async def get_subscription_stats(current_admin: UserInDB = Depends(get_current_a
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch subscription statistics: {str(e)}",
+        )
+
+
+@router.get("/enterprise-api-keys")
+async def list_enterprise_api_keys(current_admin: UserInDB = Depends(get_current_admin_user)):
+    """List all enterprise API keys with usage details"""
+    try:
+        api_keys_collection = MongoDB.get_collection("enterprise_api_keys")
+        cursor = api_keys_collection.find({}).sort("created_at", -1)
+        
+        keys = []
+        async for key_doc in cursor:
+            keys.append({
+                "key_id": key_doc["_id"],
+                "user_id": key_doc.get("user_id"),
+                "username": key_doc.get("username"),
+                "name": key_doc.get("name"),
+                "description": key_doc.get("description"),
+                "created_at": key_doc.get("created_at"),
+                "expires_at": key_doc.get("expires_at"),
+                "is_active": key_doc.get("is_active", False),
+                "last_used": key_doc.get("last_used"),
+                "usage_count": key_doc.get("usage_count", 0)
+            })
+        
+        return {"keys": keys}
+        
+    except Exception as e:
+        logger.error(f"Failed to list enterprise API keys: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list enterprise API keys"
+        )
+
+
+@router.post("/enterprise-api-keys/{key_id}/toggle")
+async def toggle_enterprise_api_key(
+    key_id: str,
+    current_admin: UserInDB = Depends(get_current_admin_user)
+):
+    """Enable/disable an enterprise API key"""
+    try:
+        api_keys_collection = MongoDB.get_collection("enterprise_api_keys")
+        key_doc = await api_keys_collection.find_one({"_id": key_id})
+        if not key_doc:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="API key not found"
+            )
+        
+        new_status = not key_doc.get("is_active", False)
+        await api_keys_collection.update_one(
+            {"_id": key_id},
+            {"$set": {"is_active": new_status}}
+        )
+        
+        return {"key_id": key_id, "is_active": new_status}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to toggle enterprise API key: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to toggle enterprise API key"
+        )
+
+
+@router.post("/enterprise-api-keys/{key_id}/reset-usage")
+async def reset_enterprise_api_usage(
+    key_id: str,
+    current_admin: UserInDB = Depends(get_current_admin_user)
+):
+    """Reset usage counters for an enterprise API key"""
+    try:
+        api_keys_collection = MongoDB.get_collection("enterprise_api_keys")
+        result = await api_keys_collection.update_one(
+            {"_id": key_id},
+            {"$set": {"usage_count": 0, "last_used": None}}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="API key not found"
+            )
+        
+        return {"message": "Usage reset successfully", "key_id": key_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reset enterprise API usage: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reset enterprise API usage"
+        )
+
+
+@router.get("/system-settings")
+async def get_system_settings_admin(current_admin: UserInDB = Depends(get_current_admin_user)):
+    """Get global system settings"""
+    try:
+        settings_collection = MongoDB.get_collection(SYSTEM_SETTINGS_COLLECTION)
+        settings = await settings_collection.find_one({"_id": SYSTEM_SETTINGS_ID})
+        if not settings:
+            settings = {
+                "_id": SYSTEM_SETTINGS_ID,
+                "allow_logins": True,
+                "allow_registrations": True,
+                "allow_analysis": True,
+                "maintenance_mode": False,
+                "message": ""
+            }
+            await settings_collection.update_one(
+                {"_id": SYSTEM_SETTINGS_ID},
+                {"$setOnInsert": settings},
+                upsert=True
+            )
+        return settings
+    except Exception as e:
+        logger.error(f"Failed to get system settings: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to load system settings"
+        )
+
+
+@router.put("/system-settings")
+async def update_system_settings_admin(
+    payload: dict,
+    current_admin: UserInDB = Depends(get_current_admin_user)
+):
+    """Update global system settings"""
+    try:
+        settings_collection = MongoDB.get_collection(SYSTEM_SETTINGS_COLLECTION)
+        update_doc = {
+            "allow_logins": bool(payload.get("allow_logins", True)),
+            "allow_registrations": bool(payload.get("allow_registrations", True)),
+            "allow_analysis": bool(payload.get("allow_analysis", True)),
+            "maintenance_mode": bool(payload.get("maintenance_mode", False)),
+            "message": payload.get("message", "")
+        }
+        await settings_collection.update_one(
+            {"_id": SYSTEM_SETTINGS_ID},
+            {"$set": update_doc},
+            upsert=True
+        )
+        return {"message": "System settings updated", **update_doc}
+    except Exception as e:
+        logger.error(f"Failed to update system settings: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update system settings"
         )
 
 

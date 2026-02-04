@@ -20,6 +20,7 @@ from src.auth.security import (
 )
 from src.database.connection import USERS_COLLECTION, MongoDB
 from src.database.models import Token, User, UserCreate, UserInDB
+from src.utils.system_settings import ensure_auth_allowed_for_user, ensure_registration_allowed
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -27,6 +28,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
 async def register_user(user: UserCreate):
     """Register a new user with validation"""
+    await ensure_registration_allowed()
     users_collection = MongoDB.get_collection(USERS_COLLECTION)
 
     # Validate password strength
@@ -82,6 +84,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    await ensure_auth_allowed_for_user(user.is_admin)
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

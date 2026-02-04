@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Leaf Disease Analyzer Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+  <div class="bg-white shadow-xl rounded-xl p-6 w-full max-w-4xl">
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">
+      Leaf Disease API Tester
+    </h1>
+
+    <!-- Request UI -->
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <input
+        id="apiKey"
+        type="text"
+        placeholder="Enter API Key"
+        class="md:col-span-3 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-green-300"
+      />
+
+      <input
+        id="fileInput"
+        type="file"
+        accept="image/*"
+        class="md:col-span-2 w-full border rounded-lg px-3 py-2"
+      />
+
+      <button
+        onclick="sendRequest()"
+        class="bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
+      >
+        Analyze Leaf
+      </button>
+    </div>
+
+    <!-- Structured Response UI -->
+    <div id="uiResult" class="hidden grid md:grid-cols-2 gap-4 mb-6">
+      <div class="p-4 border rounded-lg">
+        <h2 class="font-semibold text-gray-700 mb-2">Disease</h2>
+        <p><strong>Name:</strong> <span id="diseaseName"></span></p>
+        <p><strong>Type:</strong> <span id="diseaseType"></span></p>
+        <p><strong>Severity:</strong> <span id="severity"></span></p>
+        <p><strong>Confidence:</strong> <span id="confidence"></span>%</p>
+      </div>
+
+      <div class="p-4 border rounded-lg">
+        <h2 class="font-semibold text-gray-700 mb-2">Analysis Info</h2>
+        <p><strong>Detected:</strong> <span id="detected"></span></p>
+        <p><strong>Analysis ID:</strong> <span id="analysisId"></span></p>
+        <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+      </div>
+
+      <div class="p-4 border rounded-lg">
+        <h2 class="font-semibold text-gray-700 mb-2">Symptoms</h2>
+        <ul id="symptoms" class="list-disc list-inside text-sm"></ul>
+      </div>
+
+      <div class="p-4 border rounded-lg">
+        <h2 class="font-semibold text-gray-700 mb-2">Possible Causes</h2>
+        <ul id="causes" class="list-disc list-inside text-sm"></ul>
+      </div>
+
+      <div class="md:col-span-2 p-4 border rounded-lg">
+        <h2 class="font-semibold text-gray-700 mb-2">Treatment</h2>
+        <ul id="treatment" class="list-disc list-inside text-sm"></ul>
+      </div>
+
+      <div class="md:col-span-2 p-4 border rounded-lg">
+        <h2 class="font-semibold text-gray-700 mb-2">Description</h2>
+        <p id="description" class="text-sm text-gray-600"></p>
+      </div>
+    </div>
+
+    <!-- Raw JSON -->
+    <pre
+      id="response"
+      class="bg-gray-900 text-green-400 text-sm p-4 rounded-lg overflow-auto max-h-80"
+    ></pre>
+  </div>
+
+  <script>
+    async function sendRequest() {
+      const apiKey = document.getElementById("apiKey").value.trim();
+      const fileInput = document.getElementById("fileInput");
+      const responseEl = document.getElementById("response");
+      const uiResult = document.getElementById("uiResult");
+
+      if (!apiKey || fileInput.files.length === 0) {
+        responseEl.textContent = "API key and file are required.";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      responseEl.textContent = "Sending request...";
+      uiResult.classList.add("hidden");
+
+      try {
+        const res = await fetch("http://localhost:8000/api/v1/analyze", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`
+          },
+          body: formData
+        });
+
+        const data = await res.json();
+        responseEl.textContent = JSON.stringify(data, null, 2);
+
+        document.getElementById("analysisId").textContent = data.analysis_id;
+        document.getElementById("detected").textContent = data.disease_detected;
+        document.getElementById("diseaseName").textContent = data.disease_name;
+        document.getElementById("diseaseType").textContent = data.disease_type;
+        document.getElementById("severity").textContent = data.severity;
+        document.getElementById("confidence").textContent = data.confidence;
+        document.getElementById("timestamp").textContent = data.analysis_timestamp;
+        document.getElementById("description").textContent = data.description;
+
+        fillList("symptoms", data.symptoms);
+        fillList("causes", data.possible_causes);
+        fillList("treatment", data.treatment);
+
+        uiResult.classList.remove("hidden");
+      } catch (err) {
+        responseEl.textContent = "Error: " + err.message;
+      }
+    }
+
+    function fillList(id, items) {
+      const el = document.getElementById(id);
+      el.innerHTML = "";
+      if (!items || items.length === 0) return;
+      items.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        el.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>

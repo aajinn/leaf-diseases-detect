@@ -10,10 +10,13 @@ from src.database.connection import MongoDB
 from src.image_utils import convert_image_to_base64_and_test
 from src.routes.admin import router as admin_router
 from src.routes.disease_detection import router as detection_router
+from src.routes.enterprise_api import router as enterprise_router
 from src.routes.feedback_routes import router as feedback_router
 from src.routes.notification_routes import router as notification_router
 from src.routes.prescription_routes import router as prescription_router
+from src.routes.programmatic_api import router as programmatic_router
 from src.routes.subscription_routes import router as subscription_router
+from src.routes.system_status import router as system_status_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -47,6 +50,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate limiting middleware
+from src.middleware.rate_limiting import RateLimitMiddleware
+app.add_middleware(RateLimitMiddleware)
 
 import os
 
@@ -119,6 +126,11 @@ if os.path.exists("frontend"):
         """Serve the subscription page"""
         return FileResponse("frontend/subscription.html")
     
+    @app.get("/enterprise-dashboard", response_class=FileResponse)
+    async def serve_enterprise_dashboard():
+        """Serve the enterprise dashboard page"""
+        return FileResponse("frontend/enterprise-dashboard.html")
+    
     @app.get("/about", response_class=FileResponse)
     async def serve_about():
         return FileResponse("frontend/about.html")
@@ -135,6 +147,9 @@ app.include_router(feedback_router)
 app.include_router(notification_router)
 app.include_router(prescription_router)
 app.include_router(subscription_router)
+app.include_router(enterprise_router)
+app.include_router(programmatic_router)
+app.include_router(system_status_router)
 
 
 @app.post("/disease-detection-file")
@@ -203,6 +218,21 @@ async def api_info():
                 "disease_detection": "/api/disease-detection (POST, requires auth)",
                 "my_analyses": "/api/my-analyses (GET, requires auth)",
                 "analysis_detail": "/api/analyses/{id} (GET, requires auth)",
+            },
+            "enterprise": {
+                "status": "/api/enterprise/status (GET, enterprise only)",
+                "bulk_analysis": "/api/enterprise/bulk-analysis (POST, enterprise only)",
+                "analytics": "/api/enterprise/analytics (GET, enterprise only)",
+                "api_keys": "/api/enterprise/api-keys (GET/POST/DELETE, enterprise only)",
+                "export_csv": "/api/enterprise/export/csv (GET, enterprise only)",
+                "dashboard": "/enterprise-dashboard (GET, web interface)",
+            },
+            "programmatic": {
+                "health": "/api/v1/health (GET, API key required)",
+                "analyze": "/api/v1/analyze (POST, API key required)",
+                "analyze_base64": "/api/v1/analyze-base64 (POST, API key required)",
+                "batch_analyze": "/api/v1/batch-analyze (POST, API key required)",
+                "get_analyses": "/api/v1/analyses (GET, API key required)",
             },
             "admin": {
                 "list_users": "/auth/users (GET, admin only)",

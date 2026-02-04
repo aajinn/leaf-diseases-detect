@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Dashboard - Leaf Disease Detection</title>
+    <link rel="icon" type="image/x-icon" href="/leaf-16.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-leaf text-green-600 text-2xl mr-3"></i>
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Enterprise Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="darkModeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                    <a href="/dashboard" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                    <div id="userInfo" class="text-sm text-gray-600 dark:text-gray-300"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+            <p class="mt-2 text-gray-600 dark:text-gray-300">Loading enterprise dashboard...</p>
+        </div>
+
+        <!-- Main Dashboard Content -->
+        <div id="dashboardContent" class="hidden">
+            <!-- Status Overview -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">API Usage Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Total API Calls -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+                                <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Total API Calls</p>
+                                <p id="totalApiCalls" class="text-2xl font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- This Month -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 dark:bg-green-900">
+                                <i class="fas fa-calendar-month text-green-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-300">This Month</p>
+                                <p id="monthlyApiCalls" class="text-2xl font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rate Limit -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900">
+                                <i class="fas fa-tachometer-alt text-yellow-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Rate Limit</p>
+                                <p id="rateLimit" class="text-2xl font-bold text-gray-900 dark:text-white">-</p>
+                                <p class="text-xs text-gray-500">per minute</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active API Keys -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
+                                <i class="fas fa-key text-purple-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Active API Keys</p>
+                                <p id="activeApiKeys" class="text-2xl font-bold text-gray-900 dark:text-white">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Usage Trends Chart -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">API Usage Trends (Last 30 Days)</h3>
+                    <div class="h-64">
+                        <canvas id="usageTrendsChart" class="h-full w-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- Access Type Chart -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Access Type Distribution</h3>
+                    <div class="h-64">
+                        <canvas id="accessTypeChart" class="h-full w-full"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Guide -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Quick Guide: Use Your API Key</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Create a key, call the API, and parse the response.</p>
+                        </div>
+                        <button id="quickCreateApiKeyBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                            <i class="fas fa-key mr-2"></i>Create API Key
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                            <div class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Step 1</div>
+                            <div class="font-semibold text-gray-900 dark:text-white mb-1">Create a key</div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Click “Create API Key” and copy it. It is shown once.</p>
+                        </div>
+                        <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                            <div class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Step 2</div>
+                            <div class="font-semibold text-gray-900 dark:text-white mb-1">Call the API</div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Send your key in the `Authorization` header.</p>
+                        </div>
+                        <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                            <div class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Step 3</div>
+                            <div class="font-semibold text-gray-900 dark:text-white mb-1">Use the response</div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Parse fields like `disease_type`, `severity`, and `confidence`.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-gray-900 dark:text-white">Example Request (cURL)</h4>
+                            <button id="copyQuickCurlBtn" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                                <i class="fas fa-copy mr-1"></i>Copy
+                            </button>
+                        </div>
+                        <pre class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-xs overflow-x-auto"><code id="quickStartCurl" class="text-gray-800 dark:text-gray-200"></code></pre>
+                    </div>
+
+                    <div>
+                        <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Example Response</h4>
+                        <pre class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-xs overflow-x-auto"><code id="quickStartResponse" class="text-gray-800 dark:text-gray-200"></code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Keys Management -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">API Keys</h3>
+                        <button id="createApiKeyBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                            <i class="fas fa-plus mr-2"></i>Create New Key
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="apiKeysTable" class="overflow-x-auto">
+                        <!-- API Keys will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Analysis History -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Analysis History</h3>
+                        <button id="viewAllHistoryBtn" class="text-sm text-green-600 hover:text-green-700 dark:text-green-400">
+                            View All
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="recentActivity" class="space-y-4">
+                        <!-- Recent activity will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create API Key Modal -->
+    <div id="createApiKeyModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Create API Key</h3>
+                    <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="createApiKeyForm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Key Name *
+                        </label>
+                        <input type="text" id="keyName" required
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                               placeholder="e.g., Production API Key">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Description
+                        </label>
+                        <textarea id="keyDescription" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                  placeholder="Optional description for this API key"></textarea>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Expires In (Days)
+                        </label>
+                        <select id="keyExpiry"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                            <option value="30">30 days</option>
+                            <option value="90">90 days</option>
+                            <option value="180">180 days</option>
+                            <option value="365" selected>1 year</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-semibold">
+                            <i class="fas fa-key mr-2"></i>Create API Key
+                        </button>
+                        <button type="button" id="cancelModalBtn" class="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Created Modal -->
+    <div id="apiKeyCreatedModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full">
+            <div class="p-6">
+                <div class="text-center mb-4">
+                    <div class="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-check text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">API Key Created!</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">
+                        Your API key has been created successfully. Please copy it now as it won't be shown again.
+                    </p>
+                </div>
+                
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+                    <div class="flex items-center justify-between">
+                        <code id="newApiKey" class="text-sm font-mono text-gray-800 dark:text-gray-200 break-all"></code>
+                        <button id="copyApiKeyBtn" class="ml-2 p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="closeApiKeyModalBtn" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-semibold">
+                    Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Analysis History Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-5xl w-full max-h-[85vh] flex flex-col">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Analysis History</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Click a row to expand details.</p>
+                </div>
+                <button id="closeHistoryModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-auto">
+                <div id="historyTableContainer" class="overflow-x-auto"></div>
+            </div>
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-sm">
+                <div id="historyPaginationInfo" class="text-gray-600 dark:text-gray-300">-</div>
+                <div class="flex items-center gap-2">
+                    <button id="historyPrevBtn" class="px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        Prev
+                    </button>
+                    <button id="historyNextBtn" class="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/config.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/dark-mode.js"></script>
+    <script src="/js/enterprise-dashboard.js"></script>
+</body>
+</html>

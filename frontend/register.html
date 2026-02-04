@@ -43,6 +43,7 @@
     <!-- Register Form -->
     <div class="max-w-md mx-auto px-4 py-6">
         <div class="bg-white rounded-xl shadow-2xl p-6">
+            <div id="systemBanner" class="hidden mb-4 rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800"></div>
             <div class="text-center mb-5">
                 <i class="fas fa-user-plus text-primary text-3xl mb-2"></i>
                 <h2 class="text-2xl font-bold text-gray-800">Create Account</h2>
@@ -257,6 +258,33 @@
             message.textContent = text;
             message.classList.remove('hidden');
         }
+
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch(`${API_URL}/system/status`);
+                if (!response.ok) {
+                    return;
+                }
+                const data = await response.json();
+                const banner = document.getElementById('systemBanner');
+                const registerBtn = document.getElementById('registerBtn');
+                const inputs = document.querySelectorAll('#registerForm input');
+                
+                if (data.maintenance_mode || !data.allow_registrations) {
+                    const message = data.message || (data.maintenance_mode
+                        ? 'System is under maintenance. Registrations are temporarily disabled.'
+                        : 'Registrations are temporarily disabled.');
+                    banner.textContent = message;
+                    banner.classList.remove('hidden');
+                    if (registerBtn) registerBtn.disabled = true;
+                    inputs.forEach(input => input.disabled = true);
+                }
+            } catch (error) {
+                console.error('Failed to load system status:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSystemStatus);
     </script>
 </body>
 </html>

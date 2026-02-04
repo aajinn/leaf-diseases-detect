@@ -163,6 +163,10 @@ function initializeCameraSystem() {
 
 // Show camera modal
 function showCameraModal() {
+    if (typeof window.isAnalysisAllowed === 'function' && !window.isAnalysisAllowed()) {
+        showNotification('Monthly analysis limit reached. Upload and camera capture are disabled.', 'warning');
+        return;
+    }
     const modal = document.getElementById('cameraModal');
     if (modal) {
         modal.classList.remove('hidden');
@@ -254,6 +258,10 @@ async function switchCamera() {
 // Capture image from camera
 async function captureFromCamera() {
     try {
+        if (typeof window.isAnalysisAllowed === 'function' && !window.isAnalysisAllowed()) {
+            showNotification('Monthly analysis limit reached. Please upgrade your plan.', 'warning');
+            return;
+        }
         const btn = document.getElementById('captureBtn');
         if (btn) {
             btn.disabled = true;
@@ -326,6 +334,11 @@ class AutoCaptureMode {
 
     async autoCapture() {
         try {
+            if (typeof window.isAnalysisAllowed === 'function' && !window.isAnalysisAllowed()) {
+                showNotification('Monthly analysis limit reached. Auto-capture stopped.', 'warning');
+                this.stop();
+                return;
+            }
             let file = await cameraCapture.captureImage();
             
             // Auto-crop leaf if enabled
