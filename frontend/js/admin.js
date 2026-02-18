@@ -753,6 +753,8 @@ function switchTab(tabName) {
         loadSubscriptionStats();
     } else if (tabName === 'enterprise-api') {
         loadEnterpriseApiKeys();
+    } else if (tabName === 'notifications') {
+        loadNotifications();
     }
 }
 

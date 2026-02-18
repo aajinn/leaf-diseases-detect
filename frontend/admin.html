@@ -186,6 +186,11 @@
                         <i class="fas fa-comment-alt mr-1 sm:mr-2"></i>Feedback
                     </button>
                     
+                    <!-- Notifications -->
+                    <button onclick="switchTab('notifications')" id="tab-notifications" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+                        <i class="fas fa-bell mr-1 sm:mr-2"></i>Notifications
+                    </button>
+
                     <!-- Settings & Configuration -->
                     <button onclick="switchTab('api-config')" id="tab-api-config" class="tab-button py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
                         <i class="fas fa-cog mr-1 sm:mr-2"></i>Settings
@@ -509,10 +514,78 @@
                     </div>
                 </div>
                 
+                <!-- Notifications Tab -->
+                <div id="content-notifications" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Notification Management</h3>
+                        <button onclick="showCreateNotificationModal()" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary transition font-semibold">
+                            <i class="fas fa-plus mr-2"></i>Send Notification
+                        </button>
+                    </div>
+
+                    <!-- Notification Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+                            <p class="text-sm opacity-90">Total Sent</p>
+                            <p id="totalNotifications" class="text-4xl font-bold mt-2">0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+                            <p class="text-sm opacity-90">Delivered</p>
+                            <p id="deliveredNotifications" class="text-4xl font-bold mt-2">0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white">
+                            <p class="text-sm opacity-90">Pending</p>
+                            <p id="pendingNotifications" class="text-4xl font-bold mt-2">0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-lg p-6 text-white">
+                            <p class="text-sm opacity-90">Failed</p>
+                            <p id="failedNotifications" class="text-4xl font-bold mt-2">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Filters and Search -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select id="notificationStatusFilter" onchange="loadNotifications()" class="px-4 py-2 border rounded-lg">
+                                    <option value="">All Status</option>
+                                    <option value="sent">Sent</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <select id="notificationTypeFilter" onchange="loadNotifications()" class="px-4 py-2 border rounded-lg">
+                                    <option value="">All Types</option>
+                                    <option value="system">System</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="update">Update</option>
+                                    <option value="alert">Alert</option>
+                                </select>
+                            </div>
+                            <div class="flex-1 min-w-64">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                                <input type="text" id="notificationSearch" oninput="filterNotifications()" placeholder="Search notifications..." class="w-full px-4 py-2 border rounded-lg">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications List -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-lg font-bold mb-4">Recent Notifications</h4>
+                        <div id="notificationsList" class="space-y-4">
+                            <p class="text-gray-500 text-center py-8">Loading notifications...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Subscriptions Tab -->
                 <div id="content-subscriptions" class="tab-content hidden">
                     <h3 class="text-xl font-bold mb-4">Subscription Analytics</h3>
-                    
+
                     <!-- Subscription Overview Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
@@ -532,7 +605,7 @@
                             <p id="subChurnRate" class="text-4xl font-bold mt-2">0%</p>
                         </div>
                     </div>
-                    
+
                     <!-- Plan Distribution & Revenue Trend -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <!-- Plan Distribution -->
@@ -540,7 +613,7 @@
                             <h4 class="text-lg font-bold mb-4">Plan Distribution</h4>
                             <div id="planDistribution" class="space-y-3"></div>
                         </div>
-                        
+
                         <!-- Usage Statistics -->
                         <div class="bg-white rounded-xl shadow-lg p-6">
                             <h4 class="text-lg font-bold mb-4">Usage Statistics</h4>
@@ -564,13 +637,13 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Revenue Trend Chart -->
                     <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
                         <h4 class="text-lg font-bold mb-4">Monthly Revenue Trend (Last 6 Months)</h4>
                         <canvas id="revenueChart" height="80"></canvas>
                     </div>
-                    
+
                     <!-- Recent Subscriptions -->
                     <div class="bg-white rounded-xl shadow-lg p-6">
                         <h4 class="text-lg font-bold mb-4">Recent Activity</h4>
