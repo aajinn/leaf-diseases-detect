@@ -125,6 +125,36 @@ async def list_users(
     return [User(**user) for user in users]
 
 
+@router.get("/users/search", response_model=list[User])
+async def search_users(
+    q: str,
+    limit: int = 10,
+    current_user: UserInDB = Depends(get_current_admin_user),
+):
+    """
+    Search users by username or email for admin use.
+    Excludes admin accounts.
+    """
+    users_collection = MongoDB.get_collection(USERS_COLLECTION)
+
+    query = {
+        "is_admin": False,
+        "$or": [
+            {"username": {"$regex": q, "$options": "i"}},
+            {"email": {"$regex": q, "$options": "i"}},
+        ],
+    }
+
+    cursor = users_collection.find(query).limit(limit)
+    users = await cursor.to_list(length=limit)
+
+    for u in users:
+        if u and "_id" in u:
+            u["_id"] = str(u["_id"])
+
+    return [User(**user) for user in users]
+
+
 @router.delete("/users/{username}")
 async def delete_user(username: str, current_user: UserInDB = Depends(get_current_admin_user)):
     """Delete a user (admin only)"""

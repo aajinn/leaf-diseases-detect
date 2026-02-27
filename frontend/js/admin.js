@@ -1580,6 +1580,479 @@ async function resetEnterpriseApiUsage(keyId) {
     }
 }
 
+// ========== Admin Notifications Tab ==========
+
+let adminNotificationsCache = [];
+
+async function loadNotifications() {
+    try {
+        // Load stats
+        const statsResponse = await authenticatedFetch(`${API_URL}/api/notifications/admin/stats`);
+        if (statsResponse.ok) {
+            const stats = await statsResponse.json();
+            document.getElementById('totalNotifications').textContent = stats.total ?? 0;
+            document.getElementById('deliveredNotifications').textContent = stats.delivered ?? 0;
+            document.getElementById('pendingNotifications').textContent = stats.pending ?? 0;
+            document.getElementById('failedNotifications').textContent = stats.failed ?? 0;
+        }
+
+        // Load list with current filters
+        const status = document.getElementById('notificationStatusFilter')?.value || '';
+        const type = document.getElementById('notificationTypeFilter')?.value || '';
+
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (type) params.append('type', type);
+
+        const url = `${API_URL}/api/notifications/admin${params.toString() ? `?${params.toString()}` : ''}`;
+        const listResponse = await authenticatedFetch(url);
+
+        if (!listResponse.ok) {
+            throw new Error(`Failed to load notifications: ${listResponse.status}`);
+        }
+
+        const data = await listResponse.json();
+        adminNotificationsCache = data.notifications || [];
+
+        renderAdminNotifications(adminNotificationsCache);
+    } catch (error) {
+        console.error('Error loading admin notifications:', error);
+        const container = document.getElementById('notificationsList');
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+                    <p class="text-red-600 font-semibold">Error loading notifications</p>
+                    <p class="text-gray-600 text-sm">${error.message || 'Please try again later.'}</p>
+                </div>
+            `;
+        }
+    }
+}
+
+function renderAdminNotifications(notifications) {
+    const container = document.getElementById('notificationsList');
+    if (!container) return;
+
+    if (!notifications || notifications.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-8">No notifications found</p>';
+        return;
+    }
+
+    container.innerHTML = notifications
+        .map((n) => {
+            const statusLabel = n.read ? 'Delivered' : 'Pending';
+            const statusColor = n.read
+                ? 'bg-green-100 text-green-800'
+                : 'bg-yellow-100 text-yellow-800';
+            const typeLabel = n.type || 'system';
+            const typeColors = {
+                system: 'bg-blue-100 text-blue-800',
+                marketing: 'bg-purple-100 text-purple-800',
+                update: 'bg-indigo-100 text-indigo-800',
+                alert: 'bg-red-100 text-red-800',
+                feedback_update: 'bg-gray-100 text-gray-800',
+                analysis_correction: 'bg-orange-100 text-orange-800',
+            };
+            const typeClass = typeColors[typeLabel] || 'bg-gray-100 text-gray-800';
+
+            const username = n.username || 'All Users';
+            const email = n.email || '';
+
+            return `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-semibold text-gray-800">${n.title}</h4>
+                            <p class="text-sm text-gray-600 mt-1">${n.message}</p>
+                        </div>
+                        <div class="flex flex-col items-end space-y-1">
+                            <span class="px-2 py-1 text-xs rounded-full ${statusColor}">
+                                ${statusLabel}
+                            </span>
+                            <span class="px-2 py-1 text-xs rounded-full ${typeClass}">
+                                ${typeLabel}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
+                        <div>
+                            <span class="font-medium">${username}</span>
+                            ${email ? `<span class="ml-1 text-gray-400">(${email})</span>` : ''}
+                        </div>
+                        <div>
+                            ${n.created_at ? new Date(n.created_at).toLocaleString() : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        })
+        .join('');
+}
+
+function filterNotifications() {
+    const searchInput = document.getElementById('notificationSearch');
+    if (!searchInput) return;
+
+    const query = searchInput.value.toLowerCase();
+    if (!query) {
+        renderAdminNotifications(adminNotificationsCache);
+        return;
+    }
+
+    const filtered = adminNotificationsCache.filter((n) => {
+        const haystack = [
+            n.title || '',
+            n.message || '',
+            n.username || '',
+            n.email || '',
+            n.type || '',
+        ]
+            .join(' ')
+            .toLowerCase();
+        return haystack.includes(query);
+    });
+
+    renderAdminNotifications(filtered);
+}
+
+function showCreateNotificationModal() {
+    const modal = document.createElement('div');
+    modal.className =
+        'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Send Notification</h3>
+                    <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Audience</label>
+                        <select id="notificationTarget" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="all">All Active Users</option>
+                            <option value="plan_free">Free Plan Users</option>
+                            <option value="plan_basic">Basic Plan Users</option>
+                            <option value="plan_premium">Premium Plan Users</option>
+                            <option value="plan_enterprise">Enterprise Plan Users</option>
+                            <option value="user">Specific User (by username)</option>
+                        </select>
+                    </div>
+
+                    <div id="notificationUserWrapper" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Users</label>
+                        <div class="relative">
+                            <input 
+                                id="notificationUsername" 
+                                type="text" 
+                                class="w-full px-3 py-2 border rounded-lg" 
+                                placeholder="Search by username or email (non-admin users only)"
+                                autocomplete="off"
+                            >
+                            <div 
+                                id="notificationUserSuggestions" 
+                                class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-auto hidden"
+                            ></div>
+                        </div>
+                        <input type="hidden" id="notificationSelectedUsernamesHidden">
+                        <div id="notificationSelectedUsers" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                        <select id="notificationType" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="system">System</option>
+                            <option value="update">Update</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="alert">Alert</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input id="notificationTitle" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Notification title">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                        <textarea id="notificationMessage" rows="4" class="w-full px-3 py-2 border rounded-lg" placeholder="Notification message shown to users"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" onclick="submitAdminNotification(this)" class="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-secondary transition font-semibold">
+                        <i class="fas fa-paper-plane mr-2"></i>Send
+                    </button>
+                    <button type="button" onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const targetSelect = modal.querySelector('#notificationTarget');
+    const userWrapper = modal.querySelector('#notificationUserWrapper');
+    const usernameInput = modal.querySelector('#notificationUsername');
+    const suggestionsBox = modal.querySelector('#notificationUserSuggestions');
+    const selectedUsersContainer = modal.querySelector('#notificationSelectedUsers');
+    const selectedHiddenInput = modal.querySelector('#notificationSelectedUsernamesHidden');
+
+    const selectedUsernames = [];
+
+    targetSelect.addEventListener('change', (e) => {
+        if (e.target.value === 'user') {
+            userWrapper.classList.remove('hidden');
+        } else {
+            userWrapper.classList.add('hidden');
+        }
+    });
+
+    // Simple debounced search for non-admin users
+    let searchTimeout = null;
+    usernameInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        if (searchTimeout) clearTimeout(searchTimeout);
+
+        if (!query) {
+            suggestionsBox.classList.add('hidden');
+            suggestionsBox.innerHTML = '';
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            searchUsersForNotification(
+                query,
+                suggestionsBox,
+                usernameInput,
+                selectedUsernames,
+                selectedUsersContainer,
+                selectedHiddenInput
+            );
+        }, 300);
+    });
+
+    // Allow adding manual username on Enter
+    usernameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const value = usernameInput.value.trim();
+            if (!value) return;
+            if (!selectedUsernames.includes(value)) {
+                selectedUsernames.push(value);
+                renderSelectedUserChips(selectedUsernames, selectedUsersContainer, selectedHiddenInput);
+            }
+            usernameInput.value = '';
+            suggestionsBox.classList.add('hidden');
+            suggestionsBox.innerHTML = '';
+        }
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (event) => {
+        if (!modal.contains(event.target) || event.target === usernameInput) {
+            if (!suggestionsBox.contains(event.target) && event.target !== usernameInput) {
+                suggestionsBox.classList.add('hidden');
+            }
+        }
+    });
+}
+
+function renderSelectedUserChips(selectedUsernames, container, hiddenInput) {
+    if (!container) return;
+    hiddenInput.value = selectedUsernames.join(',');
+
+    if (selectedUsernames.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = selectedUsernames
+        .map(
+            (username) => `
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                <span>${username}</span>
+                <button 
+                    type="button" 
+                    class="ml-1 text-blue-600 hover:text-blue-800" 
+                    data-remove-username="${username}"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+            </span>
+        `,
+        )
+        .join('');
+
+    Array.from(container.querySelectorAll('button[data-remove-username]')).forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const username = btn.getAttribute('data-remove-username');
+            const idx = selectedUsernames.indexOf(username);
+            if (idx !== -1) {
+                selectedUsernames.splice(idx, 1);
+                renderSelectedUserChips(selectedUsernames, container, hiddenInput);
+            }
+        });
+    });
+}
+
+async function searchUsersForNotification(
+    query,
+    suggestionsBox,
+    inputEl,
+    selectedUsernames,
+    selectedUsersContainer,
+    selectedHiddenInput
+) {
+    try {
+        const url = `/auth/users/search?q=${encodeURIComponent(query)}&limit=10`;
+        const response = await authenticatedFetch(url);
+        if (!response.ok) {
+            throw new Error('Failed to search users');
+        }
+        const users = await response.json();
+
+        if (!users || users.length === 0) {
+            suggestionsBox.innerHTML = `
+                <div class="px-3 py-2 text-sm text-gray-500">
+                    No non-admin users found
+                </div>
+            `;
+            suggestionsBox.classList.remove('hidden');
+            return;
+        }
+
+        suggestionsBox.innerHTML = users
+            .map(
+                (u) => `
+                <button 
+                    type="button"
+                    class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex flex-col"
+                    data-username="${u.username}"
+                >
+                    <span class="font-medium text-gray-800">${u.username}</span>
+                    <span class="text-xs text-gray-500">${u.email}</span>
+                </button>
+            `,
+            )
+            .join('');
+
+        Array.from(suggestionsBox.querySelectorAll('button[data-username]')).forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const username = btn.getAttribute('data-username');
+                if (!selectedUsernames.includes(username)) {
+                    selectedUsernames.push(username);
+                    renderSelectedUserChips(selectedUsernames, selectedUsersContainer, selectedHiddenInput);
+                }
+                inputEl.value = '';
+                suggestionsBox.classList.add('hidden');
+            });
+        });
+
+        suggestionsBox.classList.remove('hidden');
+    } catch (error) {
+        console.error('Error searching users:', error);
+        suggestionsBox.innerHTML = `
+            <div class="px-3 py-2 text-sm text-red-500">
+                Failed to search users
+            </div>
+        `;
+        suggestionsBox.classList.remove('hidden');
+    }
+}
+
+async function submitAdminNotification(buttonEl) {
+    try {
+        const titleEl = document.getElementById('notificationTitle');
+        const messageEl = document.getElementById('notificationMessage');
+        const typeEl = document.getElementById('notificationType');
+        const targetEl = document.getElementById('notificationTarget');
+        const usernameEl = document.getElementById('notificationUsername');
+        const selectedHiddenEl = document.getElementById('notificationSelectedUsernamesHidden');
+
+        const title = titleEl?.value.trim() || '';
+        const message = messageEl?.value.trim() || '';
+        const type = typeEl?.value || 'system';
+        const rawTarget = targetEl?.value || 'all';
+        const username = usernameEl?.value.trim() || '';
+        const selectedUsernames = (selectedHiddenEl?.value || '')
+            .split(',')
+            .map((u) => u.trim())
+            .filter((u) => u.length > 0);
+
+        let target = rawTarget;
+        let planType = null;
+
+        if (rawTarget.startsWith('plan_')) {
+            target = 'plan';
+            planType = rawTarget.replace('plan_', '');
+        }
+
+        if (!title || !message) {
+            showNotification('Please provide both title and message', 'warning');
+            return;
+        }
+
+        if (target === 'user' && selectedUsernames.length === 0 && !username) {
+            showNotification('Please select or enter at least one username for user-specific notifications', 'warning');
+            return;
+        }
+
+        buttonEl.disabled = true;
+        buttonEl.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+
+        const payload = {
+            title,
+            message,
+            type,
+            target,
+            // Keep single username for backward compatibility; backend also respects usernames list
+            username: target === 'user' ? username : null,
+            usernames: target === 'user' ? selectedUsernames : null,
+            plan_type: target === 'plan' ? planType : null,
+        };
+
+        const response = await authenticatedFetch(`${API_URL}/api/notifications/admin/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.success === false) {
+            throw new Error(data.detail || data.message || 'Failed to send notification');
+        }
+
+        showNotification(data.message || 'Notification sent successfully', 'success');
+
+        // Close modal
+        const modal = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
+        if (modal) {
+            modal.remove();
+        }
+
+        // Refresh list and stats
+        await loadNotifications();
+    } catch (error) {
+        console.error('Error sending admin notification:', error);
+        showNotification(error.message || 'Failed to send notification', 'error');
+    } finally {
+        if (buttonEl) {
+            buttonEl.disabled = false;
+            buttonEl.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send';
+        }
+    }
+}
+
 function displayPlanDistribution(planData) {
     const container = document.getElementById('planDistribution');
     if (!planData || planData.length === 0) {

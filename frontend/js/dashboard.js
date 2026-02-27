@@ -516,7 +516,14 @@ function displayNotifications(notifications) {
 async function openNotificationAnalysis(notificationId, analysisId) {
     // Mark notification as read
     await markNotificationRead(notificationId);
-    // Store analysis ID and redirect to history
+
+    // If notification is not linked to a specific analysis, just show info and stay on page
+    if (!analysisId || analysisId === 'undefined' || analysisId === 'null') {
+        showNotification('Notification marked as read.', 'info');
+        return;
+    }
+
+    // Store analysis ID and redirect to history page to view its details
     sessionStorage.setItem('openAnalysisId', analysisId);
     window.location.href = '/history';
 }
