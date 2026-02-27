@@ -5,8 +5,11 @@
 [![Python](https://img.shields.io/badge/Python-3.8+-3776ab.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Groq](https://img.shields.io/badge/Groq-AI%20Powered-orange.svg?style=flat)](https://groq.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)](LICENSE)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Async%20%2F%20Motor-47A248.svg?style=flat&logo=mongodb)](https://www.mongodb.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-38B2AC.svg?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
+[![Razorpay](https://img.shields.io/badge/Razorpay-Payments-3395FF.svg?style=flat)](https://razorpay.com/)
 
-An enterprise-grade AI-powered leaf disease detection system featuring a dual-interface architecture: a FastAPI backend service and an interactive Streamlit web application. Built with Meta's Llama Vision models via Groq API, this system provides accurate disease identification, severity assessment, and actionable treatment recommendations for agricultural and horticultural applications.
+An enterprise-grade AI-powered leaf disease detection system featuring a dual-interface architecture: a FastAPI backend service and a responsive web frontend. Built with Meta's Llama Vision models via Groq API, the system provides accurate disease identification, severity assessment, subscription plans (Free/Basic/Premium/Enterprise) with Razorpay payments, programmatic API access, and actionable treatment recommendations for agricultural and horticultural applications.
 
 *Experience the power of AI-driven plant health analysis in action*
 
@@ -15,27 +18,41 @@ An enterprise-grade AI-powered leaf disease detection system featuring a dual-in
 ### 🎯 Core Capabilities
 - **🔍 Advanced Disease Detection**: Identifies 500+ plant diseases across multiple categories (fungal, bacterial, viral, pest-related, nutrient deficiencies)
 - **📊 Precision Severity Assessment**: AI-powered classification of disease severity levels (mild, moderate, severe)
-- ** High-Confidence Scoring**: Provides confidence percentages (0-100%) with advanced uncertainty quantification
+- **🎯 High-Confidence Scoring**: Provides confidence percentages (0-100%) with advanced uncertainty quantification
 - **💡 Expert Treatment Recommendations**: Evidence-based, actionable treatment protocols tailored to specific diseases
 - **📋 Comprehensive Symptom Analysis**: Detailed visual symptom identification with causal relationship mapping
 - **⚡ Real-time Processing**: Optimized inference pipeline with sub-5-second response times
 
 ### 🏗️ Architecture Components
-- **FastAPI Backend (src/app.py)**: RESTful API service with automatic OpenAPI documentation
-- **Web Frontend (frontend/)**: Modern responsive UI with Tailwind CSS
-- **Admin Panel (frontend/admin.html)**: Comprehensive system management dashboard
+- **FastAPI Backend (src/app.py)**: RESTful API v2.0 with automatic OpenAPI documentation
+- **Web Frontend (frontend/)**: Modern responsive UI with Tailwind CSS (npm build), dark mode, animated backgrounds
+- **Admin Panel (frontend/admin.html)**: System dashboard, user management, API config, subscription stats, enterprise API keys, system settings
 - **Core AI Engine (src/core/disease_detector.py)**: Advanced disease detection engine powered by Meta Llama Vision
-- **Authentication System**: JWT-based secure authentication with session management
-- **API Integration**: Groq AI for disease detection, Perplexity AI for YouTube recommendations
-- **Cloud Deployment**: Production-ready with Vercel integration and scalable architecture
+- **Authentication**: JWT-based auth, API key auth for programmatic access (Enterprise)
+- **API Integration**: Groq AI (detection), Perplexity AI (YouTube recommendations)
+- **Payments**: Razorpay for subscription plans (INR)
+- **Database**: MongoDB (Motor async driver) for users, analyses, subscriptions, notifications
+- **Rate Limiting**: Plan-based (10/30/60/120 requests/min) via middleware
+
+### 📱 Web Pages & Features
+- **Landing** (`/`), **Login/Register**, **Dashboard** (`/dashboard`), **History** (`/history`)
+- **Live Detection** (`/live-detection`): Camera capture, quick scan (3s), full analysis
+- **Diseases Database** (`/diseases`), **Prescriptions** (`/prescriptions`): Indian-friendly pricing (₹), purchase links (Amazon India, Flipkart, BigBasket, AgroStar), PDF export
+- **Subscription** (`/subscription`): Plans (Free/Basic/Premium/Enterprise), Razorpay checkout
+- **Enterprise Dashboard** (`/enterprise-dashboard`): Bulk analysis, analytics, API key management, CSV export
+- **About** (`/about`), **FAQ** (`/faq`)
 
 ### 🎛️ Admin Panel Features
 - **📊 System Dashboard**: Real-time statistics and usage trends
 - **👥 User Management**: View, activate/deactivate users, track per-user costs
 - **📈 API Usage Tracking**: Monitor Groq and Perplexity API consumption
 - **💰 Cost Monitoring**: Track API costs with detailed breakdowns
-- **🔧 API Configuration**: Update API keys and manage settings
+- **🔧 API Configuration**: Update Groq and Perplexity API keys
 - **📉 Usage Charts**: 30-day trends for API calls, analyses, and costs
+- **📋 Subscription Stats**: Revenue, plan distribution, payment history
+- **🔑 Enterprise API Keys**: View, toggle, reset usage for programmatic API keys
+- **⚙️ System Settings**: Allow logins/registrations/analysis, maintenance mode, custom message
+- **📄 Prescription Analytics**: Prescription generation metrics
 
 ## 🏗️ Project Architecture
 
@@ -44,20 +61,32 @@ An enterprise-grade AI-powered leaf disease detection system featuring a dual-in
 ```
 leaf-disease-detection/
 ├── src/                    # Source code
-│   ├── app.py             # FastAPI backend
-│   ├── main.py            # Streamlit frontend
-│   ├── auth/              # Authentication
-│   ├── database/          # MongoDB models
+│   ├── app.py             # FastAPI backend (v2.0)
+│   ├── auth/              # JWT + API key authentication
+│   ├── database/          # MongoDB models (connection, models, subscription_models, notification_models)
+│   ├── middleware/        # Rate limiting (plan-based)
 │   ├── routes/            # API endpoints
-│   ├── services/          # External APIs
+│   │   ├── admin.py       # Admin panel APIs
+│   │   ├── disease_detection.py
+│   │   ├── enterprise_api.py   # Enterprise bulk, analytics, API keys, export
+│   │   ├── programmatic_api.py # /api/v1/ (API key auth)
+│   │   ├── subscription_routes.py # Plans, Razorpay orders, usage
+│   │   ├── prescription_routes.py
+│   │   ├── notification_routes.py
+│   │   ├── feedback_routes.py
+│   │   └── system_status.py     # /system/status
+│   ├── services/          # perplexity_service, razorpay_service, subscription_service
 │   ├── storage/           # File storage
-│   └── core/              # AI engine
-├── frontend/              # Web interface
-├── tests/                 # Test suite
-├── docs/                  # Documentation
-├── scripts/               # Utility scripts
-├── config/                # Configuration
-└── assets/                # Static assets
+│   ├── utils/             # system_settings, usage_tracker
+│   └── core/              # AI engine (disease_detector)
+├── frontend/              # Web UI (Tailwind CSS)
+│   ├── *.html             # index, login, register, dashboard, admin, live-detection, diseases, prescriptions, subscription, enterprise-dashboard, history, about, faq
+│   ├── js/                # dashboard, admin, camera-capture, config, dark-mode, etc.
+│   └── css/               # input.css (Tailwind), dark-mode.css, animated-background.css
+├── tests/                 # Test suite (API, enterprise API)
+├── docs/                  # Documentation (ENTERPRISE_API.md, SUBSCRIPTION_SYSTEM.md, etc.)
+├── scripts/               # create_quick_admin, initialize_subscription_plans, etc.
+└── package.json           # Tailwind CSS build (npm run build-css)
 ```
 
 **📖 Full Structure**: See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for complete details.
@@ -65,17 +94,18 @@ leaf-disease-detection/
 ### Core Components
 
 **🚀 FastAPI Backend** (`src/app.py`)
-- RESTful API endpoints
-- User authentication & authorization
-- File upload handling
-- Database integration
-- YouTube video recommendations
+- RESTful API v2.0, CORS, rate limiting middleware
+- JWT and API key authentication
+- File upload, MongoDB (Motor), subscription and notification models
+- YouTube recommendations (Perplexity), payments (Razorpay)
 
-**🎨 Streamlit Frontend** (`src/main.py`)
-- Interactive web interface
-- Real-time image preview
-- Results visualization
-- Modern CSS styling
+**🎨 Web Frontend** (`frontend/` served by FastAPI)
+- Static HTML pages with Tailwind CSS (build: `npm run build-css`)
+- Dashboard, live detection, diseases, prescriptions, subscription, enterprise-dashboard
+- Dark mode, animated backgrounds, camera capture (see `docs/LIVE_DETECTION_SUMMARY.md`)
+
+**🎨 Streamlit Frontend** (`src/main.py`, optional)
+- Alternative interactive UI; run with `streamlit run main.py`
 
 **🧠 AI Detection Engine** (`src/core/disease_detector.py`)
 - LeafDiseaseDetector class
@@ -91,44 +121,46 @@ leaf-disease-detection/
 - User registration & login
 
 **💾 Database** (`src/database/`)
-- MongoDB integration
-- Pydantic models
-- Analysis records
-- User management
+- MongoDB (Motor async); models: users, analyses, prescriptions, subscriptions, notifications, enterprise_api_keys
+- Pydantic models; subscription_models, notification_models
 
-**📺 YouTube Integration** (`src/services/`)
-- Perplexity API integration
-- Automatic video recommendations
-- Treatment tutorials
-- Embedded playback
+**📺 Services** (`src/services/`)
+- **Perplexity**: YouTube recommendations, treatment tutorials
+- **Razorpay**: Subscription payment orders and verification (see `docs/features/SUBSCRIPTION_SYSTEM.md`)
 
 ## 🚀 Quick Start Guide
 
 ### Prerequisites
-- **Python 3.8+** (3.9+ recommended for optimal performance)
+- **Python 3.8+** (3.9+ recommended)
+- **Node.js & npm** (for Tailwind CSS build: `npm run build-css`)
+- **MongoDB** (local or Atlas; set `MONGODB_URL`, `MONGODB_DB_NAME` in `.env`)
 - **Groq API Key** ([Get your free key here](https://console.groq.com/))
+- **Optional**: Perplexity API key (YouTube recommendations), Razorpay keys (subscriptions)
 - **Git** for repository cloning
 
 ### 1. Repository Setup
 **Clone the repository:**
-- Run: git clone https://aajinn/leaf-diseases-detect.git
-- Navigate to: cd leaf-diseases-detect/Front
+- Run: `git clone https://github.com/shukur-alom/leaf-diseases-detect.git`
+- Navigate to: `cd leaf-diseases-detect`
 
 **Create and activate virtual environment (recommended):**
 - Windows PowerShell: python -m venv venv then .\venv\Scripts\Activate.ps1
 - Linux/macOS: python -m venv venv then source venv/bin/activate
 
 ### 2. Dependencies Installation
-**Install all required packages:**
-- Run: pip install -r requirements.txt
-- Verify: python -c "import streamlit, fastapi, groq; print('All dependencies installed successfully!')"
+**Install dependencies:**
+- Python: `pip install -r requirements.txt`
+- Frontend (Tailwind): `npm install` then `npm run build-css` when needed
+- Optional: Initialize subscription plans: `python scripts/initialize_subscription_plans.py`
+- Verify: `python -c "import fastapi, groq; print('Backend dependencies OK')"`
 
 ### 3. Environment Configuration
-Create a .env file in the project root with the following variables:
-- **Required: Groq API Key** - GROQ_API_KEY=your_groq_api_key_here
-- **Optional: Model Configuration** - MODEL_NAME=meta-llama/llama-4-scout-17b-16e-instruct
-- **Optional: Temperature** - DEFAULT_TEMPERATURE=0.3
-- **Optional: Max Tokens** - DEFAULT_MAX_TOKENS=1024
+Create a `.env` file in the project root. For Razorpay, you can use `.env.razorpay` with:
+- **Required**: `GROQ_API_KEY` – Groq API key
+- **Database**: `MONGODB_URL` (default: `mongodb://localhost:27017`), `MONGODB_DB_NAME` (default: `leaf_disease_db`)
+- **Optional**: `MODEL_NAME`, `DEFAULT_TEMPERATURE`, `DEFAULT_MAX_TOKENS`
+- **Optional**: `PERPLEXITY_API_KEY` – YouTube video recommendations
+- **Optional (subscriptions)**: In `.env.razorpay`: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
 
 ### 4. Application Launch
 
@@ -137,17 +169,29 @@ Create a .env file in the project root with the following variables:
 - Command: streamlit run main.py --server.port 8501 --server.address 0.0.0.0
 - Access at: http://localhost:8501
 
-#### Option B: FastAPI Backend Service (Recommended for Developers)
-**Launch the API server:**
-- Command: uvicorn app:app --reload --host 0.0.0.0 --port 8000
+#### Option B: FastAPI Backend + Web Frontend (Recommended)
+**Build Tailwind CSS (once or when styles change):** `npm run build-css` (or use `build-css.bat` on Windows)
+**Launch the API server (from project root):**
+- Command: `uvicorn src.app:app --reload --host 0.0.0.0 --port 8000`
+- Web app: http://localhost:8000 (landing), http://localhost:8000/dashboard, http://localhost:8000/login, etc.
 - API Documentation: http://localhost:8000/docs
 - Alternative Docs: http://localhost:8000/redoc
 
-#### Option C: Both Services (Full Stack)
-**Terminal 1: Launch FastAPI** - uvicorn app:app --reload --port 8000
-**Terminal 2: Launch Streamlit** - streamlit run main.py --server.port 8501
+#### Option C: Both FastAPI + Streamlit
+**Terminal 1:** `uvicorn src.app:app --reload --port 8000`
+**Terminal 2:** `streamlit run main.py --server.port 8501` (if using Streamlit frontend)
 
 ## 📡 API Reference
+
+### API Overview (v2.0)
+- **Public**: `POST /disease-detection-file` – no auth
+- **Auth**: `/auth/register`, `/auth/login`, `/auth/me`
+- **Protected**: `/api/disease-detection`, `/api/my-analyses`, `/api/analyses/{id}`
+- **Enterprise (JWT)**: `/api/enterprise/status`, `/api/enterprise/bulk-analysis`, `/api/enterprise/analytics`, `/api/enterprise/api-keys`, `/api/enterprise/export/csv`
+- **Programmatic (API key)**: `GET /api/v1/health`, `POST /api/v1/analyze`, `POST /api/v1/analyze-base64`, `POST /api/v1/batch-analyze`, `GET /api/v1/analyses`
+- **Subscriptions**: `/api/subscriptions/plans`, `/api/subscriptions/my-subscription`, `/api/subscriptions/create-order`, `/api/subscriptions/verify-payment`, `/api/subscriptions/usage`
+- **Other**: `/api/prescriptions/generate`, `/api/notifications`, `/api/feedback`, `GET /system/status`
+- **Rate limits**: Free 10/min, Basic 30/min, Premium 60/min, Enterprise 120/min. See `docs/ENTERPRISE_API.md` and `docs/features/SUBSCRIPTION_SYSTEM.md`.
 
 ### Streamlit Web Interface (main.py)
 
@@ -191,10 +235,7 @@ A JSON object containing:
 #### GET /
 Root endpoint providing API information and status.
 
-**Response:**
-- message: "Leaf Disease Detection API"
-- version: "1.0.0"
-- endpoints: Available endpoint descriptions
+**Response:** `GET /api` returns message, version "2.0.0", and endpoint groups (public, auth, protected, enterprise, programmatic, admin).
 
 ### Core Detection Engine (src/core/disease_detector.py)
 
@@ -295,9 +336,14 @@ This project is optimized for Vercel with the included vercel.json configuration
 ## 🔧 Advanced Configuration
 
 ### Environment Variables Reference
-| Variable | Description | Required | Default Value | Example |
-|----------|-------------|----------|---------------|---------|
+| Variable | Description | Required | Default | Example |
+|----------|-------------|----------|---------|---------|
 | GROQ_API_KEY | Groq API authentication key | ✅ Yes | - | gsk_xxx... |
+| MONGODB_URL | MongoDB connection string | ❌ No | mongodb://localhost:27017 | mongodb+srv://... |
+| MONGODB_DB_NAME | Database name | ❌ No | leaf_disease_db | leaf_disease_db |
+| PERPLEXITY_API_KEY | Perplexity AI (YouTube recommendations) | ❌ No | - | pplx_xxx... |
+| RAZORPAY_KEY_ID | Razorpay key (subscriptions; use .env.razorpay) | ❌ No | - | rzp_test_xxx |
+| RAZORPAY_KEY_SECRET | Razorpay secret | ❌ No | - | xxx |
 | MODEL_NAME | AI model identifier | ❌ No | meta-llama/llama-4-scout-17b-16e-instruct | Custom model |
 | DEFAULT_TEMPERATURE | Model creativity (0.0-2.0) | ❌ No | 0.3 | 0.5 |
 | DEFAULT_MAX_TOKENS | Response length limit | ❌ No | 1024 | 2048 |
@@ -406,7 +452,7 @@ The analyze_leaf_image_base64 method follows these steps:
 
 ### Development Setup
 **Fork and clone the repository:**
-- Commands: git clone https://github.com/your-username/leaf-diseases-detect.git, cd leaf-diseases-detect/Front
+- Commands: `git clone https://github.com/your-username/leaf-diseases-detect.git`, `cd leaf-diseases-detect`
 
 **Create development environment:**
 - Commands: python -m venv dev-env, .\dev-env\Scripts\Activate.ps1
@@ -434,14 +480,11 @@ The analyze_leaf_image_base64 method follows these steps:
 6. **Create Pull Request**: Submit PR with detailed description
 
 ### Project Structure Guidelines
-**Front/ directory contains:**
-- main.py (Streamlit frontend with UI/UX focus)
-- app.py (FastAPI backend with API endpoints)
-- utils.py (Shared utilities and helpers)
-- test_api.py (Integration tests)
-- src/core/ (Core AI detection engine)
-- tests/ (Unit test directory for all components)
-- docs/ (Additional documentation)
+**Root directory:**
+- `src/app.py` – FastAPI backend; `src/main.py` – optional Streamlit frontend
+- `frontend/` – HTML, JS, Tailwind CSS (primary web UI served by FastAPI)
+- `src/core/`, `src/routes/`, `src/services/`, `src/database/` – backend modules
+- `tests/` – test suite; `docs/` – documentation; `scripts/` – admin and setup scripts
 
 ### Contributing Guidelines
 - **Bug Reports**: Use GitHub Issues with detailed reproduction steps
@@ -466,9 +509,13 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 ### Third-Party Acknowledgments
 - **Groq API**: AI inference platform
 - **Meta Llama Models**: Vision-language models
-- **FastAPI**: Modern web framework for APIs
-- **Streamlit**: Interactive web application framework
-- **Python Ecosystem**: NumPy, Pillow, and other supporting libraries
+- **FastAPI**: Web framework for APIs
+- **MongoDB / Motor**: Database and async driver
+- **Tailwind CSS**: Frontend styling
+- **Razorpay**: Subscription payments (INR)
+- **Perplexity AI**: YouTube treatment recommendations
+- **Streamlit**: Optional interactive UI
+- **Python Ecosystem**: NumPy, Pillow, python-jose, bcrypt, and other supporting libraries
 
 ## 📞 Support & Community
 
@@ -541,9 +588,10 @@ python scripts/create_quick_admin.py
 
 ### Access Admin Panel
 
-1. Start server: `uvicorn src.app:app --reload --host 0.0.0.0 --port 8000`
-2. Login at: `http://localhost:8000/login`
-3. Access admin panel: `http://localhost:8000/admin`
+1. Create admin (if needed): `python scripts/create_quick_admin.py`
+2. Start server: `uvicorn src.app:app --reload --host 0.0.0.0 --port 8000`
+3. Login at: `http://localhost:8000/login`
+4. Access admin panel: `http://localhost:8000/admin`
 
 ### Admin Features
 
@@ -554,7 +602,7 @@ python scripts/create_quick_admin.py
 - **API Configuration**: Update Groq and Perplexity API keys
 - **Usage Charts**: Visual analytics with Chart.js
 
-📚 **Full Documentation**: See `docs/features/ADMIN_PANEL.md` and `docs/setup/ADMIN_SETUP.md`
+📚 **Full Documentation**: See `docs/features/ADMIN_PANEL.md`, `docs/setup/ADMIN_SETUP.md`, `docs/ENTERPRISE_API.md`, `docs/features/SUBSCRIPTION_SYSTEM.md`, `docs/STACK_DOCUMENTATION.md`
 
 ---
 
