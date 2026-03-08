@@ -47,3 +47,5 @@ frontend/css/tailwind.css
 # Build outputs
 dist/
 build/
+
+.env.razorpay
