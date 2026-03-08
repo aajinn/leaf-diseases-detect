@@ -226,9 +226,9 @@ DEFAULT_SUBSCRIPTION_PLANS = [
         "name": "Basic Plan",
         "plan_type": "basic",
         "description": "Enhanced features for regular users",
-        "monthly_price": 299.0,
-        "quarterly_price": 799.0,  # 11% discount
-        "yearly_price": 2999.0,    # 16% discount
+        "monthly_price": 10.0,
+        "quarterly_price": 27.0,  # 10% discount
+        "yearly_price": 100.0,    # 17% discount
         "max_analyses_per_month": 100,
         "max_image_size_mb": 10,
         "api_rate_limit_per_minute": 30,
@@ -250,9 +250,9 @@ DEFAULT_SUBSCRIPTION_PLANS = [
         "name": "Premium Plan",
         "plan_type": "premium",
         "description": "Professional features for farmers and consultants",
-        "monthly_price": 799.0,
-        "quarterly_price": 2199.0,  # 8% discount
-        "yearly_price": 7999.0,     # 17% discount
+        "monthly_price": 15.0,
+        "quarterly_price": 40.0,  # 11% discount
+        "yearly_price": 150.0,     # 17% discount
         "max_analyses_per_month": 500,
         "max_image_size_mb": 20,
         "api_rate_limit_per_minute": 60,
@@ -276,9 +276,9 @@ DEFAULT_SUBSCRIPTION_PLANS = [
         "name": "Enterprise Plan",
         "plan_type": "enterprise",
         "description": "Unlimited access for organizations and research",
-        "monthly_price": 2499.0,
-        "quarterly_price": 6999.0,  # 6% discount
-        "yearly_price": 24999.0,    # 17% discount
+        "monthly_price": 25.0,
+        "quarterly_price": 67.0,  # 11% discount
+        "yearly_price": 250.0,    # 17% discount
         "max_analyses_per_month": 0,  # Unlimited
         "max_image_size_mb": 50,
         "api_rate_limit_per_minute": 120,
