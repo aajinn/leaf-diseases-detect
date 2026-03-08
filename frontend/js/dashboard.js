@@ -615,8 +615,8 @@ async function checkSubscriptionLimits() {
             return false;
         }
         
-        // Show warning if close to limit
-        if (data.usage_percent > 80) {
+        // Show warning if close to limit (but not for unlimited plans)
+        if (data.usage_percent > 80 && data.analyses_limit > 0) {
             showNotification(`⚠️ You've used ${data.analyses_used}/${data.analyses_limit} analyses this month`, 'warning');
         }
         
@@ -676,7 +676,7 @@ function setAnalysisAllowed(allowed, data = null) {
             notice.innerHTML = `
                 <div class="flex flex-col gap-3">
                     <div>
-                        <strong>Limit reached:</strong> ${used}/${limit} analyses used for ${planName}.
+                        <strong>Limit reached:</strong> ${used}/${limit === 0 ? 'Unlimited' : limit} analyses used for ${planName}.
                         Upload and analysis are disabled until <strong>${resetText}</strong>.
                     </div>
                     <div class="flex gap-2">
@@ -752,10 +752,12 @@ async function loadSubscriptionStatus() {
             const usagePercent = data.usage.usage_percent;
             if (usagePercent > 80) {
                 const remaining = data.plan.analyses_limit - data.usage.analyses_used;
-                showNotification(
-                    `⚠️ You're running low on analyses! ${remaining} remaining this month.`,
-                    'warning'
-                );
+                if (data.plan.analyses_limit > 0) {
+                    showNotification(
+                        `⚠️ You're running low on analyses! ${remaining} remaining this month.`,
+                        'warning'
+                    );
+                }
             }
         }
     } catch (error) {
@@ -768,7 +770,10 @@ function displaySubscriptionStatus(subscription) {
     const content = document.getElementById('subscriptionContent');
     const card = document.getElementById('subscriptionCard');
     
+    console.log('displaySubscriptionStatus called with:', subscription);
+    
     if (!subscription || !subscription.plan) {
+        console.log('No subscription or plan found, showing free plan');
         nextResetDate = computeNextResetDate();
         // No subscription - show free plan
         card.className = 'bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg p-6 border border-gray-200';
@@ -781,7 +786,7 @@ function displaySubscriptionStatus(subscription) {
                 <div class="mb-4">
                     <div class="flex justify-between text-xs text-gray-600 mb-1">
                         <span>Usage</span>
-                        <span id="freeUsage">0/5</span>
+                        <span id="freeUsage">0/10</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
                         <div id="freeUsageBar" class="bg-red-400 h-2 rounded-full transition-all" style="width: 0%"></div>
@@ -801,28 +806,29 @@ function displaySubscriptionStatus(subscription) {
         return;
     }
     
+    console.log('Displaying plan:', subscription.plan.name);
+    
     const plan = subscription.plan;
     const usage = subscription.usage || { analyses_used: 0 };
     const analysesLimit = plan.analyses_limit || 0;
-    const usagePercent = analysesLimit === -1 ? 0 : Math.min((usage.analyses_used / analysesLimit) * 100, 100);
+    const usagePercent = analysesLimit === 0 ? 0 : Math.min((usage.analyses_used / analysesLimit) * 100, 100);
     
     // Set card style based on plan
     let cardClass, planColor, planIcon;
-    switch(plan.name.toLowerCase()) {
-        case 'premium':
-            cardClass = 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200';
-            planColor = 'text-purple-900';
-            planIcon = 'fa-star';
-            break;
-        case 'enterprise':
-            cardClass = 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200';
-            planColor = 'text-yellow-900';
-            planIcon = 'fa-crown';
-            break;
-        default: // basic
-            cardClass = 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200';
-            planColor = 'text-blue-900';
-            planIcon = 'fa-gem';
+    const planNameLower = plan.name.toLowerCase();
+    
+    if (planNameLower.includes('enterprise')) {
+        cardClass = 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200';
+        planColor = 'text-yellow-900';
+        planIcon = 'fa-crown';
+    } else if (planNameLower.includes('premium')) {
+        cardClass = 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200';
+        planColor = 'text-purple-900';
+        planIcon = 'fa-star';
+    } else {
+        cardClass = 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200';
+        planColor = 'text-blue-900';
+        planIcon = 'fa-gem';
     }
     
     card.className = `${cardClass} rounded-xl shadow-lg p-6 border`;
@@ -853,13 +859,13 @@ function displaySubscriptionStatus(subscription) {
             <div class="mb-4">
                 <div class="flex justify-between text-xs text-gray-600 mb-1">
                     <span>Usage</span>
-                    <span>${usage.analyses_used}/${analysesLimit === -1 ? '∞' : analysesLimit}</span>
+                    <span>${usage.analyses_used}/${analysesLimit === 0 ? '∞' : analysesLimit}</span>
                 </div>
-                ${analysesLimit !== -1 ? `
+                ${analysesLimit !== 0 ? `
                     <div class="w-full bg-gray-200 rounded-full h-2">
                         <div class="bg-primary h-2 rounded-full transition-all" style="width: ${usagePercent}%"></div>
                     </div>
-                    ${usagePercent > 80 ? '<div class="text-xs text-orange-600 mt-1">⚠️ Running low</div>' : ''}
+                    ${usagePercent > 80 && analysesLimit > 0 ? '<div class="text-xs text-orange-600 mt-1">⚠️ Running low</div>' : ''}
                 ` : '<div class="text-xs text-green-600 font-semibold">✨ Unlimited</div>'}
             </div>
             
@@ -870,7 +876,7 @@ function displaySubscriptionStatus(subscription) {
                     class="flex-1 bg-white text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition text-xs font-semibold border">
                     <i class="fas fa-cog mr-1"></i>Manage
                 </button>
-                ${plan.name.toLowerCase() !== 'enterprise' ? `
+                ${!planNameLower.includes('enterprise') ? `
                     <button onclick="window.location.href='/subscription'" 
                         class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-secondary transition text-xs font-semibold">
                         <i class="fas fa-arrow-up mr-1"></i>Upgrade
@@ -1251,8 +1257,10 @@ async function analyzeImage() {
 
     analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
 
-    // Start preview animation
-    startPreviewAnimation();
+    // Show AI analyzing animation
+    if (typeof showAIAnalyzing === 'function') {
+        showAIAnalyzing();
+    }
 
     // Set analyzing state for background animation
     if (typeof window.setAnalyzingState === 'function') {
@@ -1336,8 +1344,10 @@ async function analyzeImage() {
             
             displayResults(result);
             
-            // Stop preview animation
-            stopPreviewAnimation();
+            // Hide AI analyzing animation
+            if (typeof hideAIAnalyzing === 'function') {
+                hideAIAnalyzing();
+            }
 
             // Reset analyzing state first, then set disease status after a brief delay
             if (typeof window.setAnalyzingState === 'function') {
@@ -1430,6 +1440,12 @@ async function analyzeImage() {
         }
     } catch (error) {
         console.error('Analysis error:', error);
+        
+        // Hide AI analyzing animation on error
+        if (typeof hideAIAnalyzing === 'function') {
+            hideAIAnalyzing();
+        }
+        
         if (error.message !== 'Session expired') {
             let errorMsg = 'Network error. Please check your connection and try again.';
             if (error.message && error.message !== 'Failed to fetch') {
@@ -1438,12 +1454,15 @@ async function analyzeImage() {
             showErrorMessage(errorMsg);
         }
     } finally {
-        // Stop animation and reset analyzing state if analysis failed
+        // Hide AI analyzing animation
+        if (typeof hideAIAnalyzing === 'function') {
+            hideAIAnalyzing();
+        }
+        
+        // Reset analyzing state if analysis failed
         if (!analysisSuccessful) {
-            stopPreviewAnimation();
             if (typeof window.setAnalyzingState === 'function') {
                 window.setAnalyzingState(false);
-                // Also clear any previous disease status
                 window.diseaseStatus = null;
             }
         }
@@ -1992,7 +2011,7 @@ async function loadFreeUsage() {
         
         if (usageEl && usageBarEl) {
             const used = data.analyses_used || 0;
-            const limit = data.analyses_limit || 5;
+            const limit = data.analyses_limit || 10;
             const percent = Math.min((used / limit) * 100, 100);
             
             console.log(`Usage: ${used}/${limit} (${percent}%)`);

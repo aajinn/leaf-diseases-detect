@@ -37,6 +37,7 @@ function initializeAutoCropToggle() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await loadUserInfo();
+    await checkSubscriptionLimits();
     initializeLiveDetection();
     initializeAutoCropToggle();
 });
@@ -196,6 +197,13 @@ async function captureAndAnalyze() {
         return;
     }
     
+    // Check subscription limits
+    const canAnalyze = await checkSubscriptionLimits();
+    if (!canAnalyze) {
+        stopLiveDetection();
+        return;
+    }
+    
     try {
         // Show analyzing badge
         const badge = document.getElementById('detectionBadge');
@@ -270,11 +278,40 @@ async function analyzeImage(file) {
         body: formData
     });
     
+    if (response.status === 429) {
+        const error = await response.json();
+        showNotification(error.detail || 'Monthly limit reached', 'error');
+        stopLiveDetection();
+        throw new Error('Limit reached');
+    }
+    
     if (!response.ok) {
         throw new Error('Analysis failed');
     }
     
     return await response.json();
+}
+
+async function checkSubscriptionLimits() {
+    try {
+        const token = sessionManager.getToken();
+        const response = await fetch(`${API_URL}/api/subscriptions/check-usage`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const data = await response.json();
+        
+        if (!data.can_analyze) {
+            showNotification(`Limit reached: ${data.analyses_used}/${data.analyses_limit === 0 ? 'Unlimited' : data.analyses_limit} for ${data.plan_name}`, 'error');
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error checking limits:', error);
+        return true;
+    }
 }
 
 function displayCurrentResult(result) {

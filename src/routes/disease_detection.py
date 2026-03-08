@@ -59,25 +59,27 @@ async def detect_disease(
         # Check subscription limits first
         from src.services.subscription_service import SubscriptionService
         
-        # Get user's subscription to check limits
-        subscription = await SubscriptionService.get_user_subscription(str(current_user.id))
-        usage_quota = await SubscriptionService.get_user_usage_quota(str(current_user.id))
+        # Check if user can analyze
+        can_analyze = await SubscriptionService.check_usage_limit(str(current_user.id))
         
-        # Determine analysis limit
-        if subscription:
-            plan = await SubscriptionService.get_plan_by_id(subscription.plan_id)
-            analyses_limit = plan.max_analyses_per_month if plan else 5
-        else:
-            analyses_limit = 5  # Free plan default
+        logger.info(f"Can analyze check for {current_user.username}: {can_analyze}")
         
-        analyses_used = usage_quota.analyses_used if usage_quota else 0
-        
-        # Check if user has exceeded limit (unlimited = -1)
-        if analyses_limit != -1 and analyses_used >= analyses_limit:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Monthly analysis limit reached ({analyses_used}/{analyses_limit}). Please upgrade your plan."
-            )
+        if not can_analyze:
+            # Get details for error message
+            usage_quota = await SubscriptionService.get_user_usage_quota(str(current_user.id))
+            logger.info(f"Usage quota: {usage_quota}")
+            
+            if usage_quota:
+                logger.info(f"Quota limit: {usage_quota.analyses_limit}, used: {usage_quota.analyses_used}")
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Monthly analysis limit reached ({usage_quota.analyses_used}/{usage_quota.analyses_limit}). Please upgrade your plan."
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Monthly analysis limit reached. Please upgrade your plan."
+                )
 
         # Validate file
         if not file.filename:

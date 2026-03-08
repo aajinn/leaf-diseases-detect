@@ -125,7 +125,9 @@ class PerplexityService:
 
         try:
             # Create search query - be very explicit about YouTube URLs
-            query = f"""Find {max_videos} YouTube video tutorials about treating {disease_name} ({disease_type} disease) in plants.
+            query = f"""Find {max_videos} YouTube video tutorials about treating {disease_name} ({disease_type} disease) in PLANTS.
+
+IMPORTANT: Only search for videos about PLANT diseases, NOT human or animal diseases.
 
 For each video, you MUST provide:
 1. Video title
@@ -138,7 +140,14 @@ Format your response like this:
 2. [Video Title]
    URL: https://www.youtube.com/watch?v=VIDEO_ID
 
-Focus on practical treatment methods, organic solutions, and step-by-step guides."""
+Focus on:
+- Plant disease treatment methods
+- Agricultural and gardening solutions
+- Organic plant treatments
+- Crop disease management
+- Step-by-step plant care guides
+
+DO NOT include videos about human diseases, medical treatments, or animal diseases."""
 
             logger.info(f"Requesting treatment videos for: {disease_name}")
 
@@ -148,7 +157,7 @@ Focus on practical treatment methods, organic solutions, and step-by-step guides
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a helpful assistant that searches YouTube for plant disease treatment videos. Always include complete YouTube URLs in your response.",
+                        "content": "You are a plant disease expert that searches YouTube for PLANT disease treatment videos. You ONLY provide videos about plant diseases, agriculture, and gardening. NEVER provide videos about human or animal diseases. Always include complete YouTube URLs in your response.",
                     },
                     {"role": "user", "content": query},
                 ],
@@ -197,13 +206,21 @@ Focus on practical treatment methods, organic solutions, and step-by-step guides
             return []
 
         try:
-            query = f"""Find {max_videos} YouTube videos about general plant care and disease prevention.
+            query = f"""Find {max_videos} YouTube videos about general PLANT care and disease prevention.
+
+IMPORTANT: Only search for videos about PLANTS and gardening, NOT human health or medical topics.
 
 For each video, provide:
 1. Video title
 2. Complete YouTube URL (https://www.youtube.com/watch?v=VIDEO_ID)
 
-Topics: plant health maintenance, disease prevention, watering, fertilization."""
+Topics: 
+- Plant health maintenance
+- Plant disease prevention
+- Watering and fertilization
+- Garden care
+- Crop management
+- Agricultural best practices"""
 
             logger.info("Requesting general plant care videos")
 
@@ -212,7 +229,7 @@ Topics: plant health maintenance, disease prevention, watering, fertilization.""
                 messages=[
                     {
                         "role": "system",
-                        "content": "You search YouTube for plant care videos. Always include complete YouTube URLs.",
+                        "content": "You are a plant care expert that searches YouTube for PLANT care and gardening videos. You ONLY provide videos about plants, agriculture, and gardening. NEVER provide videos about human health or medical topics. Always include complete YouTube URLs.",
                     },
                     {"role": "user", "content": query},
                 ],

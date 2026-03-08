@@ -68,6 +68,19 @@ async def register_user(user: UserCreate):
     result = await users_collection.insert_one(user_in_db.dict(by_alias=True))
 
     created_user = await users_collection.find_one({"_id": result.inserted_id})
+    
+    # Assign free plan to new user
+    try:
+        from src.services.subscription_service import SubscriptionService
+        await SubscriptionService.assign_free_plan(
+            user_id=str(result.inserted_id),
+            username=user_dict["username"]
+        )
+    except Exception as e:
+        # Log but don't fail registration
+        import logging
+        logging.getLogger(__name__).error(f"Failed to assign free plan: {str(e)}")
+    
     # Convert MongoDB ObjectId to string for pydantic model validation
     if created_user and "_id" in created_user:
         created_user["_id"] = str(created_user["_id"])

@@ -702,8 +702,9 @@ async def check_usage_limits(current_user: UserInDB = Depends(get_current_active
         
         if not subscription:
             # No subscription = free plan with 5 analyses limit
-            analyses_used = current_user.analyses_this_month
-            analyses_limit = 5  # Free plan limit
+            usage_quota = await SubscriptionService.get_user_usage_quota(str(current_user.id))
+            analyses_used = usage_quota.analyses_used if usage_quota else 0
+            analyses_limit = 10  # Free plan limit
             
             return {
                 "can_analyze": analyses_used < analyses_limit,
@@ -722,18 +723,20 @@ async def check_usage_limits(current_user: UserInDB = Depends(get_current_active
                 detail="Subscription plan not found"
             )
         
-        analyses_used = current_user.analyses_this_month
+        # Get usage from quota
+        usage_quota = await SubscriptionService.get_user_usage_quota(str(current_user.id))
+        analyses_used = usage_quota.analyses_used if usage_quota else 0
         analyses_limit = plan.max_analyses_per_month
         
-        # Unlimited plans (-1) can always analyze
-        if analyses_limit == -1:
+        # Unlimited plans (0) can always analyze
+        if analyses_limit == 0:
             return {
                 "can_analyze": True,
                 "analyses_used": analyses_used,
-                "analyses_limit": -1,
+                "analyses_limit": 0,
                 "usage_percent": 0,
                 "plan_name": plan.name,
-                "remaining": float('inf')
+                "remaining": -1  # Use -1 instead of float('inf')
             }
         
         can_analyze = analyses_used < analyses_limit
@@ -836,7 +839,7 @@ async def increment_usage(current_user: UserInDB = Depends(get_current_active_us
             analyses_limit = plan.max_analyses_per_month if plan else -1
             plan_name = plan.name if plan else "Unknown"
         else:
-            analyses_limit = 5  # Free plan limit
+            analyses_limit = 10  # Free plan limit
             plan_name = "Free"
         
         return {

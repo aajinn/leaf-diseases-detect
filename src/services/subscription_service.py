@@ -132,16 +132,31 @@ class SubscriptionService:
     async def get_user_subscription(user_id: str) -> Optional[UserSubscription]:
         """Get user's current subscription"""
         try:
+            logger.info(f"🔍 Getting subscription for user_id: {user_id}")
             subscriptions_collection = MongoDB.get_collection(USER_SUBSCRIPTIONS_COLLECTION)
             subscription_data = await subscriptions_collection.find_one({
                 "user_id": user_id,
                 "status": {"$in": [SubscriptionStatus.ACTIVE.value]}
             })
+            
+            logger.info(f"📋 Raw subscription data: {subscription_data}")
+            
             if subscription_data:
+                # Convert ObjectId to string for plan_id
+                if "_id" in subscription_data and isinstance(subscription_data["_id"], ObjectId):
+                    subscription_data["_id"] = str(subscription_data["_id"])
+                if "plan_id" in subscription_data and isinstance(subscription_data["plan_id"], ObjectId):
+                    subscription_data["plan_id"] = str(subscription_data["plan_id"])
+                
+                logger.info(f"✅ Converted subscription data: plan_id={subscription_data.get('plan_id')}, plan_type={subscription_data.get('plan_type')}")
                 return UserSubscription(**subscription_data)
+            
+            logger.warning(f"⚠️ No subscription found for user {user_id}")
             return None
         except Exception as e:
             logger.error(f"Failed to get user subscription for {user_id}: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             return None
 
     @staticmethod
@@ -230,7 +245,7 @@ class SubscriptionService:
 
     @staticmethod
     async def cancel_user_subscription(user_id: str) -> bool:
-        """Cancel user's current subscription by deleting it"""
+        """Cancel user's current subscription by deleting it and resetting usage"""
         try:
             logger.info(f"🚫 Cancelling/deleting subscriptions for user: {user_id}")
             
@@ -240,10 +255,18 @@ class SubscriptionService:
             result = await subscriptions_collection.delete_many({"user_id": user_id})
             logger.info(f"🚫 Deleted {result.deleted_count} subscriptions")
             
-            # Also delete usage quotas
+            # Delete usage quotas (will be recreated with new subscription)
             quotas_collection = MongoDB.get_collection(USAGE_QUOTAS_COLLECTION)
             quota_result = await quotas_collection.delete_many({"user_id": user_id})
             logger.info(f"🚫 Deleted {quota_result.deleted_count} usage quotas")
+            
+            # Reset user's monthly usage counter
+            users_collection = MongoDB.get_collection("users")
+            await users_collection.update_one(
+                {"_id": user_id},
+                {"$set": {"analyses_this_month": 0, "last_reset_date": datetime.utcnow()}}
+            )
+            logger.info(f"🔄 Reset usage counter for user")
             
             return result.deleted_count > 0
         except Exception as e:
@@ -298,6 +321,9 @@ class SubscriptionService:
                 "year": now.year
             })
             if quota_data:
+                # Ensure analyses_used exists
+                if 'analyses_used' not in quota_data:
+                    quota_data['analyses_used'] = 0
                 return UsageQuota(**quota_data)
             return None
         except Exception as e:
@@ -306,10 +332,33 @@ class SubscriptionService:
 
     @staticmethod
     async def increment_usage(user_id: str) -> bool:
-        """Increment user's analysis usage count"""
+        """Increment user's analysis usage count in usage_quotas"""
         try:
             now = datetime.utcnow()
             quotas_collection = MongoDB.get_collection(USAGE_QUOTAS_COLLECTION)
+            
+            # Find current quota
+            quota = await quotas_collection.find_one({
+                "user_id": user_id,
+                "month": now.month,
+                "year": now.year
+            })
+            
+            if not quota:
+                # Create quota if doesn't exist (for users without subscription)
+                subscription = await SubscriptionService.get_user_subscription(user_id)
+                if subscription:
+                    plan = await SubscriptionService.get_plan_by_id(subscription.plan_id)
+                    limit = plan.max_analyses_per_month if plan else 10
+                else:
+                    limit = 10  # Free plan default
+                
+                await SubscriptionService.create_usage_quota(
+                    user_id=user_id,
+                    username="",
+                    subscription_id="",
+                    analyses_limit=limit
+                )
             
             result = await quotas_collection.update_one(
                 {
@@ -320,11 +369,10 @@ class SubscriptionService:
                 {
                     "$inc": {"analyses_used": 1},
                     "$set": {"updated_at": datetime.utcnow()}
-                },
-                upsert=True
+                }
             )
             
-            return result.modified_count > 0 or result.upserted_id is not None
+            return result.modified_count > 0
         except Exception as e:
             logger.error(f"Failed to increment usage for {user_id}: {str(e)}")
             return False
@@ -334,16 +382,27 @@ class SubscriptionService:
         """Check if user has exceeded usage limit"""
         try:
             quota = await SubscriptionService.get_user_usage_quota(user_id)
+            
+            logger.info(f"check_usage_limit for user {user_id}: quota={quota}")
+            
             if not quota:
+                logger.warning(f"No quota found for user {user_id}")
                 return False  # No quota found, deny access
             
-            # Unlimited usage (0 limit)
+            logger.info(f"Quota details: limit={quota.analyses_limit}, used={quota.analyses_used}")
+            
+            # Unlimited usage (0 limit means unlimited)
             if quota.analyses_limit == 0:
+                logger.info(f"User {user_id} has unlimited plan (limit=0), allowing")
                 return True
             
-            return quota.analyses_used < quota.analyses_limit
+            can_analyze = quota.analyses_used < quota.analyses_limit
+            logger.info(f"User {user_id} can_analyze={can_analyze} ({quota.analyses_used}/{quota.analyses_limit})")
+            return can_analyze
         except Exception as e:
             logger.error(f"Failed to check usage limit for {user_id}: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             return False
 
     @staticmethod
@@ -440,4 +499,30 @@ class SubscriptionService:
             return subscription is not None
         except Exception as e:
             logger.error(f"Failed to assign free plan to {username}: {str(e)}")
+            return False
+
+    @staticmethod
+    async def reset_user_usage(user_id: str) -> bool:
+        """Reset user's usage count (admin only)"""
+        try:
+            now = datetime.utcnow()
+            quotas_collection = MongoDB.get_collection(USAGE_QUOTAS_COLLECTION)
+            
+            result = await quotas_collection.update_one(
+                {
+                    "user_id": user_id,
+                    "month": now.month,
+                    "year": now.year
+                },
+                {
+                    "$set": {
+                        "analyses_used": 0,
+                        "updated_at": now
+                    }
+                }
+            )
+            
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Failed to reset usage for {user_id}: {str(e)}")
             return False
