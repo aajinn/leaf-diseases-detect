@@ -261,6 +261,24 @@ async function subscribeToPlan(planName) {
         }
         console.log('✅ Razorpay SDK loaded successfully');
 
+        // Get user info for prefill
+        let userInfo = { name: 'User', email: '' };
+        try {
+            const userResponse = await fetch(`${API_URL}/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (userResponse.ok) {
+                const userData = await userResponse.json();
+                userInfo = {
+                    name: userData.username || 'User',
+                    email: userData.email || ''
+                };
+                console.log('✅ User info loaded for prefill:', userInfo);
+            }
+        } catch (e) {
+            console.warn('⚠️ Could not load user info for prefill:', e);
+        }
+
         // Initialize Razorpay payment
         const options = {
             key: orderData.key_id,
@@ -274,8 +292,9 @@ async function subscribeToPlan(planName) {
                 await verifyPayment(response, planName, 'monthly');
             },
             prefill: {
-                name: 'User',
-                email: 'user@example.com'
+                name: userInfo.name,
+                email: userInfo.email,
+                contact: ''
             },
             theme: {
                 color: '#10b981'
@@ -445,10 +464,10 @@ function getPlanDetails(planName) {
     const plans = {
         basic: {
             name: 'Basic Plan',
-            price: 299,
-            analyses: '50',
+            price: 10,
+            analyses: '100',
             features: [
-                '50 analyses per month',
+                '100 analyses per month',
                 'Advanced AI detection',
                 'Detailed treatment plans',
                 'Email support'
@@ -456,7 +475,7 @@ function getPlanDetails(planName) {
         },
         premium: {
             name: 'Premium Plan',
-            price: 799,
+            price: 15,
             analyses: '500',
             features: [
                 '500 analyses per month',
@@ -468,7 +487,7 @@ function getPlanDetails(planName) {
         },
         enterprise: {
             name: 'Enterprise Plan',
-            price: 2499,
+            price: 25,
             analyses: 'Unlimited',
             features: [
                 'Unlimited analyses',
