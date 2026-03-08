@@ -45,9 +45,9 @@ def enterprise_plan():
         name="Enterprise Plan",
         plan_type=PlanType.ENTERPRISE,
         description="Enterprise features",
-        monthly_price=2499.0,
-        quarterly_price=6999.0,
-        yearly_price=24999.0,
+        monthly_price=25.0,
+        quarterly_price=67.0,
+        yearly_price=250.0,
         max_analyses_per_month=0,  # Unlimited
         max_image_size_mb=50,
         api_rate_limit_per_minute=120,
@@ -69,7 +69,7 @@ def enterprise_subscription(enterprise_user, enterprise_plan):
         plan_type=PlanType.ENTERPRISE,
         status=SubscriptionStatus.ACTIVE,
         billing_cycle=BillingCycle.YEARLY,
-        amount_paid=24999.0,
+        amount_paid=250.0,
         start_date=datetime.utcnow(),
         end_date=datetime.utcnow() + timedelta(days=365)
     )
