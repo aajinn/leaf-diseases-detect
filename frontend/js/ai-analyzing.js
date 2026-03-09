@@ -47,7 +47,7 @@ function showAIAnalyzing() {
             <!-- Info -->
             <div style="margin-top: 1rem; opacity: 0.8; font-size: 0.9rem;">
                 <i class="fas fa-robot mr-2"></i>
-                Powered by Advanced AI
+                Powered by Meta Llama Vision
             </div>
         </div>
     `;

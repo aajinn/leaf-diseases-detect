@@ -5,9 +5,6 @@ let analysisAllowed = true;
 let lastUsageData = null;
 let nextResetDate = null;
 
-// Preview image split/rejoin animation during analysis
-window._previewAnimation = window._previewAnimation || { running: false, pieces: [] };
-
 function startPreviewAnimation() {
     try {
         const img = document.getElementById('previewImg');
@@ -124,33 +121,6 @@ function startPreviewAnimation() {
     }
 }
 
-function stopPreviewAnimation() {
-    try {
-        const img = document.getElementById('previewImg');
-        const container = document.getElementById('preview-animation-container');
-        
-        if (container) {
-            container.style.transition = 'transform 600ms ease, opacity 600ms ease';
-            container.style.transform = 'scale(0.8)';
-            container.style.opacity = '0';
-            
-            setTimeout(() => {
-                try {
-                    container.remove();
-                    if (window._previewAnimation.style) {
-                        window._previewAnimation.style.remove();
-                    }
-                } catch (e) {}
-            }, 600);
-        }
-        
-        if (img) img.style.visibility = '';
-        window._previewAnimation.running = false;
-        
-    } catch (e) {
-        console.error('stopPreviewAnimation error:', e);
-    }
-}
 
 // Toggle auto-crop feature
 function toggleAutoCrop(enabled) {
