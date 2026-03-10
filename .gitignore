@@ -8,7 +8,7 @@ yarn-error.log*
 .env
 .env.local
 .env.production
-
+.env.razorpay
 # Python
 __pycache__/
 *.py[cod]
