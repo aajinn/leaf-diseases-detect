@@ -84,7 +84,7 @@
                         <input type="checkbox" class="mr-2">
                         <span class="text-gray-600 text-sm">Remember me</span>
                     </label>
-                    <a href="#" class="text-primary text-sm hover:underline">Forgot password?</a>
+                    <a href="#" onclick="showForgotPasswordModal(); return false;" class="text-primary text-sm hover:underline">Forgot password?</a>
                 </div>
 
                 <button type="submit" id="loginBtn"
@@ -143,11 +143,93 @@
     <script src="js/auth.js"></script>
     <script src="js/validation.js"></script>
     <script>
-        // Toggle password visibility
+        function showForgotPasswordModal() {
+            const modal = document.createElement('div');
+            modal.id = 'forgotPasswordModal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                    <div class="p-6">
+                        <div class="text-center mb-6">
+                            <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                                <i class="fas fa-key text-blue-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Forgot Password?</h3>
+                            <p class="text-gray-600 text-sm">Enter your email and we'll send you a reset link.</p>
+                        </div>
+                        <form id="forgotPasswordForm" class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-1">Email Address</label>
+                                <input type="email" id="resetEmail" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                                    placeholder="Enter your email">
+                            </div>
+                            <div id="forgotPasswordMessage" class="hidden p-3 rounded-lg text-sm"></div>
+                            <div class="flex space-x-3">
+                                <button type="submit" id="sendResetBtn"
+                                    class="flex-1 bg-primary text-white py-3 rounded-lg hover:bg-secondary transition font-semibold">
+                                    <i class="fas fa-paper-plane mr-2"></i>Send Reset Link
+                                </button>
+                                <button type="button" onclick="closeForgotPasswordModal()" 
+                                    class="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await handleForgotPassword();
+            });
+        }
+
+        function closeForgotPasswordModal() {
+            const modal = document.getElementById('forgotPasswordModal');
+            if (modal) modal.remove();
+        }
+
+        async function handleForgotPassword() {
+            const email = document.getElementById('resetEmail').value.trim();
+            const btn = document.getElementById('sendResetBtn');
+            if (!email) {
+                showForgotPasswordMessage('Please enter your email address', 'error');
+                return;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+            try {
+                const response = await fetch(`${API_URL}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showForgotPasswordMessage('If an account exists with this email, you will receive a password reset link shortly.', 'success');
+                    setTimeout(() => closeForgotPasswordModal(), 3000);
+                } else {
+                    showForgotPasswordMessage(data.detail || 'Failed to send reset email', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send Reset Link';
+                }
+            } catch (error) {
+                showForgotPasswordMessage('An error occurred. Please try again.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send Reset Link';
+            }
+        }
+
+        function showForgotPasswordMessage(text, type) {
+            const messageDiv = document.getElementById('forgotPasswordMessage');
+            messageDiv.className = `p-3 rounded-lg text-sm ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            messageDiv.textContent = text;
+            messageDiv.classList.remove('hidden');
+        }
+
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById(inputId + '-icon');
-            
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.remove('fa-eye');
@@ -161,35 +243,25 @@
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const btn = document.getElementById('loginBtn');
-            
-            // Basic validation
             if (!username) {
                 showMessage('Please enter your username', 'error');
                 return;
             }
-            
             if (!password) {
                 showMessage('Please enter your password', 'error');
                 return;
             }
-            
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing in...';
-            
             try {
                 const result = await login(username, password);
-                
                 if (result.success) {
                     showMessage('Success! Redirecting...', 'success');
-                    
-                    // Check for redirect parameter
                     const urlParams = new URLSearchParams(window.location.search);
                     const redirect = urlParams.get('redirect') || '/dashboard';
-                    
                     setTimeout(() => {
                         window.location.href = redirect;
                     }, 1000);
@@ -215,13 +287,10 @@
         async function loadSystemStatus() {
             try {
                 const response = await fetch(`${API_URL}/system/status`);
-                if (!response.ok) {
-                    return;
-                }
+                if (!response.ok) return;
                 const data = await response.json();
                 const banner = document.getElementById('systemBanner');
                 const loginBtn = document.getElementById('loginBtn');
-                
                 if (data.maintenance_mode || !data.allow_logins) {
                     const message = data.message || (data.maintenance_mode
                         ? 'System is under maintenance. Logins are temporarily disabled.'

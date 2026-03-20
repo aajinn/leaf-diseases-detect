@@ -91,6 +91,11 @@ if os.path.exists("frontend"):
         """Serve the login page"""
         return FileResponse("frontend/login.html")
 
+    @app.get("/reset-password", response_class=FileResponse)
+    async def serve_reset_password():
+        """Serve the password reset page"""
+        return FileResponse("frontend/reset-password.html")
+
     @app.get("/dashboard", response_class=FileResponse)
     async def serve_dashboard():
         """Serve the dashboard page"""

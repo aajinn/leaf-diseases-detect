@@ -5,10 +5,12 @@ Authentication Routes
 API endpoints for user registration, login, and profile management.
 """
 
-from datetime import timedelta
+from datetime import timedelta, datetime
+import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel, EmailStr
 
 from src.auth.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -21,8 +23,18 @@ from src.auth.security import (
 from src.database.connection import USERS_COLLECTION, MongoDB
 from src.database.models import Token, User, UserCreate, UserInDB
 from src.utils.system_settings import ensure_auth_allowed_for_user, ensure_registration_allowed
+from src.services.email_service import email_service
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 
 @router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
@@ -185,3 +197,85 @@ async def delete_user(username: str, current_user: UserInDB = Depends(get_curren
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return {"message": f"User {username} deleted successfully"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest):
+    """Request password reset email"""
+    users_collection = MongoDB.get_collection(USERS_COLLECTION)
+    
+    # Find user by email
+    user = await users_collection.find_one({"email": request.email.lower()})
+    
+    # Always return success to prevent email enumeration
+    if not user:
+        return {"message": "If the email exists, a password reset link has been sent"}
+    
+    # Generate reset token
+    reset_token = secrets.token_urlsafe(32)
+    reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+    
+    # Store reset token in database
+    await users_collection.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "reset_token": reset_token,
+                "reset_token_expires": reset_token_expires
+            }
+        }
+    )
+    
+    # Send email
+    email_sent = email_service.send_password_reset_email(
+        to_email=user["email"],
+        reset_token=reset_token,
+        username=user["username"]
+    )
+    
+    if not email_sent:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send password reset email. Please try again later."
+        )
+    
+    return {"message": "If the email exists, a password reset link has been sent"}
+
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+    """Reset password using token"""
+    users_collection = MongoDB.get_collection(USERS_COLLECTION)
+    
+    # Find user with valid reset token
+    user = await users_collection.find_one({
+        "reset_token": request.token,
+        "reset_token_expires": {"$gt": datetime.utcnow()}
+    })
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    # Validate new password
+    try:
+        UserCreate.validate_password(request.new_password)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    
+    # Update password and clear reset token
+    hashed_password = get_password_hash(request.new_password)
+    await users_collection.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {"hashed_password": hashed_password},
+            "$unset": {"reset_token": "", "reset_token_expires": ""}
+        }
+    )
+    
+    return {"message": "Password reset successfully"}
