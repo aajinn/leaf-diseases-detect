@@ -219,6 +219,31 @@ async function subscribeToPlan(planName) {
         }
         console.log('✅ User confirmed subscription');
 
+        // Handle free plan downgrade without payment
+        if (planName.toLowerCase() === 'free') {
+            console.log('🆓 Downgrading to free plan (no payment required)');
+            showNotification('Downgrading to free plan...', 'info');
+            
+            const response = await fetch(`${API_URL}/api/subscriptions/downgrade-to-free`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                showNotification('Successfully downgraded to free plan', 'success');
+                await loadCurrentSubscription();
+                updatePlanButtons();
+            } else {
+                throw new Error(data.detail || 'Failed to downgrade to free plan');
+            }
+            return;
+        }
+
         showNotification('Creating payment order...', 'info');
         console.log('📡 Making API call to create payment order...');
 
@@ -462,6 +487,17 @@ async function showSubscriptionConfirm(planName) {
 // Get plan details
 function getPlanDetails(planName) {
     const plans = {
+        free: {
+            name: 'Free Plan',
+            price: 0,
+            analyses: '10',
+            features: [
+                '10 analyses per month',
+                'Basic AI detection',
+                'Standard treatment plans',
+                'Community support'
+            ]
+        },
         basic: {
             name: 'Basic Plan',
             price: 10,
@@ -499,7 +535,7 @@ function getPlanDetails(planName) {
         }
     };
     
-    return plans[planName] || plans.basic;
+    return plans[planName.toLowerCase()] || plans.basic;
 }
 
 // Manage billing

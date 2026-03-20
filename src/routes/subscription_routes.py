@@ -693,6 +693,43 @@ async def cancel_subscription(current_user: UserInDB = Depends(get_current_activ
         )
 
 
+@router.post("/downgrade-to-free")
+async def downgrade_to_free(current_user: UserInDB = Depends(get_current_active_user)):
+    """Downgrade user to free plan (no payment required)"""
+    try:
+        logger.info(f"🆓 Downgrading user {current_user.username} to free plan")
+        
+        # Cancel existing subscription
+        success = await SubscriptionService.cancel_user_subscription(str(current_user.id))
+        logger.info(f"🚫 Cancelled existing subscription: {success}")
+        
+        # Reset user's monthly usage counter
+        from src.database.connection import MongoDB
+        from datetime import datetime
+        
+        users_collection = MongoDB.get_collection("users")
+        await users_collection.update_one(
+            {"_id": current_user.id},
+            {"$set": {"analyses_this_month": 0, "last_reset_date": datetime.utcnow()}}
+        )
+        logger.info(f"🔄 Reset usage counter for user")
+        
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "success": True,
+                "message": "Successfully downgraded to free plan"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to downgrade to free plan for {current_user.username}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to downgrade to free plan"
+        )
+
+
 @router.get("/check-usage")
 async def check_usage_limits(current_user: UserInDB = Depends(get_current_active_user)):
     """Check if user can perform analysis based on subscription limits"""
