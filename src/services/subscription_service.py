@@ -386,8 +386,27 @@ class SubscriptionService:
             logger.info(f"check_usage_limit for user {user_id}: quota={quota}")
             
             if not quota:
-                logger.warning(f"No quota found for user {user_id}")
-                return False  # No quota found, deny access
+                logger.warning(f"No quota found for user {user_id}, creating default quota")
+                # Create default quota for user
+                subscription = await SubscriptionService.get_user_subscription(user_id)
+                if subscription:
+                    plan = await SubscriptionService.get_plan_by_id(subscription.plan_id)
+                    limit = plan.max_analyses_per_month if plan else 10
+                else:
+                    # Assign free plan if no subscription
+                    await SubscriptionService.assign_free_plan(user_id, "")
+                    limit = 10
+                
+                await SubscriptionService.create_usage_quota(
+                    user_id=user_id,
+                    username="",
+                    subscription_id="",
+                    analyses_limit=limit
+                )
+                # Recheck quota
+                quota = await SubscriptionService.get_user_usage_quota(user_id)
+                if not quota:
+                    return False
             
             logger.info(f"Quota details: limit={quota.analyses_limit}, used={quota.analyses_used}")
             

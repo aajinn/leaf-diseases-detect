@@ -31,8 +31,24 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if not request.url.path.startswith("/api/"):
             return await call_next(request)
         
-        # Skip rate limiting for health checks
-        if request.url.path.endswith("/health"):
+        # Skip rate limiting for health checks and read-only endpoints
+        exempt_paths = [
+            "/health",
+            "/api/subscriptions/plans",
+            "/api/subscriptions/my-subscription",
+            "/api/prescriptions/my-prescriptions",
+            "/api/my-analyses",
+            "/api/notifications",
+            "/system/status",
+            "/auth/me"
+        ]
+        
+        # Check if path is exempt or is a GET request to read-only endpoints
+        if any(request.url.path.endswith(path) or request.url.path == path for path in exempt_paths):
+            return await call_next(request)
+        
+        # Only rate limit POST/PUT/DELETE requests for analysis and heavy operations
+        if request.method == "GET":
             return await call_next(request)
         
         try:

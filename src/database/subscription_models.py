@@ -209,7 +209,7 @@ DEFAULT_SUBSCRIPTION_PLANS = [
         "yearly_price": 0.0,
         "max_analyses_per_month": 10,
         "max_image_size_mb": 5,
-        "api_rate_limit_per_minute": 10,
+        "api_rate_limit_per_minute": 30,  # Increased from 10
         "features": [
             "10 disease analyses per month",
             "Basic disease identification",
@@ -231,7 +231,7 @@ DEFAULT_SUBSCRIPTION_PLANS = [
         "yearly_price": 100.0,    # 17% discount
         "max_analyses_per_month": 100,
         "max_image_size_mb": 10,
-        "api_rate_limit_per_minute": 30,
+        "api_rate_limit_per_minute": 60,  # Increased from 30
         "features": [
             "100 disease analyses per month",
             "Advanced disease identification",
@@ -255,7 +255,7 @@ DEFAULT_SUBSCRIPTION_PLANS = [
         "yearly_price": 150.0,     # 17% discount
         "max_analyses_per_month": 500,
         "max_image_size_mb": 20,
-        "api_rate_limit_per_minute": 60,
+        "api_rate_limit_per_minute": 120,  # Increased from 60
         "features": [
             "500 disease analyses per month",
             "AI-powered severity assessment",
@@ -281,7 +281,7 @@ DEFAULT_SUBSCRIPTION_PLANS = [
         "yearly_price": 250.0,    # 17% discount
         "max_analyses_per_month": 0,  # Unlimited
         "max_image_size_mb": 50,
-        "api_rate_limit_per_minute": 120,
+        "api_rate_limit_per_minute": 300,  # Increased from 120
         "features": [
             "Unlimited disease analyses",
             "Custom AI model training",

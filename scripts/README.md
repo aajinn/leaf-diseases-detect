@@ -1,237 +1,323 @@
-# Scripts Directory
+# Maintenance Scripts
 
-Utility scripts for development, testing, and data management.
+This folder contains utility scripts for system maintenance, user management, and troubleshooting.
+
+## Quick Reference
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `fix_user_quotas.py` | Fix missing quotas/subscriptions | Users can't analyze |
+| `verify_user_quotas.py` | Check all users have proper quotas | After fixes, routine checks |
+| `update_rate_limits.py` | Update rate limits in database | After changing limits in code |
+| `initialize_subscription_plans.py` | Create default subscription plans | First time setup |
+| `create_quick_admin.py` | Create admin user | Need admin access |
+
+## Detailed Documentation
+
+### 1. fix_user_quotas.py
+**Purpose:** Fix users who don't have usage quotas or subscriptions.
+
+**What it does:**
+- Finds users without subscriptions → assigns free plan
+- Finds users with subscriptions but no quotas → creates quotas
+- Handles errors gracefully, continues processing all users
+
+**When to run:**
+- Users getting "Monthly analysis limit reached" error
+- After database migration
+- After manual database changes
+- Routine maintenance (monthly)
+
+**Usage:**
+```cmd
+# Windows
+fix_user_quotas.bat
+
+# Or directly
+python scripts\fix_user_quotas.py
+```
+
+**Expected output:**
+```
+[*] Connecting to database...
+[*] Finding users without subscriptions...
+  [+] Created quota for user1
+  [+] Assigned free plan to user2
+[+] Fixed 5 users!
+```
 
 ---
 
-## 🚀 CI/CD Pre-Push Checks
+### 2. verify_user_quotas.py
+**Purpose:** Verify all users have proper subscriptions and quotas.
 
-**Run all CI checks locally before pushing to catch issues early!**
+**What it does:**
+- Checks every user has a subscription
+- Checks every user has a usage quota
+- Displays usage statistics
+- Reports any issues found
 
-### Windows (PowerShell)
-```powershell
-.\scripts\run-ci-checks.ps1
+**When to run:**
+- After running fix_user_quotas.py
+- Before/after system updates
+- Routine health checks
+- Troubleshooting user issues
+
+**Usage:**
+```cmd
+# Windows
+verify_user_quotas.bat
+
+# Or directly
+python scripts\verify_user_quotas.py
 ```
 
-### Linux/Mac (Bash)
-```bash
-chmod +x scripts/run-ci-checks.sh
-./scripts/run-ci-checks.sh
+**Expected output:**
 ```
-
-### What It Checks
-1. ✅ Black code formatting
-2. ✅ isort import sorting
-3. ✅ Flake8 critical errors
-4. ✅ Flake8 style warnings
-5. ✅ Pytest test suite
-6. ✅ FastAPI import verification
-
-If all checks pass, you're safe to push! 🚀
-
-### Quick Fixes
-
-If checks fail, run these commands to auto-fix:
-
-```bash
-# Format code with Black
-black . --exclude '/(\.git|\.venv|venv|__pycache__|node_modules|build|dist)/' --extend-exclude 'Leaf Disease'
-
-# Sort imports with isort
-isort . --skip-gitignore --extend-skip 'Leaf Disease'
+[*] Checking all users...
+  [+] user1: Free Plan - 5/10 analyses used
+  [+] user2: Premium Plan - 50/500 analyses used
+==================================================
+Total Users: 14
+Users OK: 14
+Missing Subscription: 0
+Missing Quota: 0
+==================================================
+[+] All users have proper quotas!
 ```
 
 ---
 
-## 📋 Prescription Data Scripts
+### 3. update_rate_limits.py
+**Purpose:** Update rate limits in existing subscription plans.
 
-Scripts for managing prescription sample data for testing and development.
+**What it does:**
+- Updates api_rate_limit_per_minute for all plan types
+- Applies new limits from subscription_models.py to database
 
-## Quick Start
+**When to run:**
+- After changing rate limits in code
+- When users report rate limiting issues
+- After performance tuning
 
-### Add Sample Prescriptions
+**Usage:**
+```cmd
+# Windows
+update_rate_limits.bat
 
-The easiest way to add sample data:
-
-```bash
-python scripts/add_sample_prescriptions.py
+# Or directly
+python scripts\update_rate_limits.py
 ```
 
-This will:
-- Generate 50 sample prescriptions
-- Distribute them across 5 sample users
-- Cover 8 different diseases
-- Span the last 30 days
-- Include various priorities and statuses
-- Show statistics after completion
-
-**Output Example:**
+**Expected output:**
 ```
-🌱 PRESCRIPTION SAMPLE DATA GENERATOR
-====================================
-
-Generating prescriptions...
-  ✓ 10/50 prescriptions created
-  ✓ 20/50 prescriptions created
-  ✓ 30/50 prescriptions created
-  ✓ 40/50 prescriptions created
-  ✓ 50/50 prescriptions created
-
-✅ Successfully generated 50 prescriptions!
-
-📊 DATABASE STATISTICS
-  Total prescriptions: 50
-  
-  By Priority:
-    • moderate: 20
-    • high: 15
-    • urgent: 10
-    • low: 5
+[*] Updating rate limits for all plans...
+  [+] Updated free plan: 30 requests/minute
+  [+] Updated basic plan: 60 requests/minute
+  [+] Updated premium plan: 120 requests/minute
+  [+] Updated enterprise plan: 300 requests/minute
+[+] Rate limits updated successfully!
 ```
 
-## Advanced Usage
+---
 
-### Seed Prescription Data (Advanced)
+### 4. initialize_subscription_plans.py
+**Purpose:** Initialize default subscription plans in the database.
 
-For more control over the data generation:
+**What it does:**
+- Creates 4 default plans (Free, Basic, Premium, Enterprise)
+- Sets pricing, limits, and features
+- Only runs if plans don't already exist
 
-```bash
-# Generate 50 prescriptions (default)
-python scripts/seed_prescription_data.py generate
+**When to run:**
+- First time system setup
+- After database reset
+- When adding new plan features
 
-# Generate custom number
-python scripts/seed_prescription_data.py generate --count 100
-
-# Show current statistics
-python scripts/seed_prescription_data.py stats
-
-# Clear all prescription data (DANGEROUS!)
-python scripts/seed_prescription_data.py clear
+**Usage:**
+```cmd
+python scripts\initialize_subscription_plans.py
 ```
 
-## Sample Data Details
+**Expected output:**
+```
+🚀 Connecting to database...
+📋 Initializing subscription plans...
+✅ Subscription plans initialized successfully!
 
-### Users (5 sample users)
-- farmer_raj
-- agri_priya
-- farm_kumar
-- green_thumb
-- crop_master
+📊 Created 4 subscription plans:
+  • Free Plan: ₹0/month (10 analyses)
+  • Basic Plan: ₹10/month (100 analyses)
+  • Premium Plan: ₹15/month (500 analyses)
+  • Enterprise Plan: ₹25/month (0 analyses)
+```
 
-### Diseases (8 types)
-- Bacterial Blight (bacterial, severe)
-- Fungal Leaf Spot (fungal, moderate)
-- Powdery Mildew (fungal, mild)
-- Leaf Rust (fungal, moderate)
-- Bacterial Wilt (bacterial, severe)
-- Early Blight (fungal, moderate)
-- Late Blight (fungal, severe)
-- Anthracnose (fungal, moderate)
+---
 
-### Priorities (weighted distribution)
-- Urgent: 20%
-- High: 30%
-- Moderate: 40%
-- Low: 10%
+### 5. create_quick_admin.py
+**Purpose:** Create an admin user quickly.
 
-### Statuses (weighted distribution)
-- Active: 70%
-- Completed: 20%
-- Expired: 10%
+**What it does:**
+- Creates admin user with default credentials
+- Assigns admin privileges
+- Sets up initial subscription
 
-### Date Range
-- Created: Random dates within last 30 days
-- Expires: 90 days after creation
+**When to run:**
+- First time setup
+- Need admin access
+- Lost admin credentials
 
-## Viewing the Data
+**Usage:**
+```cmd
+python scripts\create_quick_admin.py
+```
 
-After generating sample data:
+**Default credentials:**
+- Username: `admin`
+- Password: `Admin@123`
+- Email: `admin@leafdisease.com`
 
-1. **Admin Dashboard**
-   - Navigate to `/admin`
-   - Click on "Prescriptions" tab
-   - View analytics and charts
+**⚠️ Security:** Change the password immediately after first login!
 
-2. **User Prescriptions**
-   - Login as any user
-   - Navigate to `/prescriptions`
-   - View prescription list
+---
+
+## Batch Files (Windows)
+
+For convenience, batch files are provided in the project root:
+
+- `fix_user_quotas.bat` - Run fix_user_quotas.py
+- `verify_user_quotas.bat` - Run verify_user_quotas.py
+- `update_rate_limits.bat` - Run update_rate_limits.py
+
+Simply double-click to run.
+
+---
 
 ## Troubleshooting
 
-### "Module not found" error
-Make sure you're running from the project root:
-```bash
-cd /path/to/leaf-diseases-detect
-python scripts/add_sample_prescriptions.py
-```
-
-### Database connection error
+### Script fails to connect to database
+**Solution:**
 1. Check MongoDB is running
-2. Verify `.env` file has correct `MONGODB_URL`
-3. Ensure database name is correct
+2. Verify MONGODB_URL in .env
+3. Check network connectivity
 
-### No data showing in admin
-1. Refresh the admin page
-2. Check browser console for errors
-3. Verify prescriptions were created:
-   ```bash
-   python scripts/seed_prescription_data.py stats
-   ```
-
-## Cleaning Up
-
-To remove all prescription data:
-
-```bash
-python scripts/seed_prescription_data.py clear
+### "No module named 'src'"
+**Solution:**
+Run from project root directory:
+```cmd
+cd c:\Projects\MAIN PROJECT\leaf-diseases-detect
+python scripts\script_name.py
 ```
 
-**⚠️ WARNING**: This will delete ALL prescriptions, including real user data!
+### Unicode errors on Windows
+**Solution:**
+Scripts use ASCII characters for Windows compatibility. If you see encoding errors:
+```cmd
+chcp 65001
+python scripts\script_name.py
+```
 
-## Development
+### Permission errors
+**Solution:**
+Run as administrator or check file permissions.
 
-### Adding More Sample Data
+---
 
-Edit `add_sample_prescriptions.py` to customize:
+## Best Practices
 
+### Routine Maintenance Schedule
+
+**Daily:**
+- Monitor server logs for errors
+
+**Weekly:**
+- Run `verify_user_quotas.py`
+- Check rate limit usage
+
+**Monthly:**
+- Run `fix_user_quotas.py` (preventive)
+- Review subscription analytics
+- Clean up old rate limit records
+
+**After Updates:**
+- Run `verify_user_quotas.py`
+- Test critical user flows
+- Check logs for errors
+
+### Before Production Deployment
+
+1. Run `initialize_subscription_plans.py`
+2. Run `create_quick_admin.py`
+3. Run `verify_user_quotas.py`
+4. Test admin login
+5. Test user registration
+6. Test disease analysis
+
+---
+
+## Adding New Scripts
+
+When creating new maintenance scripts:
+
+1. **Add to this folder:** `scripts/`
+2. **Follow naming:** `verb_noun.py` (e.g., `fix_user_quotas.py`)
+3. **Add shebang:** `#!/usr/bin/env python3`
+4. **Add docstring:** Explain purpose and usage
+5. **Use logging:** Print clear status messages
+6. **Handle errors:** Try/except with informative messages
+7. **Add to README:** Document in this file
+8. **Create batch file:** For Windows users (optional)
+
+**Template:**
 ```python
-# Add more users
-users = [
-    {"id": "user6", "username": "new_farmer"},
-    # ... more users
-]
+#!/usr/bin/env python3
+"""
+Script Name
+===========
 
-# Add more diseases
-diseases = [
-    {"name": "New Disease", "type": "fungal", "severity": "moderate"},
-    # ... more diseases
-]
+Brief description of what the script does.
+"""
 
-# Change count
-count = 100  # Generate 100 prescriptions
+import asyncio
+import sys
+import os
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.database.connection import MongoDB
+
+async def main():
+    """Main function"""
+    try:
+        print("[*] Starting...")
+        await MongoDB.connect_db()
+        
+        # Your code here
+        
+        print("[+] Success!")
+        return 0
+    except Exception as e:
+        print(f"[-] Error: {e}")
+        return 1
+    finally:
+        await MongoDB.close_db()
+
+if __name__ == "__main__":
+    exit_code = asyncio.run(main())
+    sys.exit(exit_code)
 ```
 
-### Testing Analytics
+---
 
-1. Generate sample data
-2. Open admin dashboard
-3. Check "Prescriptions" tab
-4. Verify all charts display correctly
-5. Test different time ranges
+## Related Documentation
 
-## Notes
+- `docs/QUOTA_FIX.md` - Quota system fixes
+- `docs/RATE_LIMITING_FIX.md` - Rate limiting fixes
+- `docs/SYSTEM_FIXES_SUMMARY.md` - All fixes summary
+- `docs/features/SUBSCRIPTION_SYSTEM.md` - Subscription system
+- `docs/features/ADMIN_PANEL.md` - Admin panel guide
 
-- Sample data uses fake user IDs
-- Analysis IDs are generated as `sample_analysis_{i}_{timestamp}`
-- Prescription IDs follow normal format: `RX-YYYYMMDD-XXXXXXXX`
-- All prescriptions have full product recommendations and treatment steps
-- Purchase links are generated for each product
+---
 
-## Support
-
-If you encounter issues:
-1. Check MongoDB connection
-2. Verify all dependencies are installed
-3. Check server logs for errors
-4. Ensure prescription service is working correctly
+**Last Updated:** 2026-04-21
+**Maintained By:** System Administrator

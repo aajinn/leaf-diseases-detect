@@ -209,8 +209,9 @@ async function captureAndAnalyze() {
             }
             
             // Stop scanning when disease is detected
-            stopScanningOnDetection();
-        } else {
+            stopScanningOnDetection('disease');
+        } else if (result.disease_type !== 'invalid_image') {
+            // Healthy leaf detected
             frameGuide.classList.remove('border-yellow-500', 'border-red-500');
             frameGuide.classList.add('border-green-500');
             
@@ -218,6 +219,13 @@ async function captureAndAnalyze() {
             if (typeof window.setDiseaseStatus === 'function') {
                 window.setDiseaseStatus('healthy');
             }
+            
+            // Stop scanning when healthy leaf is detected
+            stopScanningOnDetection('healthy');
+        } else {
+            // Invalid image, keep scanning
+            frameGuide.classList.remove('border-yellow-500', 'border-red-500');
+            frameGuide.classList.add('border-green-500');
         }
         
         // Hide scanning animation
@@ -289,7 +297,7 @@ async function quickAnalyze(file) {
     }
 }
 
-function stopScanningOnDetection() {
+function stopScanningOnDetection(detectionType) {
     // Stop the scanning interval but keep camera active
     if (scanInterval) {
         clearInterval(scanInterval);
@@ -298,18 +306,21 @@ function stopScanningOnDetection() {
     
     isScanning = false;
     
-    // Update status
-    updateStatus('detected', 'Disease Detected - Scanning Stopped');
-    
-    // Show notification
-    showNotification('Disease detected! Scanning stopped.', 'warning');
+    // Update status based on detection type
+    if (detectionType === 'disease') {
+        updateStatus('detected', 'Disease Detected - Scanning Stopped');
+        showNotification('Disease detected! Scanning stopped.', 'warning');
+    } else if (detectionType === 'healthy') {
+        updateStatus('detected', 'Healthy Leaf Detected - Scanning Stopped');
+        showNotification('Healthy leaf detected! Scanning stopped.', 'success');
+    }
     
     // Update UI to show detection stopped
     const stopBtn = document.getElementById('stopBtn');
     const captureBtn = document.getElementById('captureBtn');
     
     if (stopBtn) {
-        stopBtn.innerHTML = '<i class="fas fa-camera mr-2"></i>Resume Scanning';
+        stopBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Resume Scanning';
         stopBtn.onclick = resumeScanning;
     }
     
@@ -395,7 +406,8 @@ function displayQuickResult(result) {
                 </div>
             </div>
         `;
-    } else {
+    } else if (result.disease_type !== 'invalid_image') {
+        // Healthy leaf detected
         content.innerHTML = `
             <div class="space-y-4">
                 <!-- Header -->
@@ -422,6 +434,27 @@ function displayQuickResult(result) {
                     <p class="text-lg text-gray-300">This plant appears to be healthy!</p>
                     <p class="text-sm text-gray-400 mt-2">Continue monitoring for best results</p>
                 </div>
+                
+                <!-- Action Button -->
+                <div class="flex space-x-2">
+                    <button onclick="resumeScanning()" 
+                        class="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition font-semibold text-sm">
+                        <i class="fas fa-play mr-2"></i>Resume Scanning
+                    </button>
+                    <button onclick="stopScanning()" 
+                        class="bg-gray-700 text-white px-4 py-3 rounded-lg hover:bg-gray-600 transition text-sm">
+                        <i class="fas fa-times mr-2"></i>Close
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        // Invalid image - show minimal message, keep scanning
+        content.innerHTML = `
+            <div class="bg-yellow-900 bg-opacity-30 rounded-lg p-4 text-center">
+                <i class="fas fa-search text-yellow-400 text-3xl mb-2"></i>
+                <p class="text-sm text-gray-300">Searching for leaf...</p>
+                <p class="text-xs text-gray-400 mt-1">Position a leaf in the frame</p>
             </div>
         `;
     }
